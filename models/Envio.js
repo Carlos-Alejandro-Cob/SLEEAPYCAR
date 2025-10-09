@@ -1,11 +1,12 @@
 // models/Envio.js
 const pool = require('../config/db');
+const { queryWithRetry } = require('../utils/dbQuery');
 
 class Envio {
 
     // 1. Listar y Filtrar (CRUD Read)
     static async findAll({ q, estado }) {
-        let query = 'SELECT id_envio as _id, codigo_envio as ID_Envio, nombre_destinatario as Nombre_Destinatario, direccion_completa as Direccion_Completa, estado_envio as Estado_Envio, fecha_entrega, url_foto_evidencia as URL_Foto_Entrega FROM envios_view WHERE 1=1';
+        let query = 'SELECT id_envio as _id, codigo_envio as ID_Envio, nombre_destinatario as Nombre_Destinatario, direccion_completa as Direccion_Completa, estado_envio as Estado_Envio, fecha_entrega, NULL as URL_Foto_Entrega FROM envios WHERE 1=1';
         const params = [];
 
         if (q) {
@@ -19,14 +20,14 @@ class Envio {
         
         query += ' ORDER BY fecha_salida DESC';
 
-        const [rows] = await pool.query(query, params);
+        const [rows] = await queryWithRetry(query, params);
         return rows;
     }
 
     // 2. Encontrar por ID
     static async findById(id) {
-        const query = 'SELECT id_envio as _id, codigo_envio as ID_Envio, nombre_destinatario as Nombre_Destinatario, direccion_completa as Direccion_Completa, estado_envio as Estado_Envio, url_foto_evidencia as URL_Foto_Entrega FROM envios_view WHERE id_envio = ?';
-        const [rows] = await pool.query(query, [id]);
+        const query = 'SELECT id_envio as _id, codigo_envio as ID_Envio, nombre_destinatario as Nombre_Destinatario, direccion_completa as Direccion_Completa, estado_envio as Estado_Envio, NULL as URL_Foto_Entrega FROM envios WHERE id_envio = ?';
+        const [rows] = await queryWithRetry(query, [id]);
         return rows[0]; // Devuelve el primer resultado o undefined
     }
 
@@ -44,10 +45,10 @@ class Envio {
             VALUES (?, ?, ?, ?, NOW())
         `;
         
-        const [result] = await pool.query(query, [codigo_envio, nombre_destinatario, direccion_completa, estado_envio]);
+        const [result] = await queryWithRetry(query, [codigo_envio, nombre_destinatario, direccion_completa, estado_envio]);
         
         // Devolvemos el objeto creado con su nuevo ID
-        return { id: result.insertId, ...data };
+        return { id: result.insertId, ...data }; // result es un array aquí, accedemos al primer elemento
     }
 
     // 4. Actualizar un envío (CRUD Update)
@@ -65,7 +66,7 @@ class Envio {
             WHERE id_envio = ?
         `;
 
-        const [result] = await pool.query(query, [codigo_envio, nombre_destinatario, direccion_completa, estado_envio, id]);
+        const [result] = await queryWithRetry(query, [codigo_envio, nombre_destinatario, direccion_completa, estado_envio, id]);
         return result.affectedRows; // Devuelve 1 si fue exitoso, 0 si no
     }
 
@@ -82,6 +83,9 @@ class Envio {
 
             if (detalleIds.length > 0) {
                 // 2. Eliminar las incidencias que dependen de los detalles del envío.
+                // Usamos IN (??) para que mysql2 expanda correctamente el array de IDs.
+                // Para una lista de valores, se debe usar un solo '?' y pasar los valores como un array dentro de otro array.
+                // El uso de '??' es para identificadores (nombres de tabla/columna) y causa el error 'Unknown column'.
                 await connection.query('DELETE FROM incidencias WHERE id_detalle_envio_fk IN (?)', [detalleIds]);
             }
 

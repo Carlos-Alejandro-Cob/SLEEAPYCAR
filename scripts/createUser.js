@@ -70,7 +70,7 @@ async function createUser() {
         console.error('❌ Error al crear el usuario:', error.message);
     } finally {
         if (connection) connection.release();
-        await pool.end(); // Cierra todas las conexiones del pool
+        await pool.end(); // Cierra todas las conexiones del pool para que el script finalice.
     }
 }
 

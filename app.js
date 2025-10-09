@@ -25,35 +25,38 @@ require('./config/passport')(passport);
 // 2.1. Parseo de Peticiones
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json()); // Para manejar JSON (útil para la futura API móvil)
-app.use(methodOverride(function (req, res) {
-    if (req.body && typeof req.body === 'object' && '_method' in req.body) {
-      // busca en req.body y lo elimina
-      var method = req.body._method;
-      delete req.body._method;
-      return method;
-    }
-}));
+
+// Simplificamos method-override para que busque '_method' en la query y en el body.
+app.use(methodOverride('_method'));
 
 // 2.2. Servidor de Archivos Estáticos
 app.use(express.static(path.join(__dirname, 'public'))); // Sirve CSS, JS y estáticos
 
 // 2.3. Seguridad
-app.use(
-    helmet.contentSecurityPolicy({
+// La configuración más robusta para Helmet es pasar un único objeto de configuración.
+// Esto asegura que todas las directivas se apliquen correctamente en un solo paso.
+app.use(helmet({
+    contentSecurityPolicy: {
+        useDefaults: false,
         directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: [
+            "default-src": ["'self'"], // Por defecto, solo permite recursos del mismo origen.
+            "script-src": [
                 "'self'",
                 "https://cdn.jsdelivr.net", // Permitir Bootstrap JS
+                "'unsafe-inline'", // Necesario para scripts en línea en las vistas EJS.
             ],
-            styleSrc: ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
-            fontSrc: ["'self'", "https://cdnjs.cloudflare.com"], // Permitir Font Awesome
-            connectSrc: ["'self'", "https://cdn.jsdelivr.net"], // Permitir conexiones para source maps
-            imgSrc: ["'self'", "data:"],
-            objectSrc: ["'none'"],
+            "style-src": ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "'unsafe-inline'"], // Permite estilos de CDNs y en línea.
+            "font-src": ["'self'", "https://cdnjs.cloudflare.com"], // Permitir Font Awesome
+            "connect-src": [ // Permite conexiones a...
+                "'self'",
+                "https://cdn.jsdelivr.net" // ...el CDN para source maps.
+            ],
+            "img-src": ["'self'", "data:"], // Permite imágenes del mismo origen y data URIs.
+            "object-src": ["'none'"], // Bloquea plugins como Flash.
+            "upgrade-insecure-requests": [], // Pide al navegador que intente usar HTTPS.
         },
-    })
-);
+    },
+}));
 
 // 2.4. Sesión y Autenticación
 app.use(session({
@@ -79,6 +82,9 @@ app.use((req, res, next) => {
 // Aquí conectaremos nuestro módulo administrativo
 const adminRoutes = require('./routes/adminRoutes');
 const authRoutes = require('./routes/authRoutes');
+
+// Middleware to handle favicon.ico requests and prevent 404 errors in the console
+app.get('/favicon.ico', (req, res) => res.status(204).send());
 
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);

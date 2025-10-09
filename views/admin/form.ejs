@@ -64,19 +64,18 @@
                 </form>
             </div>
         </div>
+
+        <% if (isEdit) { %>
+            <div class="mt-4 pt-4 border-top border-danger">
+                <h5>Zona de Peligro</h5>
+                <p>Esta acción no se puede deshacer.</p>
+                <!-- Formulario independiente para la eliminación -->
+                <form action="/admin/envios/<%= envio._id %>?_method=DELETE" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este envío?');">
+                    <button type="submit" class="btn btn-danger">Eliminar Envío</button>
+                </form>
+            </div>
+        <% } %>
     </div>
 </div>
 
 <%- include('../layouts/footer') %>
-
-<script>
-// Puedes añadir aquí validaciones de JavaScript del lado del cliente si lo necesitas.
-document.querySelector('form').addEventListener('submit', function(e) {
-    const idEnvio = document.getElementById('ID_Envio').value;
-    if (!idEnvio) {
-        alert('El ID de Envío es obligatorio.');
-        e.preventDefault();
-    }
-    // Agrega más validaciones según sea necesario...
-});
-</script>
