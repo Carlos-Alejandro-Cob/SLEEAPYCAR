@@ -2,28 +2,27 @@
 
 const express = require('express');
 const router = express.Router();
-// Asumimos que tendremos un controlador para manejar la lógica
-const envioController = require('../controllers/envioController'); 
+const envioController = require('../controllers/envioController');
+const { ensureAuthenticated } = require('../middleware/auth');
 
-// GET /admin/envios        -> Listar y filtrar envíos
-router.get('/envios', envioController.listEnvíos); 
+// --- RUTAS CRUD PARA ENVÍOS ---
 
-// GET /admin/envios/nuevo  -> Mostrar formulario de alta
-router.get('/envios/nuevo', envioController.showCreateForm);
+// [R]EAD: Listar todos los envíos (con filtros)
+router.get('/envios', ensureAuthenticated, envioController.listEnvíos);
 
-// POST /admin/envios       -> Procesar el alta de un nuevo envío (CRUD Create)
-router.post('/envios', envioController.createEnvío);
+// [C]REATE: Mostrar formulario para nuevo envío
+router.get('/envios/nuevo', ensureAuthenticated, envioController.showCreateForm);
 
-// GET /admin/envios/editar/:id -> Mostrar formulario de edición (con datos cargados)
-router.get('/envios/editar/:id', envioController.showEditForm);
+// [C]REATE: Procesar el formulario y crear el nuevo envío
+router.post('/envios', ensureAuthenticated, envioController.createEnvío);
 
-// POST /admin/envios/editar/:id -> Procesar la modificación (CRUD Update)
-// Usamos POST aquí porque el formulario web no soporta PUT directamente,
-// y method-override se encargará de simularlo.
-router.post('/envios/editar/:id', envioController.updateEnvío);
+// [R]EAD: Mostrar formulario para editar un envío específico
+router.get('/envios/:id/editar', ensureAuthenticated, envioController.showEditForm);
 
-// DELETE /admin/envios/eliminar/:id -> Eliminar (CRUD Delete)
-// Usamos el verbo DELETE gracias a method-override
-router.post('/envios/eliminar/:id', envioController.deleteEnvío);
+// [U]PDATE: Procesar la modificación de un envío
+router.put('/envios/:id', ensureAuthenticated, envioController.updateEnvío);
+
+// [D]ELETE: Eliminar un envío
+router.delete('/envios/:id', ensureAuthenticated, envioController.deleteEnvío);
 
 module.exports = router;

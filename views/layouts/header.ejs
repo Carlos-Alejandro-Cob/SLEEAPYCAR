@@ -37,6 +37,17 @@
                             Nuevo Envío
                         </a>
                     </li>
+                    <% if (user) { %>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user-circle me-1"></i>
+                            <%= user.nombre_completo %>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="/auth/logout"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+                    <% } %>
                 </ul>
             </div>
         </div>
@@ -44,3 +55,21 @@
 
     <!-- Main Content -->
     <main class="container-fluid py-4">
+        <% if (locals.success_msg && locals.success_msg.length > 0) { %>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <%= success_msg %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <% } %>
+        <% if (locals.error_msg && locals.error_msg.length > 0) { %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <%= error_msg %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <% } %>
+        <% if (locals.error && locals.error.length > 0) { %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <%= error %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <% } %>

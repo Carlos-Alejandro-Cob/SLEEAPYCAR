@@ -1,178 +1,82 @@
-<%- include('../layouts/main', { 
-    title: (isEdit ? 'Editar Envío' : 'Nuevo Envío') + ' - SLEE APYCAR',
-    body: `
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <!-- Header Section -->
-                <div class="d-flex align-items-center mb-4">
-                    <a href="/admin/envios" class="btn btn-outline-secondary me-3">
-                        <i class="fas fa-arrow-left"></i>
-                    </a>
-                    <div>
-                        <h1 class="h3 mb-1">
-                            <i class="fas fa-${isEdit ? 'edit' : 'plus'} me-2 text-primary"></i>
-                            ${isEdit ? 'Editar Envío' : 'Nuevo Envío'}
-                        </h1>
-                        <p class="text-muted">${isEdit ? 'Modifica la información del envío' : 'Completa los datos del nuevo envío'}</p>
+<%- include('../layouts/header', { ...locals, title: (isEdit ? 'Editar Envío' : 'Nuevo Envío') + ' - SLEE APYCAR' }) %>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-1">
+                    <i class="fas <%= isEdit ? 'fa-edit' : 'fa-plus-circle' %> me-2 text-primary"></i>
+                    <%= isEdit ? 'Editar Envío' : 'Nuevo Envío' %>
+                </h1>
+                <p class="text-muted">
+                    <%= isEdit ? 'Modifica los detalles del envío.' : 'Completa el formulario para registrar un nuevo envío.' %>
+                </p>
+            </div>
+            <a href="/admin/envios" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Volver a la lista
+            </a>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card">
+            <div class="card-body">
+                <form action="<%= isEdit ? '/admin/envios/' + envio._id + '?_method=PUT' : '/admin/envios' %>" method="POST">
+                    <!-- Ya no se necesita el input oculto, se usa el query param en el action -->
+                    
+                    <div class="mb-3">
+                        <label for="ID_Envio" class="form-label">ID de Envío</label>
+                        <input type="text" class="form-control" id="ID_Envio" name="ID_Envio" value="<%= envio ? envio.ID_Envio : '' %>" required>
                     </div>
-                </div>
 
-                <!-- Form Section -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-info-circle me-2"></i>
-                            Información del Envío
-                        </h5>
+                    <div class="mb-3">
+                        <label for="Nombre_Destinatario" class="form-label">Nombre del Destinatario</label>
+                        <input type="text" class="form-control" id="Nombre_Destinatario" name="Nombre_Destinatario" value="<%= envio ? envio.Nombre_Destinatario : '' %>" required>
                     </div>
-                    <div class="card-body">
-                        <form method="POST" action="${isEdit ? '/admin/envios/editar/' + envio._id : '/admin/envios'}" 
-                              enctype="multipart/form-data" id="formEnvio">
-                            
-                            <!-- ID Envío -->
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="ID_Envio" class="form-label">
-                                        ID de Envío <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="text" class="form-control" id="ID_Envio" name="ID_Envio" 
-                                           value="${envio ? envio.ID_Envio : ''}" 
-                                           placeholder="Ej: ENV001" required>
-                                    <div class="form-text">Identificador único del envío</div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="Estado_Envio" class="form-label">Estado del Envío</label>
-                                    <select class="form-select" id="Estado_Envio" name="Estado_Envio">
-                                        <option value="Pendiente" ${envio && envio.Estado_Envio === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
-                                        <option value="En Ruta" ${envio && envio.Estado_Envio === 'En Ruta' ? 'selected' : ''}>En Ruta</option>
-                                        <option value="Entregado" ${envio && envio.Estado_Envio === 'Entregado' ? 'selected' : ''}>Entregado</option>
-                                    </select>
-                                </div>
-                            </div>
 
-                            <!-- Destinatario -->
-                            <div class="mb-3">
-                                <label for="Nombre_Destinatario" class="form-label">
-                                    Nombre del Destinatario <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" class="form-control" id="Nombre_Destinatario" name="Nombre_Destinatario" 
-                                       value="${envio ? envio.Nombre_Destinatario : ''}" 
-                                       placeholder="Ej: Sucursal Centro" required>
-                            </div>
-
-                            <!-- Dirección -->
-                            <div class="mb-3">
-                                <label for="Direccion_Completa" class="form-label">
-                                    Dirección Completa <span class="text-danger">*</span>
-                                </label>
-                                <textarea class="form-control" id="Direccion_Completa" name="Direccion_Completa" 
-                                          rows="3" placeholder="Ej: Calle 10 #123, Barrio Centro" required>${envio ? envio.Direccion_Completa : ''}</textarea>
-                            </div>
-
-                            <!-- URL Foto Entrega -->
-                            <div class="mb-3">
-                                <label for="URL_Foto_Entrega" class="form-label">
-                                    URL de Foto de Entrega
-                                </label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-image"></i>
-                                    </span>
-                                    <input type="url" class="form-control" id="URL_Foto_Entrega" name="URL_Foto_Entrega" 
-                                           value="${envio ? envio.URL_Foto_Entrega : ''}" 
-                                           placeholder="https://ejemplo.com/foto.jpg">
-                                </div>
-                                <div class="form-text">URL de la foto de entrega (opcional)</div>
-                            </div>
-
-                            <!-- Preview de foto si existe -->
-                            ${envio && envio.URL_Foto_Entrega ? `
-                                <div class="mb-3">
-                                    <label class="form-label">Foto Actual</label>
-                                    <div class="text-center">
-                                        <img src="${envio.URL_Foto_Entrega}" alt="Foto de entrega" 
-                                             class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
-                                        <div class="mt-2">
-                                            <a href="${envio.URL_Foto_Entrega}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-external-link-alt me-1"></i>
-                                                Ver en nueva pestaña
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            ` : ''}
-
-                            <!-- Botones de Acción -->
-                            <div class="d-flex justify-content-between">
-                                <a href="/admin/envios" class="btn btn-outline-secondary">
-                                    <i class="fas fa-times me-2"></i>
-                                    Cancelar
-                                </a>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-${isEdit ? 'save' : 'plus'} me-2"></i>
-                                    ${isEdit ? 'Actualizar Envío' : 'Crear Envío'}
-                                </button>
-                            </div>
-                        </form>
+                    <div class="mb-3">
+                        <label for="Direccion_Completa" class="form-label">Dirección Completa</label>
+                        <input type="text" class="form-control" id="Direccion_Completa" name="Direccion_Completa" value="<%= envio ? envio.Direccion_Completa : '' %>" required>
                     </div>
-                </div>
 
-                <!-- Información Adicional -->
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h6 class="mb-0">
-                            <i class="fas fa-info-circle me-2"></i>
-                            Información del Sistema
-                        </h6>
+                    <div class="mb-3">
+                        <label for="Estado_Envio" class="form-label">Estado del Envío</label>
+                        <select class="form-select" id="Estado_Envio" name="Estado_Envio">
+                            <option value="Pendiente" <%= (envio && envio.Estado_Envio === 'Pendiente') ? 'selected' : '' %>>Pendiente</option>
+                            <option value="En Ruta" <%= (envio && envio.Estado_Envio === 'En Ruta') ? 'selected' : '' %>>En Ruta</option>
+                            <option value="Entregado" <%= (envio && envio.Estado_Envio === 'Entregado') ? 'selected' : '' %>>Entregado</option>
+                        </select>
                     </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <small class="text-muted">
-                                    <strong>Fecha de Creación:</strong><br>
-                                    ${envio ? new Date().toLocaleString() : 'Al guardar'}
-                                </small>
-                            </div>
-                            <div class="col-md-6">
-                                <small class="text-muted">
-                                    <strong>Última Modificación:</strong><br>
-                                    ${envio ? new Date().toLocaleString() : 'N/A'}
-                                </small>
-                            </div>
-                        </div>
+
+                    <div class="mb-3">
+                        <label for="URL_Foto_Entrega" class="form-label">URL de Foto de Entrega (Opcional)</label>
+                        <input type="url" class="form-control" id="URL_Foto_Entrega" name="URL_Foto_Entrega" value="<%= envio ? (envio.URL_Foto_Entrega || '') : '' %>" placeholder="https://...">
                     </div>
-                </div>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <a href="/admin/envios" class="btn btn-secondary me-2">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>
+                            <%= isEdit ? 'Actualizar Envío' : 'Guardar Envío' %>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-    ` 
-}) %>
+    </div>
+</div>
+
+<%- include('../layouts/footer') %>
 
 <script>
-// Validación del formulario
-document.getElementById('formEnvio').addEventListener('submit', function(e) {
-    const idEnvio = document.getElementById('ID_Envio').value.trim();
-    const destinatario = document.getElementById('Nombre_Destinatario').value.trim();
-    const direccion = document.getElementById('Direccion_Completa').value.trim();
-    
-    if (!idEnvio || !destinatario || !direccion) {
+// Puedes añadir aquí validaciones de JavaScript del lado del cliente si lo necesitas.
+document.querySelector('form').addEventListener('submit', function(e) {
+    const idEnvio = document.getElementById('ID_Envio').value;
+    if (!idEnvio) {
+        alert('El ID de Envío es obligatorio.');
         e.preventDefault();
-        alert('Por favor, completa todos los campos obligatorios (*)');
-        return;
     }
-    
-    // Validar formato de ID de envío
-    if (!/^ENV\d{3,}$/i.test(idEnvio)) {
-        e.preventDefault();
-        alert('El ID de envío debe tener el formato ENV seguido de números (ej: ENV001)');
-        return;
-    }
-});
-
-// Auto-generar ID de envío si está vacío
-document.getElementById('ID_Envio').addEventListener('blur', function() {
-    if (!this.value.trim()) {
-        const timestamp = Date.now().toString().slice(-6);
-        this.value = 'ENV' + timestamp;
-    }
+    // Agrega más validaciones según sea necesario...
 });
 </script>

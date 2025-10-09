@@ -1,4 +1,4 @@
-<%- include('../layouts/header', { title: 'Gestión de Envíos - SLEE APYCAR' }) %>
+<%- include('../layouts/header', { ...locals, title: 'Gestión de Envíos - SLEE APYCAR' }) %>
 
 <div class="row">
     <div class="col-12">
@@ -121,11 +121,11 @@
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                <a href="/admin/envios/editar/<%= envio._id %>" class="btn btn-sm btn-outline-primary">
+                                                <a href="/admin/envios/<%= envio._id %>/editar" class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                                <button type="button" class="btn btn-sm btn-outline-danger"
-                                                        onclick="confirmarEliminacion('<%= envio._id %>', '<%= envio.ID_Envio %>')">
+                                                <button type="button" class="btn btn-sm btn-outline-danger js-delete-btn"
+                                                        data-envio-id="<%= envio._id %>" data-envio-codigo="<%= envio.ID_Envio %>">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </div>
@@ -171,17 +171,3 @@
 </div>
 
 <%- include('../layouts/footer') %>
-
-<script>
-function confirmarEliminacion(id, envioId) {
-    document.getElementById('envioId').textContent = envioId;
-    const form = document.getElementById('formEliminar');
-    form.action = `/admin/envios/${id}?_method=DELETE`;
-    new bootstrap.Modal(document.getElementById('modalEliminar')).show();
-}
-
-function exportarExcel() {
-    // Implementar exportación a Excel
-    alert('Función de exportación en desarrollo');
-}
-</script>

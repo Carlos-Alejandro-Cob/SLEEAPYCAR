@@ -1,6 +1,21 @@
 // SLEE APYCAR - Custom JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Manejo centralizado para los modales de eliminación
+    const deleteModal = document.getElementById('modalEliminar');
+    if (deleteModal) {
+        document.body.addEventListener('click', function(event) {
+            if (event.target.closest('.js-delete-btn')) {
+                const button = event.target.closest('.js-delete-btn');
+                const envioId = button.dataset.envioId;
+                const envioCodigo = button.dataset.envioCodigo;
+                
+                // Llama a la función global para configurar y mostrar el modal
+                window.confirmarEliminacion(envioId, envioCodigo);
+            }
+        });
+    }
+
     // Inicializar tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -158,7 +173,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Confirmación de eliminación con modal
     window.confirmarEliminacion = function(id, envioId) {
         document.getElementById('envioId').textContent = envioId;
-        document.getElementById('formEliminar').action = '/admin/envios/eliminar/' + id;
+        const form = document.getElementById('formEliminar');
+        form.action = `/admin/envios/${id}`; // Correct RESTful URL
         var modal = new bootstrap.Modal(document.getElementById('modalEliminar'));
         modal.show();
     };
