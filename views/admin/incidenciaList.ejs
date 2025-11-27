@@ -2,35 +2,35 @@
 
 <div class="row">
     <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-start mb-4">
             <div>
-                <h1 class="h3 mb-1">
-                    <i class="fas fa-list-alt me-2 text-info"></i>
-                    Listado de Incidencias
-                </h1>
-                <p class="text-muted">Gestiona y visualiza todas las incidencias reportadas.</p>
+                <h1 class="h3 mb-2">Incidencias</h1>
+                <p class="text-muted mb-0">Gestiona y visualiza todas las incidencias reportadas</p>
             </div>
             <a href="/admin/incidencias/nueva" class="btn btn-primary">
-                <i class="fas fa-plus-circle me-2"></i>
-                Reportar Nueva Incidencia
+                <i class="fas fa-plus me-2"></i>Nueva Incidencia
             </a>
         </div>
 
         <% if (incidencias && incidencias.length > 0) { %>
-            <div class="card shadow mb-4">
-                <div class="card-body">
+            <div class="card">
+                <div class="card-header">
+                    <span class="text-muted" style="font-size: 0.875rem; font-weight: 500;">
+                        <%= incidencias.length %> <%= incidencias.length === 1 ? 'incidencia' : 'incidencias' %>
+                    </span>
+                </div>
+                <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <table class="table table-hover mb-0">
                             <thead>
                                 <tr>
                                     <th>ID</th>
                                     <th>Detalle Envío</th>
-                                    <th>Usuario Reporta</th>
+                                    <th>Usuario</th>
                                     <th>Tipo</th>
                                     <th>Observaciones</th>
-                                    <th>Foto Evidencia</th>
-                                    <th>Fecha Reporte</th>
-                                    <!-- <th>Acciones</th> -->
+                                    <th>Foto</th>
+                                    <th>Fecha</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -43,11 +43,11 @@
                                         <td><%= incidencia.observaciones %></td>
                                         <td>
                                             <% if (incidencia.url_foto_evidencia) { %>
-                                                <a href="<%= incidencia.url_foto_evidencia %>" target="_blank">
-                                                    <img src="<%= incidencia.url_foto_evidencia %>" alt="Evidencia" style="width: 100px; height: auto;">
+                                                <a href="<%= incidencia.url_foto_evidencia %>" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-image"></i>
                                                 </a>
                                             <% } else { %>
-                                                No hay foto
+                                                <span class="text-muted" style="font-size: 0.8125rem;">—</span>
                                             <% } %>
                                         </td>
                                         <td><%= incidencia.fecha_reporte ? new Date(incidencia.fecha_reporte).toLocaleString() : 'N/A' %></td>
@@ -65,8 +65,17 @@
                 </div>
             </div>
         <% } else { %>
-            <div class="alert alert-info" role="alert">
-                No hay incidencias reportadas aún.
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-center py-5">
+                        <i class="fas fa-exclamation-circle fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No hay incidencias reportadas</h5>
+                        <p class="text-muted mb-4">Comienza reportando una nueva incidencia</p>
+                        <a href="/admin/incidencias/nueva" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Nueva Incidencia
+                        </a>
+                    </div>
+                </div>
             </div>
         <% } %>
     </div>

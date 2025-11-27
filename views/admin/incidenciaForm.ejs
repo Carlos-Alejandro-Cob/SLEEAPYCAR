@@ -2,54 +2,51 @@
 
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-start mb-4">
             <div>
-                <h1 class="h3 mb-1">
-                    <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
-                    Nueva Incidencia
-                </h1>
-                <p class="text-muted">Reporta una nueva incidencia con los detalles y una foto de evidencia.</p>
+                <h1 class="h3 mb-2">Nueva Incidencia</h1>
+                <p class="text-muted mb-0">Reporta una nueva incidencia con los detalles y una foto de evidencia</p>
             </div>
             <a href="/admin/envios" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>
-                Volver a Envíos
+                <i class="fas fa-arrow-left me-2"></i>Volver
             </a>
         </div>
 
         <div class="card">
             <div class="card-body">
                 <form action="/admin/incidencias" method="POST" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <label for="id_detalle_envio_fk" class="form-label">ID Detalle Envío</label>
-                        <input type="number" class="form-control" id="id_detalle_envio_fk" name="id_detalle_envio_fk" required>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="id_detalle_envio_fk" class="form-label">ID Detalle Envío</label>
+                            <input type="number" class="form-control" id="id_detalle_envio_fk" name="id_detalle_envio_fk" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="id_usuario_reporta_fk" class="form-label">ID Usuario Reporta</label>
+                            <input type="number" class="form-control" id="id_usuario_reporta_fk" name="id_usuario_reporta_fk" required>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="tipo_incidencia" class="form-label">Tipo de Incidencia</label>
+                            <input type="text" class="form-control" id="tipo_incidencia" name="tipo_incidencia" required>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="observaciones" class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="observaciones" name="observaciones" rows="4"></textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="foto_evidencia" class="form-label">Foto de Evidencia</label>
+                            <input type="file" class="form-control" id="foto_evidencia" name="foto_evidencia" accept="image/jpeg">
+                            <div class="form-text" style="font-size: 0.8125rem; color: var(--text-light);">Solo se permiten archivos JPG</div>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="id_usuario_reporta_fk" class="form-label">ID Usuario Reporta</label>
-                        <input type="number" class="form-control" id="id_usuario_reporta_fk" name="id_usuario_reporta_fk" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="tipo_incidencia" class="form-label">Tipo de Incidencia</label>
-                        <input type="text" class="form-control" id="tipo_incidencia" name="tipo_incidencia" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="observaciones" class="form-label">Observaciones</label>
-                        <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="foto_evidencia" class="form-label">Foto de Evidencia (JPG)</label>
-                        <input type="file" class="form-control" id="foto_evidencia" name="foto_evidencia" accept="image/jpeg">
-                        <div class="form-text">Solo se permiten archivos JPG.</div>
-                    </div>
-
-                    <div class="d-flex justify-content-end mt-4">
-                        <a href="/admin/envios" class="btn btn-secondary me-2">Cancelar</a>
+                    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                        <a href="/admin/envios" class="btn btn-outline-secondary">Cancelar</a>
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-2"></i>
-                            Reportar Incidencia
+                            <i class="fas fa-save me-2"></i>Reportar Incidencia
                         </button>
                     </div>
                 </form>

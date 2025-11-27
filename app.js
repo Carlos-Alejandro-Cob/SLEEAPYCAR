@@ -31,6 +31,7 @@ app.use(methodOverride('_method'));
 
 // 2.2. Servidor de Archivos Estáticos
 app.use(express.static(path.join(__dirname, 'public'))); // Sirve CSS, JS y estáticos
+app.use('/assets', express.static(path.join(__dirname, 'assets'))); // Sirve assets (logo, imágenes, etc.)
 
 // 2.3. Seguridad
 // La configuración más robusta para Helmet es pasar un único objeto de configuración.

@@ -3,55 +3,49 @@
 <div class="row">
     <div class="col-12">
         <!-- Header Section -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-start mb-4">
             <div>
-                <h1 class="h3 mb-1">
-                    <i class="fas fa-truck me-2 text-primary"></i>
-                    Gestión de Envíos
-                </h1>
-                <p class="text-muted">Administra y monitorea todos los envíos del sistema</p>
+                <h1 class="h3 mb-2">Gestión de Envíos</h1>
+                <p class="text-muted mb-0">Administra y monitorea todos los envíos del sistema</p>
             </div>
-            <a href="/admin/envios/nuevo" class="btn btn-primary me-2">
-                <i class="fas fa-plus me-2"></i>
-                Nuevo Envío
-            </a>
-            <a href="/admin/incidencias/nueva" class="btn btn-warning me-2">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                Reportar Incidencia
-            </a>
-            <a href="/admin/incidencias" class="btn btn-info">
-                <i class="fas fa-list me-2"></i>
-                Ver Incidencias
-            </a>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="/admin/envios/nuevo" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Nuevo Envío
+                </a>
+                <a href="/admin/incidencias/nueva" class="btn btn-outline-primary">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Reportar Incidencia
+                </a>
+                <a href="/admin/incidencias" class="btn btn-outline-primary">
+                    <i class="fas fa-list me-2"></i>Incidencias
+                </a>
+            </div>
         </div>
 
         <!-- Filters Section -->
         <div class="card mb-4">
             <div class="card-body">
-                <form method="GET" action="/admin/envios" class="row g-3">
-                    <div class="col-md-6">
+                <form method="GET" action="/admin/envios" class="row g-3 align-items-end">
+                    <div class="col-md-5">
                         <label for="q" class="form-label">Buscar</label>
                         <input type="text" class="form-control" id="q" name="q"
-                               placeholder="Buscar por destinatario o ID de envío..."
+                               placeholder="Destinatario o ID de envío..."
                                value="<%= query || '' %>">
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label for="estado" class="form-label">Estado</label>
                         <select class="form-select" id="estado" name="estado">
-                            <option value="">Todos los estados</option>
+                            <option value="">Todos</option>
                             <option value="Pendiente" <%= estadoFiltro === 'Pendiente' ? 'selected' : '' %>>Pendiente</option>
                             <option value="En Ruta" <%= estadoFiltro === 'En Ruta' ? 'selected' : '' %>>En Ruta</option>
                             <option value="Entregado" <%= estadoFiltro === 'Entregado' ? 'selected' : '' %>>Entregado</option>
                         </select>
                     </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-outline-primary me-2">
-                            <i class="fas fa-search me-1"></i>
-                            Filtrar
+                    <div class="col-md-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-fill">
+                            <i class="fas fa-search me-2"></i>Filtrar
                         </button>
                         <a href="/admin/envios" class="btn btn-outline-secondary">
-                            <i class="fas fa-times me-1"></i>
-                            Limpiar
+                            <i class="fas fa-times"></i>
                         </a>
                     </div>
                 </form>
@@ -61,16 +55,14 @@
         <!-- Results Section -->
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="fas fa-list me-2"></i>
-                    Lista de Envíos (<%= envios.length %> resultados)
-                </h5>
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportarExcel()">
-                        <i class="fas fa-file-excel me-1"></i>
-                        Exportar
-                    </button>
+                <div>
+                    <span class="text-muted" style="font-size: 0.875rem; font-weight: 500;">
+                        <%= envios.length %> <%= envios.length === 1 ? 'envío' : 'envíos' %>
+                    </span>
                 </div>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportarExcel()">
+                    <i class="fas fa-file-excel me-2"></i>Exportar
+                </button>
             </div>
             <div class="card-body p-0">
                 <% if (envios.length === 0) { %>
@@ -86,14 +78,14 @@
                 <% } else { %>
                     <div class="table-responsive">
                         <table class="table table-hover mb-0">
-                            <thead class="table-light">
+                            <thead>
                                 <tr>
-                                    <th>ID Envío</th>
+                                    <th>ID</th>
                                     <th>Destinatario</th>
                                     <th>Dirección</th>
                                     <th>Estado</th>
-                                    <th>Foto Entrega</th>
-                                    <th>Acciones</th>
+                                    <th>Foto</th>
+                                    <th width="120">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -120,24 +112,22 @@
                                         <td>
                                             <% if (envio.URL_Foto_Entrega) { %>
                                                 <a href="<%= envio.URL_Foto_Entrega %>" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                    <i class="fas fa-image me-1"></i>
-                                                    Ver Foto
+                                                    <i class="fas fa-image"></i>
                                                 </a>
                                             <% } else { %>
-                                                <span class="text-muted">Sin foto</span>
+                                                <span class="text-muted" style="font-size: 0.8125rem;">—</span>
                                             <% } %>
                                         </td>
                                         <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="/admin/envios/<%= envio._id %>/editar" class="btn btn-sm btn-outline-primary">
+                                            <div class="d-flex gap-1">
+                                                <a href="/admin/envios/<%= envio._id %>/editar" class="btn btn-sm btn-outline-primary" title="Editar">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                            <!-- Formulario independiente para la eliminación -->
-                                            <form action="/admin/envios/<%= envio._id %>?_method=DELETE" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de que quieres eliminar el envío <%= envio.ID_Envio %>?');">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
+                                                <form action="/admin/envios/<%= envio._id %>?_method=DELETE" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de que quieres eliminar el envío <%= envio.ID_Envio %>?');">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>
