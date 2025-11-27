@@ -4,6 +4,7 @@ const express = require('express');
 const router = express.Router();
 const envioController = require('../controllers/envioController');
 const { ensureAuthenticated } = require('../middleware/auth');
+const upload = require('../utils/multerConfig'); // Importa la instancia de multer configurada
 
 // --- RUTAS CRUD PARA ENVÍOS ---
 
@@ -24,5 +25,16 @@ router.put('/envios/:id', ensureAuthenticated, envioController.updateEnvío);
 
 // [D]ELETE: Eliminar un envío
 router.delete('/envios/:id', ensureAuthenticated, envioController.deleteEnvío);
+
+// --- RUTAS PARA INCIDENCIAS ---
+
+// [R]EAD: Listar todas las incidencias
+router.get('/incidencias', ensureAuthenticated, envioController.listIncidencias);
+
+// [C]REATE: Mostrar formulario para nueva incidencia
+router.get('/incidencias/nueva', ensureAuthenticated, envioController.showCreateIncidenciaForm);
+
+// [C]REATE: Procesar la creación de una nueva incidencia con subida de imagen
+router.post('/incidencias', ensureAuthenticated, upload.single('foto_evidencia'), envioController.createIncidencia);
 
 module.exports = router;

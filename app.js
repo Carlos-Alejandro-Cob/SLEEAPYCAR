@@ -37,23 +37,24 @@ app.use(express.static(path.join(__dirname, 'public'))); // Sirve CSS, JS y est�
 // Esto asegura que todas las directivas se apliquen correctamente en un solo paso.
 app.use(helmet({
     contentSecurityPolicy: {
-        useDefaults: false,
         directives: {
-            "default-src": ["'self'"], // Por defecto, solo permite recursos del mismo origen.
+            "default-src": [
+                "'self'",
+                "https://cdn.jsdelivr.net",
+                "http://localhost:3001", // Permitir conexiones HTTP a localhost
+                "ws://localhost:3001" // Permitir conexiones WebSocket a localhost
+            ],
             "script-src": [
                 "'self'",
-                "https://cdn.jsdelivr.net", // Permitir Bootstrap JS
-                "'unsafe-inline'", // Necesario para scripts en línea en las vistas EJS.
+                "https://cdn.jsdelivr.net",
+                "'unsafe-inline'",
+                "'unsafe-eval'"
             ],
-            "style-src": ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "'unsafe-inline'"], // Permite estilos de CDNs y en línea.
-            "font-src": ["'self'", "https://cdnjs.cloudflare.com"], // Permitir Font Awesome
-            "connect-src": [ // Permite conexiones a...
-                "'self'",
-                "https://cdn.jsdelivr.net" // ...el CDN para source maps.
-            ],
-            "img-src": ["'self'", "data:"], // Permite imágenes del mismo origen y data URIs.
-            "object-src": ["'none'"], // Bloquea plugins como Flash.
-            "upgrade-insecure-requests": [], // Pide al navegador que intente usar HTTPS.
+            "style-src": ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
+            "font-src": ["'self'", "https://cdnjs.cloudflare.com"],
+            "img-src": ["'self'", "data:", "https://isubzrcyvxrkchodohtv.supabase.co/storage/v1/object/public/incidencia-fotos/public/"], // Permitir imágenes del mismo origen, data URIs y del bucket 'incidencia-fotos'/public de Supabase Storage
+            "object-src": ["'none'"],
+            "upgrade-insecure-requests": [],
         },
     },
 }));
@@ -64,16 +65,16 @@ app.use(session({
     resave: false,
     saveUninitialized: true
 }));
-app.use(flash());
+app.use(flash()); // Re-habilitado
 // Inicialización de Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
 // 2.5. Variables Locales para Vistas
 app.use((req, res, next) => {
-    res.locals.success_msg = req.flash('success_msg');
-    res.locals.error_msg = req.flash('error_msg'); // Para errores personalizados
-    res.locals.error = req.flash('error'); // Para errores de Passport
+    res.locals.success_msg = req.flash('success_msg'); // Re-habilitado
+    res.locals.error_msg = req.flash('error_msg'); // Re-habilitado
+    res.locals.error = req.flash('error'); // Re-habilitado
     res.locals.user = req.user || null; // Pasa el usuario a todas las vistas
     next();
 });

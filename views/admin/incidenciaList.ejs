@@ -1,0 +1,75 @@
+<%- include('../layouts/header', { ...locals, title: 'Listado de Incidencias - SLEE APYCAR' }) %>
+
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-1">
+                    <i class="fas fa-list-alt me-2 text-info"></i>
+                    Listado de Incidencias
+                </h1>
+                <p class="text-muted">Gestiona y visualiza todas las incidencias reportadas.</p>
+            </div>
+            <a href="/admin/incidencias/nueva" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i>
+                Reportar Nueva Incidencia
+            </a>
+        </div>
+
+        <% if (incidencias && incidencias.length > 0) { %>
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Detalle Envío</th>
+                                    <th>Usuario Reporta</th>
+                                    <th>Tipo</th>
+                                    <th>Observaciones</th>
+                                    <th>Foto Evidencia</th>
+                                    <th>Fecha Reporte</th>
+                                    <!-- <th>Acciones</th> -->
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% incidencias.forEach(incidencia => { %>
+                                    <tr>
+                                        <td><%= incidencia.id_incidencia %></td>
+                                        <td><%= incidencia.id_detalle_envio_fk %></td>
+                                        <td><%= incidencia.id_usuario_reporta_fk %></td>
+                                        <td><%= incidencia.tipo_incidencia %></td>
+                                        <td><%= incidencia.observaciones %></td>
+                                        <td>
+                                            <% if (incidencia.url_foto_evidencia) { %>
+                                                <a href="<%= incidencia.url_foto_evidencia %>" target="_blank">
+                                                    <img src="<%= incidencia.url_foto_evidencia %>" alt="Evidencia" style="width: 100px; height: auto;">
+                                                </a>
+                                            <% } else { %>
+                                                No hay foto
+                                            <% } %>
+                                        </td>
+                                        <td><%= incidencia.fecha_reporte ? new Date(incidencia.fecha_reporte).toLocaleString() : 'N/A' %></td>
+                                        <!-- <td>
+                                            <a href="/admin/incidencias/<%= incidencia.id_incidencia %>/editar" class="btn btn-sm btn-warning me-1">Editar</a>
+                                            <form action="/admin/incidencias/<%= incidencia.id_incidencia %>?_method=DELETE" method="POST" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de que quieres eliminar esta incidencia?');">Eliminar</button>
+                                            </form>
+                                        </td> -->
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        <% } else { %>
+            <div class="alert alert-info" role="alert">
+                No hay incidencias reportadas aún.
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../layouts/footer') %>
