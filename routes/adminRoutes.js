@@ -37,4 +37,13 @@ router.get('/incidencias/nueva', ensureAuthenticated, envioController.showCreate
 // [C]REATE: Procesar la creación de una nueva incidencia con subida de imagen
 router.post('/incidencias', ensureAuthenticated, upload.single('foto_evidencia'), envioController.createIncidencia);
 
+// [R]EAD: Mostrar formulario para editar una incidencia
+router.get('/incidencias/:id/editar', ensureAuthenticated, envioController.showEditIncidenciaForm);
+
+// [U]PDATE: Procesar la modificación de una incidencia
+router.put('/incidencias/:id', ensureAuthenticated, upload.single('foto_evidencia'), envioController.updateIncidencia);
+
+// [D]ELETE: Eliminar una incidencia
+router.delete('/incidencias/:id', ensureAuthenticated, envioController.deleteIncidencia);
+
 module.exports = router;

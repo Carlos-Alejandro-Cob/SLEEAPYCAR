@@ -1,14 +1,14 @@
 // controllers/envioController.js
 const Envio = require('../models/Envio');
 const Incidencia = require('../models/Incidencia');
-const { uploadImage } = require('../models/supabaseUploadService');
+
 
 // 1. Listar y Filtrar (CRUD Read)
 exports.listEnvíos = async (req, res) => {
     try {
         const { q, estado } = req.query;
         const envios = await Envio.findAll({ q, estado });
-        
+
         res.render('admin/list', {
             envios: envios,
             query: q || '',
@@ -38,9 +38,9 @@ exports.createEnvío = async (req, res) => {
             direccion_completa: req.body.Direccion_Completa,
             estado_envio: req.body.Estado_Envio || 'En Espera'
         };
-        
+
         await Envio.create(nuevoEnvio);
-        
+
         req.flash('success_msg', `Envío "${nuevoEnvio.codigo_envio}" creado con éxito.`);
         res.redirect('/admin/envios');
     } catch (error) {
@@ -78,9 +78,9 @@ exports.updateEnvío = async (req, res) => {
             direccion_completa: req.body.Direccion_Completa,
             estado_envio: req.body.Estado_Envio
         };
-        
+
         await Envio.update(req.params.id, datosActualizados);
-        
+
         req.flash('success_msg', `Envío "${datosActualizados.codigo_envio}" actualizado correctamente.`);
         res.redirect('/admin/envios');
     } catch (error) {
@@ -111,17 +111,28 @@ exports.deleteEnvío = async (req, res) => {
 exports.createIncidencia = async (req, res) => {
     try {
         // Multer ya ha procesado el archivo y lo ha puesto en req.file
-        const { id_detalle_envio_fk, id_usuario_reporta_fk, tipo_incidencia, observaciones } = req.body;
+        const { codigo_envio, id_detalle_envio_fk, id_usuario_reporta_fk, tipo_incidencia, observaciones } = req.body;
         let url_foto_evidencia = null;
 
         if (req.file) {
-            // Subir la imagen a Supabase Storage
-            url_foto_evidencia = await uploadImage(req.file.buffer, req.file.originalname);
+            // Multer-Cloudinary ya ha subido la imagen y la URL está en req.file.path
+            url_foto_evidencia = req.file.path;
+        }
+
+        let finalIdDetalle = id_detalle_envio_fk;
+
+        // Si viene el código de envío (texto), buscamos el ID interno
+        if (codigo_envio) {
+            finalIdDetalle = await Envio.findDetailIdByCodigo(codigo_envio);
+            if (!finalIdDetalle) {
+                req.flash('error_msg', 'El código de envío no existe.');
+                return res.redirect('/admin/incidencias/nueva');
+            }
         }
 
         const nuevaIncidencia = {
-            id_detalle_envio_fk: parseInt(id_detalle_envio_fk), // Asegúrate de que sea un número
-            id_usuario_reporta_fk: parseInt(id_usuario_reporta_fk), // Asegúrate de que sea un número
+            id_detalle_envio_fk: parseInt(finalIdDetalle),
+            id_usuario_reporta_fk: parseInt(id_usuario_reporta_fk),
             tipo_incidencia,
             observaciones,
             url_foto_evidencia,
@@ -130,18 +141,22 @@ exports.createIncidencia = async (req, res) => {
         console.log('Nueva Incidencia a crear:', nuevaIncidencia);
         await Incidencia.create(nuevaIncidencia);
 
-        // req.flash('success_msg', 'Incidencia creada con éxito.');
-        res.redirect('/admin/incidencias'); // Redirige a donde corresponda
+        req.flash('success_msg', 'Incidencia creada con éxito.');
+        res.redirect('/admin/incidencias');
     } catch (error) {
         console.error('Error al crear incidencia:', error);
-        // req.flash('error_msg', `Error al crear la incidencia: ${error.message}`);
-        res.redirect('/admin/incidencias/nueva'); // Redirige al formulario de creación de incidencia
+        req.flash('error_msg', `Error al crear la incidencia: ${error.message}`);
+        res.redirect('/admin/incidencias/nueva');
     }
 };
 
 // 8. Mostrar Formulario de Creación de Incidencia
+// 8. Mostrar Formulario de Creación de Incidencia
 exports.showCreateIncidenciaForm = (req, res) => {
-    res.render('admin/incidenciaForm');
+    res.render('admin/incidenciaForm', {
+        incidencia: null,
+        isEdit: false
+    });
 };
 
 // 9. Listar Incidencias
@@ -153,5 +168,81 @@ exports.listIncidencias = async (req, res) => {
         console.error('Error al listar incidencias:', error);
         req.flash('error_msg', 'Ocurrió un error al obtener las incidencias.');
         res.redirect('/admin/envios'); // Redirige a envios si falla el listado de incidencias
+    }
+};
+
+// 10. Mostrar Formulario de Edición de Incidencia
+exports.showEditIncidenciaForm = async (req, res) => {
+    try {
+        const incidencia = await Incidencia.findById(req.params.id);
+        if (!incidencia) {
+            req.flash('error_msg', 'Incidencia no encontrada.');
+            return res.redirect('/admin/incidencias');
+        }
+        res.render('admin/incidenciaForm', {
+            incidencia: incidencia,
+            isEdit: true
+        });
+    } catch (error) {
+        console.error('Error al mostrar formulario de edición de incidencia:', error);
+        req.flash('error_msg', 'Error al cargar la incidencia.');
+        res.redirect('/admin/incidencias');
+    }
+};
+
+// 11. Procesar Modificación de Incidencia
+exports.updateIncidencia = async (req, res) => {
+    try {
+        const { codigo_envio, id_detalle_envio_fk, id_usuario_reporta_fk, tipo_incidencia, observaciones } = req.body;
+        let url_foto_evidencia = null;
+
+        if (req.file) {
+            url_foto_evidencia = req.file.path;
+        }
+
+        let finalIdDetalle = id_detalle_envio_fk;
+
+        // Si viene el código de envío (texto), buscamos el ID interno
+        if (codigo_envio) {
+            finalIdDetalle = await Envio.findDetailIdByCodigo(codigo_envio);
+            if (!finalIdDetalle) {
+                req.flash('error_msg', 'El código de envío no existe.');
+                return res.redirect(`/admin/incidencias/${req.params.id}/editar`);
+            }
+        }
+
+        const datosActualizados = {
+            id_detalle_envio_fk: parseInt(finalIdDetalle),
+            id_usuario_reporta_fk: parseInt(id_usuario_reporta_fk),
+            tipo_incidencia,
+            observaciones,
+            url_foto_evidencia
+        };
+
+        await Incidencia.update(req.params.id, datosActualizados);
+
+        req.flash('success_msg', 'Incidencia actualizada correctamente.');
+        res.redirect('/admin/incidencias');
+    } catch (error) {
+        console.error('Error al actualizar incidencia:', error);
+        req.flash('error_msg', 'Error al actualizar la incidencia.');
+        res.redirect(`/admin/incidencias/${req.params.id}/editar`);
+    }
+};
+
+// 12. Procesar Eliminación de Incidencia
+exports.deleteIncidencia = async (req, res) => {
+    try {
+        const affectedRows = await Incidencia.delete(req.params.id);
+        if (affectedRows > 0) {
+            req.flash('success_msg', 'La incidencia ha sido eliminada.');
+        } else {
+            req.flash('error_msg', 'No se pudo eliminar la incidencia o no fue encontrada.');
+        }
+        res.redirect('/admin/incidencias');
+    } catch (error) {
+        console.error('Error al eliminar incidencia:', error);
+        req.flash('error_msg', 'Error al eliminar la incidencia.');
+        res.redirect('/admin/incidencias');
     }
 };

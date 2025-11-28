@@ -1,6 +1,15 @@
 const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('../config/cloudinary');
 
-// Configurar Multer para almacenar archivos en memoria
-const upload = multer({ storage: multer.memoryStorage() });
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'incidencia-fotos',
+        allowed_formats: ['jpg', 'png', 'jpeg'],
+    },
+});
+
+const upload = multer({ storage: storage });
 
 module.exports = upload;

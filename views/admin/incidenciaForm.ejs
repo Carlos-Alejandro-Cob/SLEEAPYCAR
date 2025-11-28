@@ -1,58 +1,102 @@
-<%- include('../layouts/header', { ...locals, title: 'Nueva Incidencia - SLEE APYCAR' }) %>
+<%- include('../layouts/header', { ...locals, title: (isEdit ? 'Editar Incidencia' : 'Nueva Incidencia' )
+    + ' - SLEE APYCAR' }) %>
 
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="d-flex justify-content-between align-items-start mb-4">
-            <div>
-                <h1 class="h3 mb-2">Nueva Incidencia</h1>
-                <p class="text-muted mb-0">Reporta una nueva incidencia con los detalles y una foto de evidencia</p>
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Header Section -->
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h1 class="h3 mb-2">
+                        <%= isEdit ? 'Editar Incidencia' : 'Nueva Incidencia' %>
+                    </h1>
+                    <p class="text-muted mb-0">
+                        <%= isEdit ? 'Modifica los detalles de la incidencia'
+                            : 'Reporta una nueva incidencia con los detalles y una foto de evidencia' %>
+                    </p>
+                </div>
+                <a href="/admin/incidencias" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
             </div>
-            <a href="/admin/envios" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Volver
-            </a>
-        </div>
 
-        <div class="card">
-            <div class="card-body">
-                <form action="/admin/incidencias" method="POST" enctype="multipart/form-data">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label for="id_detalle_envio_fk" class="form-label">ID Detalle Envío</label>
-                            <input type="number" class="form-control" id="id_detalle_envio_fk" name="id_detalle_envio_fk" required>
+            <!-- Form Card -->
+            <div class="card">
+                <div class="card-body">
+                    <form
+                        action="/admin/incidencias<%= isEdit ? '/' + incidencia.id_incidencia + '?_method=PUT' : '' %>"
+                        method="POST" enctype="multipart/form-data">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="codigo_envio" class="form-label">ID de Envío</label>
+                                <input type="text" class="form-control" id="codigo_envio" name="codigo_envio"
+                                    value="<%= incidencia ? incidencia.codigo_envio : '' %>"
+                                    placeholder="Ej: E-20251023-02" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="id_usuario_reporta_fk" class="form-label">ID Usuario Reporta</label>
+                                <input type="number" class="form-control" id="id_usuario_reporta_fk"
+                                    name="id_usuario_reporta_fk"
+                                    value="<%= incidencia ? incidencia.id_usuario_reporta_fk : '' %>" required>
+                            </div>
+
+                            <div class="col-12">
+                                <label for="tipo_incidencia" class="form-label">Tipo de Incidencia</label>
+                                <input type="text" class="form-control" id="tipo_incidencia" name="tipo_incidencia"
+                                    value="<%= incidencia ? incidencia.tipo_incidencia : '' %>" required>
+                            </div>
+
+                            <div class="col-12">
+                                <label for="observaciones" class="form-label">Observaciones</label>
+                                <textarea class="form-control" id="observaciones" name="observaciones"
+                                    rows="4"><%= incidencia ? incidencia.observaciones : '' %></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <label for="foto_evidencia" class="form-label">Foto de Evidencia</label>
+                                <% if (isEdit && incidencia.url_foto_evidencia) { %>
+                                    <div class="mb-2">
+                                        <img src="<%= incidencia.url_foto_evidencia %>" alt="Evidencia actual"
+                                            style="max-height: 150px; border-radius: 4px;">
+                                        <p class="text-muted small">Imagen actual</p>
+                                    </div>
+                                    <% } %>
+                                        <input type="file" class="form-control" id="foto_evidencia"
+                                            name="foto_evidencia" accept="image/jpeg, image/png">
+                                        <div class="form-text" style="font-size: 0.8125rem; color: var(--text-light);">
+                                            Solo se permiten archivos JPG/PNG. <%= isEdit
+                                                ? 'Deja en blanco para mantener la imagen actual.' : '' %>
+                                        </div>
+                            </div>
                         </div>
 
-                        <div class="col-md-6">
-                            <label for="id_usuario_reporta_fk" class="form-label">ID Usuario Reporta</label>
-                            <input type="number" class="form-control" id="id_usuario_reporta_fk" name="id_usuario_reporta_fk" required>
+                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <a href="/admin/incidencias" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                <%= isEdit ? 'Actualizar' : 'Reportar' %> Incidencia
+                            </button>
                         </div>
-
-                        <div class="col-12">
-                            <label for="tipo_incidencia" class="form-label">Tipo de Incidencia</label>
-                            <input type="text" class="form-control" id="tipo_incidencia" name="tipo_incidencia" required>
-                        </div>
-
-                        <div class="col-12">
-                            <label for="observaciones" class="form-label">Observaciones</label>
-                            <textarea class="form-control" id="observaciones" name="observaciones" rows="4"></textarea>
-                        </div>
-
-                        <div class="col-12">
-                            <label for="foto_evidencia" class="form-label">Foto de Evidencia</label>
-                            <input type="file" class="form-control" id="foto_evidencia" name="foto_evidencia" accept="image/jpeg">
-                            <div class="form-text" style="font-size: 0.8125rem; color: var(--text-light);">Solo se permiten archivos JPG</div>
-                        </div>
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                        <a href="/admin/envios" class="btn btn-outline-secondary">Cancelar</a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-2"></i>Reportar Incidencia
-                        </button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
+
+            <% if (isEdit) { %>
+                <div class="card mt-4 border-danger">
+                    <div class="card-body">
+                        <h5 class="mb-2" style="color: #dc2626;">Zona de Peligro</h5>
+                        <p class="text-muted mb-3" style="font-size: 0.875rem;">Esta acción no se puede deshacer.</p>
+                        <form action="/admin/incidencias/<%= incidencia.id_incidencia %>?_method=DELETE" method="POST"
+                            class="d-inline"
+                            onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta incidencia?');">
+                            <button type="submit" class="btn btn-outline-danger">
+                                <i class="fas fa-trash me-2"></i>Eliminar Incidencia
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <% } %>
         </div>
     </div>
-</div>
 
-<%- include('../layouts/footer') %>
+    <%- include('../layouts/footer') %>

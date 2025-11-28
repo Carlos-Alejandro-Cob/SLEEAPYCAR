@@ -1,84 +1,121 @@
 <%- include('../layouts/header', { ...locals, title: 'Listado de Incidencias - SLEE APYCAR' }) %>
 
-<div class="row">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-start mb-4">
-            <div>
-                <h1 class="h3 mb-2">Incidencias</h1>
-                <p class="text-muted mb-0">Gestiona y visualiza todas las incidencias reportadas</p>
-            </div>
-            <a href="/admin/incidencias/nueva" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i>Nueva Incidencia
-            </a>
-        </div>
-
-        <% if (incidencias && incidencias.length > 0) { %>
-            <div class="card">
-                <div class="card-header">
-                    <span class="text-muted" style="font-size: 0.875rem; font-weight: 500;">
-                        <%= incidencias.length %> <%= incidencias.length === 1 ? 'incidencia' : 'incidencias' %>
-                    </span>
+    <div class="row">
+        <style>
+            .table-sm td,
+            .table-sm th {
+                padding-top: 0.15rem !important;
+                padding-bottom: 0.15rem !important;
+                vertical-align: middle !important;
+            }
+        </style>
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h1 class="h3 mb-2">Incidencias</h1>
+                    <p class="text-muted mb-0">Gestiona y visualiza todas las incidencias reportadas</p>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Detalle Envío</th>
-                                    <th>Usuario</th>
-                                    <th>Tipo</th>
-                                    <th>Observaciones</th>
-                                    <th>Foto</th>
-                                    <th>Fecha</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% incidencias.forEach(incidencia => { %>
+                <a href="/admin/incidencias/nueva" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Nueva Incidencia
+                </a>
+            </div>
+
+            <% if (incidencias && incidencias.length> 0) { %>
+                <div class="card">
+                    <div class="card-header">
+                        <span class="text-muted" style="font-size: 0.875rem; font-weight: 500;">
+                            <%= incidencias.length %>
+                                <%= incidencias.length===1 ? 'incidencia' : 'incidencias' %>
+                        </span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-sm mb-0" style="font-size: 0.75rem;">
+                                <thead>
                                     <tr>
-                                        <td><%= incidencia.id_incidencia %></td>
-                                        <td><%= incidencia.id_detalle_envio_fk %></td>
-                                        <td><%= incidencia.id_usuario_reporta_fk %></td>
-                                        <td><%= incidencia.tipo_incidencia %></td>
-                                        <td><%= incidencia.observaciones %></td>
-                                        <td>
-                                            <% if (incidencia.url_foto_evidencia) { %>
-                                                <a href="<%= incidencia.url_foto_evidencia %>" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                    <i class="fas fa-image"></i>
-                                                </a>
-                                            <% } else { %>
-                                                <span class="text-muted" style="font-size: 0.8125rem;">—</span>
-                                            <% } %>
-                                        </td>
-                                        <td><%= incidencia.fecha_reporte ? new Date(incidencia.fecha_reporte).toLocaleString() : 'N/A' %></td>
-                                        <!-- <td>
-                                            <a href="/admin/incidencias/<%= incidencia.id_incidencia %>/editar" class="btn btn-sm btn-warning me-1">Editar</a>
-                                            <form action="/admin/incidencias/<%= incidencia.id_incidencia %>?_method=DELETE" method="POST" class="d-inline">
-                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de que quieres eliminar esta incidencia?');">Eliminar</button>
-                                            </form>
-                                        </td> -->
+                                        <th>ID</th>
+                                        <th>Detalle Envío</th>
+                                        <th>Usuario</th>
+                                        <th>Tipo</th>
+                                        <th>Observaciones</th>
+                                        <th>Foto</th>
+                                        <th>Fecha</th>
+                                        <th>Acciones</th>
                                     </tr>
-                                <% }); %>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    <% incidencias.forEach(incidencia=> { %>
+                                        <tr>
+                                            <td>
+                                                <%= incidencia.id_incidencia %>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">
+                                                    <%= incidencia.codigo_envio || incidencia.id_detalle_envio_fk %>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <%= incidencia.id_usuario_reporta_fk %>
+                                            </td>
+                                            <td>
+                                                <%= incidencia.tipo_incidencia %>
+                                            </td>
+                                            <td>
+                                                <%= incidencia.observaciones %>
+                                            </td>
+                                            <td>
+                                                <% if (incidencia.url_foto_evidencia) { %>
+                                                    <a href="<%= incidencia.url_foto_evidencia %>" target="_blank"
+                                                        class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-image"></i>
+                                                    </a>
+                                                    <% } else { %>
+                                                        <span class="text-muted" style="font-size: 0.8125rem;">—</span>
+                                                        <% } %>
+                                            </td>
+                                            <td>
+                                                <%= incidencia.fecha_reporte ? new
+                                                    Date(incidencia.fecha_reporte).toLocaleString() : 'N/A' %>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex gap-1">
+                                                    <a href="/admin/incidencias/<%= incidencia.id_incidencia %>/editar"
+                                                        class="btn btn-sm btn-outline-primary" title="Editar">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <form
+                                                        action="/admin/incidencias/<%= incidencia.id_incidencia %>?_method=DELETE"
+                                                        method="POST" class="d-inline"
+                                                        onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta incidencia?');">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                            title="Eliminar">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
-        <% } else { %>
-            <div class="card">
-                <div class="card-body">
-                    <div class="text-center py-5">
-                        <i class="fas fa-exclamation-circle fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">No hay incidencias reportadas</h5>
-                        <p class="text-muted mb-4">Comienza reportando una nueva incidencia</p>
-                        <a href="/admin/incidencias/nueva" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Nueva Incidencia
-                        </a>
+                <% } else { %>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="text-center py-5">
+                                <i class="fas fa-exclamation-circle fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No hay incidencias reportadas</h5>
+                                <p class="text-muted mb-4">Comienza reportando una nueva incidencia</p>
+                                <a href="/admin/incidencias/nueva" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>Nueva Incidencia
+                                </a>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-        <% } %>
+                    <% } %>
+        </div>
     </div>
-</div>
 
-<%- include('../layouts/footer') %>
+    <%- include('../layouts/footer') %>

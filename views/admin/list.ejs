@@ -1,144 +1,168 @@
 <%- include('../layouts/header', { ...locals, title: 'Gestión de Envíos - SLEE APYCAR' }) %>
 
-<div class="row">
-    <div class="col-12">
-        <!-- Header Section -->
-        <div class="d-flex justify-content-between align-items-start mb-4">
-            <div>
-                <h1 class="h3 mb-2">Gestión de Envíos</h1>
-                <p class="text-muted mb-0">Administra y monitorea todos los envíos del sistema</p>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <a href="/admin/envios/nuevo" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>Nuevo Envío
-                </a>
-                <a href="/admin/incidencias/nueva" class="btn btn-outline-primary">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Reportar Incidencia
-                </a>
-                <a href="/admin/incidencias" class="btn btn-outline-primary">
-                    <i class="fas fa-list me-2"></i>Incidencias
-                </a>
-            </div>
-        </div>
-
-        <!-- Filters Section -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <form method="GET" action="/admin/envios" class="row g-3 align-items-end">
-                    <div class="col-md-5">
-                        <label for="q" class="form-label">Buscar</label>
-                        <input type="text" class="form-control" id="q" name="q"
-                               placeholder="Destinatario o ID de envío..."
-                               value="<%= query || '' %>">
-                    </div>
-                    <div class="col-md-3">
-                        <label for="estado" class="form-label">Estado</label>
-                        <select class="form-select" id="estado" name="estado">
-                            <option value="">Todos</option>
-                            <option value="Pendiente" <%= estadoFiltro === 'Pendiente' ? 'selected' : '' %>>Pendiente</option>
-                            <option value="En Ruta" <%= estadoFiltro === 'En Ruta' ? 'selected' : '' %>>En Ruta</option>
-                            <option value="Entregado" <%= estadoFiltro === 'Entregado' ? 'selected' : '' %>>Entregado</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4 d-flex gap-2">
-                        <button type="submit" class="btn btn-primary flex-fill">
-                            <i class="fas fa-search me-2"></i>Filtrar
-                        </button>
-                        <a href="/admin/envios" class="btn btn-outline-secondary">
-                            <i class="fas fa-times"></i>
-                        </a>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Results Section -->
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
+    <div class="row">
+        <style>
+            .table-sm td,
+            .table-sm th {
+                padding-top: 0.15rem !important;
+                padding-bottom: 0.15rem !important;
+                vertical-align: middle !important;
+            }
+        </style>
+        <div class="col-12">
+            <!-- Header Section -->
+            <div class="d-flex justify-content-between align-items-start mb-4">
                 <div>
-                    <span class="text-muted" style="font-size: 0.875rem; font-weight: 500;">
-                        <%= envios.length %> <%= envios.length === 1 ? 'envío' : 'envíos' %>
-                    </span>
+                    <h1 class="h3 mb-2">Gestión de Envíos</h1>
+                    <p class="text-muted mb-0">Administra y monitorea todos los envíos del sistema</p>
                 </div>
-                <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportarExcel()">
-                    <i class="fas fa-file-excel me-2"></i>Exportar
-                </button>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="/admin/envios/nuevo" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Nuevo Envío
+                    </a>
+                    <a href="/admin/incidencias/nueva" class="btn btn-outline-primary">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Reportar Incidencia
+                    </a>
+                    <a href="/admin/incidencias" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-2"></i>Incidencias
+                    </a>
+                </div>
             </div>
-            <div class="card-body p-0">
-                <% if (envios.length === 0) { %>
-                    <div class="text-center py-5">
-                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">No se encontraron envíos</h5>
-                        <p class="text-muted">Intenta ajustar los filtros de búsqueda</p>
-                        <a href="/admin/envios/nuevo" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>
-                            Crear Primer Envío
-                        </a>
+
+            <!-- Filters Section -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="GET" action="/admin/envios" class="row g-3 align-items-end">
+                        <div class="col-md-5">
+                            <label for="q" class="form-label">Buscar</label>
+                            <input type="text" class="form-control" id="q" name="q"
+                                placeholder="Destinatario o ID de envío..." value="<%= query || '' %>">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="estado" class="form-label">Estado</label>
+                            <select class="form-select" id="estado" name="estado">
+                                <option value="">Todos</option>
+                                <option value="Pendiente" <%=estadoFiltro==='Pendiente' ? 'selected' : '' %>>Pendiente
+                                </option>
+                                <option value="En Ruta" <%=estadoFiltro==='En Ruta' ? 'selected' : '' %>>En Ruta
+                                </option>
+                                <option value="Entregado" <%=estadoFiltro==='Entregado' ? 'selected' : '' %>>Entregado
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-fill">
+                                <i class="fas fa-search me-2"></i>Filtrar
+                            </button>
+                            <a href="/admin/envios" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted" style="font-size: 0.875rem; font-weight: 500;">
+                            <%= envios.length %>
+                                <%= envios.length===1 ? 'envío' : 'envíos' %>
+                        </span>
                     </div>
-                <% } else { %>
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Destinatario</th>
-                                    <th>Dirección</th>
-                                    <th>Estado</th>
-                                    <th>Foto</th>
-                                    <th width="120">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% envios.forEach(function(envio) { %>
-                                    <tr>
-                                        <td>
-                                            <span class="badge bg-secondary"><%= envio.ID_Envio %></span>
-                                        </td>
-                                        <td>
-                                            <strong><%= envio.Nombre_Destinatario %></strong>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted"><%= envio.Direccion_Completa %></small>
-                                        </td>
-                                        <td>
-                                            <%
-                                            let badgeClass = 'bg-secondary';
-                                            if (envio.Estado_Envio === 'Entregado') badgeClass = 'bg-success';
-                                            else if (envio.Estado_Envio === 'En Ruta') badgeClass = 'bg-warning';
-                                            else if (envio.Estado_Envio === 'Pendiente') badgeClass = 'bg-info';
-                                            %>
-                                            <span class="badge <%= badgeClass %>"><%= envio.Estado_Envio %></span>
-                                        </td>
-                                        <td>
-                                            <% if (envio.URL_Foto_Entrega) { %>
-                                                <a href="<%= envio.URL_Foto_Entrega %>" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                    <i class="fas fa-image"></i>
-                                                </a>
-                                            <% } else { %>
-                                                <span class="text-muted" style="font-size: 0.8125rem;">—</span>
-                                            <% } %>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex gap-1">
-                                                <a href="/admin/envios/<%= envio._id %>/editar" class="btn btn-sm btn-outline-primary" title="Editar">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <form action="/admin/envios/<%= envio._id %>?_method=DELETE" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de que quieres eliminar el envío <%= envio.ID_Envio %>?');">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <% }); %>
-                            </tbody>
-                        </table>
-                    </div>
-                <% } %>
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportarExcel()">
+                        <i class="fas fa-file-excel me-2"></i>Exportar
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <% if (envios.length===0) { %>
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No se encontraron envíos</h5>
+                            <p class="text-muted">Intenta ajustar los filtros de búsqueda</p>
+                            <a href="/admin/envios/nuevo" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>
+                                Crear Primer Envío
+                            </a>
+                        </div>
+                        <% } else { %>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm mb-0" style="font-size: 0.75rem;">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Destinatario</th>
+                                            <th>Dirección</th>
+                                            <th>Estado</th>
+                                            <th>Foto</th>
+                                            <th width="120">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% envios.forEach(function(envio) { %>
+                                            <tr>
+                                                <td>
+                                                    <span class="badge bg-secondary">
+                                                        <%= envio.ID_Envio %>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <strong>
+                                                        <%= envio.Nombre_Destinatario %>
+                                                    </strong>
+                                                </td>
+                                                <td>
+                                                    <small class="text-muted">
+                                                        <%= envio.Direccion_Completa %>
+                                                    </small>
+                                                </td>
+                                                <td>
+                                                    <% let badgeClass='bg-secondary' ; if
+                                                        (envio.Estado_Envio==='Entregado' ) badgeClass='bg-success' ;
+                                                        else if (envio.Estado_Envio==='En Ruta' )
+                                                        badgeClass='bg-warning' ; else if
+                                                        (envio.Estado_Envio==='Pendiente' ) badgeClass='bg-info' ; %>
+                                                        <span class="badge <%= badgeClass %>">
+                                                            <%= envio.Estado_Envio %>
+                                                        </span>
+                                                </td>
+                                                <td>
+                                                    <% if (envio.URL_Foto_Entrega) { %>
+                                                        <a href="<%= envio.URL_Foto_Entrega %>" target="_blank"
+                                                            class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-image"></i>
+                                                        </a>
+                                                        <% } else { %>
+                                                            <span class="text-muted"
+                                                                style="font-size: 0.8125rem;">—</span>
+                                                            <% } %>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex gap-1">
+                                                        <a href="/admin/envios/<%= envio._id %>/editar"
+                                                            class="btn btn-sm btn-outline-primary" title="Editar">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <form action="/admin/envios/<%= envio._id %>?_method=DELETE"
+                                                            method="POST" class="d-inline"
+                                                            onsubmit="return confirm('¿Estás seguro de que quieres eliminar el envío <%= envio.ID_Envio %>?');">
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                                title="Eliminar">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <% } %>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<%- include('../layouts/footer') %>
+    <%- include('../layouts/footer') %>

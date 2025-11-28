@@ -17,7 +17,7 @@ class Envio {
             query += ' AND estado_envio = ?';
             params.push(estado);
         }
-        
+
         query += ' ORDER BY fecha_salida DESC';
 
         const [rows] = await queryWithRetry(query, params);
@@ -44,9 +44,9 @@ class Envio {
             INSERT INTO envios (codigo_envio, nombre_destinatario, direccion_completa, estado_envio, fecha_salida)
             VALUES (?, ?, ?, ?, NOW())
         `;
-        
+
         const [result] = await queryWithRetry(query, [codigo_envio, nombre_destinatario, direccion_completa, estado_envio]);
-        
+
         // Devolvemos el objeto creado con su nuevo ID
         return { id: result.insertId, ...data }; // result es un array aquí, accedemos al primer elemento
     }
@@ -94,7 +94,7 @@ class Envio {
 
             // 4. Eliminar los detalles del envío.
             await connection.query('DELETE FROM detalle_envio WHERE id_envio_fk = ?', [id]);
-            
+
             // 5. Finalmente, eliminar el envío principal.
             const [result] = await connection.query('DELETE FROM envios WHERE id_envio = ?', [id]);
 
@@ -106,6 +106,18 @@ class Envio {
         } finally {
             connection.release(); // Libera la conexión de vuelta al pool.
         }
+    }
+    // 6. Obtener ID de detalle por Código de Envío
+    static async findDetailIdByCodigo(codigo) {
+        const query = `
+            SELECT de.id_detalle 
+            FROM envios e 
+            JOIN detalle_envio de ON e.id_envio = de.id_envio_fk 
+            WHERE e.codigo_envio = ? 
+            LIMIT 1
+        `;
+        const [rows] = await queryWithRetry(query, [codigo]);
+        return rows[0] ? rows[0].id_detalle : null;
     }
 }
 

@@ -53,7 +53,7 @@ app.use(helmet({
             ],
             "style-src": ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
             "font-src": ["'self'", "https://cdnjs.cloudflare.com"],
-            "img-src": ["'self'", "data:", "https://isubzrcyvxrkchodohtv.supabase.co/storage/v1/object/public/incidencia-fotos/public/"], // Permitir imágenes del mismo origen, data URIs y del bucket 'incidencia-fotos'/public de Supabase Storage
+            "img-src": ["'self'", "data:", "https://isubzrcyvxrkchodohtv.supabase.co/storage/v1/object/public/incidencia-fotos/public/", "https://res.cloudinary.com"], // Permitir imágenes del mismo origen, data URIs y Cloudinary
             "object-src": ["'none'"],
             "upgrade-insecure-requests": [],
         },
