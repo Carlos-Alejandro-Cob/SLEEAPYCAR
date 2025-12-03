@@ -30,10 +30,11 @@ class Incidencia {
 
     static async findAll() {
         const query = `
-            SELECT i.*, e.codigo_envio 
+            SELECT i.*, e.codigo_envio, u.nombre_completo
             FROM incidencias i
             LEFT JOIN detalle_envio de ON i.id_detalle_envio_fk = de.id_detalle
             LEFT JOIN envios e ON de.id_envio_fk = e.id_envio
+            LEFT JOIN usuarios u ON i.id_usuario_reporta_fk = u.id_usuario
             ORDER BY i.fecha_reporte DESC
         `;
         const [rows] = await queryWithRetry(query);

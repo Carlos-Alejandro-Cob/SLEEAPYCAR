@@ -36,7 +36,10 @@ exports.createEnvío = async (req, res) => {
             codigo_envio: req.body.ID_Envio,
             nombre_destinatario: req.body.Nombre_Destinatario,
             direccion_completa: req.body.Direccion_Completa,
-            estado_envio: req.body.Estado_Envio || 'En Espera'
+            estado_envio: req.body.Estado_Envio || 'En Espera',
+            metodo_pago: req.body.metodo_pago,
+            precio: req.body.precio,
+            estado_pago: req.body.estado_pago
         };
 
         await Envio.create(nuevoEnvio);
@@ -76,7 +79,10 @@ exports.updateEnvío = async (req, res) => {
             codigo_envio: req.body.ID_Envio,
             nombre_destinatario: req.body.Nombre_Destinatario,
             direccion_completa: req.body.Direccion_Completa,
-            estado_envio: req.body.Estado_Envio
+            estado_envio: req.body.Estado_Envio,
+            metodo_pago: req.body.metodo_pago,
+            precio: req.body.precio,
+            estado_pago: req.body.estado_pago
         };
 
         await Envio.update(req.params.id, datosActualizados);

@@ -38,24 +38,33 @@ app.use('/assets', express.static(path.join(__dirname, 'assets'))); // Sirve ass
 // Esto asegura que todas las directivas se apliquen correctamente en un solo paso.
 app.use(helmet({
     contentSecurityPolicy: {
+        useDefaults: false,
         directives: {
             "default-src": [
                 "'self'",
                 "https://cdn.jsdelivr.net",
-                "http://localhost:3001", // Permitir conexiones HTTP a localhost
-                "ws://localhost:3001" // Permitir conexiones WebSocket a localhost
+                "http://localhost:3001",
+                "ws://localhost:3001"
             ],
             "script-src": [
                 "'self'",
                 "https://cdn.jsdelivr.net",
+                "https://cdnjs.cloudflare.com",
+                "https://sdk.mercadopago.com",
+                "https://www.paypal.com",
+                "https://www.sandbox.paypal.com",
+                "https://*.mercadopago.com",
+                "https://*.mercadolibre.com",
+                "https://http2.mlstatic.com",
                 "'unsafe-inline'",
                 "'unsafe-eval'"
             ],
-            "style-src": ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
-            "font-src": ["'self'", "https://cdnjs.cloudflare.com"],
-            "img-src": ["'self'", "data:", "https://isubzrcyvxrkchodohtv.supabase.co/storage/v1/object/public/incidencia-fotos/public/", "https://res.cloudinary.com"], // Permitir imágenes del mismo origen, data URIs y Cloudinary
+            "style-src": ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com", "'unsafe-inline'"],
+            "font-src": ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com", "https://http2.mlstatic.com", "data:"],
+            "img-src": ["'self'", "data:", "https://isubzrcyvxrkchodohtv.supabase.co/storage/v1/object/public/incidencia-fotos/public/", "https://res.cloudinary.com", "https://http2.mlstatic.com", "https://*.mercadolibre.com", "https://*.mercadopago.com", "https://www.paypalobjects.com", "https://www.mercadolibre.com", "https://www.mercadolivre.com"],
+            "connect-src": ["'self'", "http://localhost:3001", "ws://localhost:3001", "https://www.paypal.com", "https://www.sandbox.paypal.com", "https://api.mercadopago.com", "https://events.mercadopago.com", "https://api.mercadopago.com/v1/events", "https://cdn.jsdelivr.net", "https://www.mercadolibre.com", "https://api.mercadolibre.com", "https://http2.mlstatic.com", "https://*.mercadopago.com", "https://*.mercadolibre.com"],
+            "frame-src": ["'self'", "https://www.paypal.com", "https://sdk.mercadopago.com", "https://www.sandbox.paypal.com", "https://www.mercadolibre.com", "https://*.mercadopago.com", "https://*.mercadolibre.com"],
             "object-src": ["'none'"],
-            "upgrade-insecure-requests": [],
         },
     },
 }));
@@ -84,10 +93,12 @@ app.use((req, res, next) => {
 // Aquí conectaremos nuestro módulo administrativo
 const adminRoutes = require('./routes/adminRoutes');
 const authRoutes = require('./routes/authRoutes');
+const publicRoutes = require('./routes/publicRoutes');
 
 // Middleware to handle favicon.ico requests and prevent 404 errors in the console
 app.get('/favicon.ico', (req, res) => res.status(204).send());
 
+app.use('/', publicRoutes);
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 

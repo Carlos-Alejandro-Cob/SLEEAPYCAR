@@ -95,6 +95,7 @@
                                             <th>Destinatario</th>
                                             <th>Dirección</th>
                                             <th>Estado</th>
+                                            <th>Pago</th>
                                             <th>Foto</th>
                                             <th width="120">Acciones</th>
                                         </tr>
@@ -128,10 +129,26 @@
                                                         </span>
                                                 </td>
                                                 <td>
+                                                    <span class="badge bg-light text-dark border">
+                                                        <%= envio.metodo_pago || '—' %>
+                                                    </span>
+                                                    <br>
+                                                    <small class="text-muted">$<%= envio.precio ?
+                                                            parseFloat(envio.precio).toFixed(2) : '0.00' %></small>
+                                                    <% if (envio.estado_pago==='Pagado' ) { %>
+                                                        <span class="badge bg-success"
+                                                            style="font-size: 0.65rem;">Pagado</span>
+                                                        <% } else { %>
+                                                            <span class="badge bg-warning text-dark"
+                                                                style="font-size: 0.65rem;">Pendiente</span>
+                                                            <% } %>
+                                                </td>
+                                                <td>
                                                     <% if (envio.URL_Foto_Entrega) { %>
-                                                        <a href="<%= envio.URL_Foto_Entrega %>" target="_blank"
-                                                            class="btn btn-sm btn-outline-primary">
-                                                            <i class="fas fa-image"></i>
+                                                        <a href="<%= envio.URL_Foto_Entrega %>" target="_blank">
+                                                            <img src="<%= envio.URL_Foto_Entrega %>" alt="Foto"
+                                                                class="img-thumbnail"
+                                                                style="height: 40px; width: auto; padding: 2px;">
                                                         </a>
                                                         <% } else { %>
                                                             <span class="text-muted"

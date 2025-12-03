@@ -10,12 +10,13 @@ exports.showLoginForm = (req, res) => {
 exports.login = passport.authenticate('local', {
     successRedirect: '/admin/envios',
     failureRedirect: '/auth/login',
-    failureFlash: true // Habilita los mensajes flash de error de Passport
+    failureFlash: true, // Habilita los mensajes flash de error de Passport
+    successFlash: '¡Bienvenido al sistema!'
 });
 
 // Cierra la sesión del usuario
 exports.logout = (req, res, next) => {
-    req.logout(function(err) {
+    req.logout(function (err) {
         if (err) { return next(err); }
         req.flash('success_msg', 'Has cerrado sesión correctamente.');
         res.redirect('/auth/login');

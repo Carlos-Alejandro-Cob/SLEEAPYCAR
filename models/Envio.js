@@ -6,7 +6,7 @@ class Envio {
 
     // 1. Listar y Filtrar (CRUD Read)
     static async findAll({ q, estado }) {
-        let query = 'SELECT id_envio as _id, codigo_envio as ID_Envio, nombre_destinatario as Nombre_Destinatario, direccion_completa as Direccion_Completa, estado_envio as Estado_Envio, fecha_entrega, NULL as URL_Foto_Entrega FROM envios WHERE 1=1';
+        let query = 'SELECT id_envio as _id, codigo_envio as ID_Envio, nombre_destinatario as Nombre_Destinatario, direccion_completa as Direccion_Completa, estado_envio as Estado_Envio, metodo_pago, fecha_entrega, precio, estado_pago, NULL as URL_Foto_Entrega FROM envios WHERE 1=1';
         const params = [];
 
         if (q) {
@@ -26,7 +26,7 @@ class Envio {
 
     // 2. Encontrar por ID
     static async findById(id) {
-        const query = 'SELECT id_envio as _id, codigo_envio as ID_Envio, nombre_destinatario as Nombre_Destinatario, direccion_completa as Direccion_Completa, estado_envio as Estado_Envio, NULL as URL_Foto_Entrega FROM envios WHERE id_envio = ?';
+        const query = 'SELECT id_envio as _id, codigo_envio as ID_Envio, nombre_destinatario as Nombre_Destinatario, direccion_completa as Direccion_Completa, estado_envio as Estado_Envio, metodo_pago, precio, estado_pago, NULL as URL_Foto_Entrega FROM envios WHERE id_envio = ?';
         const [rows] = await queryWithRetry(query, [id]);
         return rows[0]; // Devuelve el primer resultado o undefined
     }
@@ -37,15 +37,18 @@ class Envio {
             codigo_envio,
             nombre_destinatario,
             direccion_completa,
-            estado_envio
+            estado_envio,
+            metodo_pago,
+            precio,
+            estado_pago
         } = data;
 
         const query = `
-            INSERT INTO envios (codigo_envio, nombre_destinatario, direccion_completa, estado_envio, fecha_salida)
-            VALUES (?, ?, ?, ?, NOW())
+            INSERT INTO envios (codigo_envio, nombre_destinatario, direccion_completa, estado_envio, metodo_pago, precio, estado_pago, fecha_salida)
+            VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
         `;
 
-        const [result] = await queryWithRetry(query, [codigo_envio, nombre_destinatario, direccion_completa, estado_envio]);
+        const [result] = await queryWithRetry(query, [codigo_envio, nombre_destinatario, direccion_completa, estado_envio, metodo_pago, precio || 0, estado_pago || 'Pendiente']);
 
         // Devolvemos el objeto creado con su nuevo ID
         return { id: result.insertId, ...data }; // result es un array aquí, accedemos al primer elemento
@@ -57,16 +60,19 @@ class Envio {
             codigo_envio,
             nombre_destinatario,
             direccion_completa,
-            estado_envio
+            estado_envio,
+            metodo_pago,
+            precio,
+            estado_pago
         } = data;
 
         const query = `
             UPDATE envios 
-            SET codigo_envio = ?, nombre_destinatario = ?, direccion_completa = ?, estado_envio = ?
+            SET codigo_envio = ?, nombre_destinatario = ?, direccion_completa = ?, estado_envio = ?, metodo_pago = ?, precio = ?, estado_pago = ?
             WHERE id_envio = ?
         `;
 
-        const [result] = await queryWithRetry(query, [codigo_envio, nombre_destinatario, direccion_completa, estado_envio, id]);
+        const [result] = await queryWithRetry(query, [codigo_envio, nombre_destinatario, direccion_completa, estado_envio, metodo_pago, precio, estado_pago, id]);
         return result.affectedRows; // Devuelve 1 si fue exitoso, 0 si no
     }
 
@@ -120,15 +126,5 @@ class Envio {
         return rows[0] ? rows[0].id_detalle : null;
     }
 }
-
-// VISTA SQL RECOMENDADA:
-// Para simplificar las consultas y unir la foto del envío, puedes crear esta vista en tu BD.
-/*
-CREATE OR REPLACE VIEW envios_view AS
-SELECT 
-    e.*,
-    (SELECT i.url_foto_evidencia FROM detalle_envio de JOIN incidencias i ON de.id_detalle = i.id_detalle_envio_fk WHERE de.id_envio_fk = e.id_envio AND i.tipo_incidencia = 'ENTREGA_OK' ORDER BY i.fecha_reporte DESC LIMIT 1) as url_foto_evidencia
-FROM envios e;
-*/
 
 module.exports = Envio;
