@@ -71,6 +71,11 @@
                                 </select>
                             </div>
 
+                            <div class="col-md-6">
+                                <label for="id_producto_fk" class="form-label">ID de Producto</label>
+                                <input type="number" class="form-control" id="id_producto_fk" name="id_producto_fk" value="<%= envio && envio.id_producto_fk ? envio.id_producto_fk : '' %>" required>
+                            </div>
+
                             <div class="col-12">
                                 <label for="Nombre_Destinatario" class="form-label">Nombre del Destinatario</label>
                                 <input type="text" class="form-control" id="Nombre_Destinatario"

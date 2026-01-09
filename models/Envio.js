@@ -26,7 +26,22 @@ class Envio {
 
     // 2. Encontrar por ID
     static async findById(id) {
-        const query = 'SELECT id_envio as _id, codigo_envio as ID_Envio, nombre_destinatario as Nombre_Destinatario, direccion_completa as Direccion_Completa, estado_envio as Estado_Envio, metodo_pago, precio, estado_pago, NULL as URL_Foto_Entrega FROM envios WHERE id_envio = ?';
+        const query = `
+            SELECT 
+                e.id_envio as _id, 
+                e.codigo_envio as ID_Envio, 
+                e.nombre_destinatario as Nombre_Destinatario, 
+                e.direccion_completa as Direccion_Completa, 
+                e.estado_envio as Estado_Envio, 
+                e.metodo_pago, 
+                e.precio, 
+                e.estado_pago, 
+                de.id_producto_fk,
+                NULL as URL_Foto_Entrega 
+            FROM envios e
+            LEFT JOIN detalle_envio de ON e.id_envio = de.id_envio_fk
+            WHERE e.id_envio = ?
+        `;
         const [rows] = await queryWithRetry(query, [id]);
         return rows[0]; // Devuelve el primer resultado o undefined
     }
@@ -40,18 +55,36 @@ class Envio {
             estado_envio,
             metodo_pago,
             precio,
-            estado_pago
+            estado_pago,
+            id_producto_fk // Se recibe el ID del producto
         } = data;
 
-        const query = `
-            INSERT INTO envios (codigo_envio, nombre_destinatario, direccion_completa, estado_envio, metodo_pago, precio, estado_pago, fecha_salida)
-            VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
-        `;
+        // Validación para asegurar que el producto no sea nulo
+        if (!id_producto_fk) {
+            throw new Error('El ID del producto (id_producto_fk) es obligatorio para crear el detalle del envío.');
+        }
 
-        const [result] = await queryWithRetry(query, [codigo_envio, nombre_destinatario, direccion_completa, estado_envio, metodo_pago, precio || 0, estado_pago || 'Pendiente']);
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
 
-        // Devolvemos el objeto creado con su nuevo ID
-        return { id: result.insertId, ...data }; // result es un array aquí, accedemos al primer elemento
+            const queryEnvio = `
+                INSERT INTO envios (codigo_envio, nombre_destinatario, direccion_completa, estado_envio, metodo_pago, precio, estado_pago, fecha_salida)
+                VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+            `;
+            const [result] = await connection.query(queryEnvio, [codigo_envio, nombre_destinatario, direccion_completa, estado_envio, metodo_pago, precio || 0, estado_pago || 'Pendiente']);
+
+            // Se usa el id_producto_fk en la inserción
+            await connection.query('INSERT INTO detalle_envio (id_envio_fk, id_producto_fk) VALUES (?, ?)', [result.insertId, id_producto_fk]);
+
+            await connection.commit();
+            return { id: result.insertId, ...data };
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 
     // 4. Actualizar un envío (CRUD Update)

@@ -36,10 +36,11 @@ exports.createEnvío = async (req, res) => {
             codigo_envio: req.body.ID_Envio,
             nombre_destinatario: req.body.Nombre_Destinatario,
             direccion_completa: req.body.Direccion_Completa,
-            estado_envio: req.body.Estado_Envio || 'En Espera',
+            estado_envio: req.body.Estado_Envio || 'Nuevo',
             metodo_pago: req.body.metodo_pago,
             precio: req.body.precio,
-            estado_pago: req.body.estado_pago
+            estado_pago: req.body.estado_pago,
+            id_producto_fk: req.body.id_producto_fk // Añadido para el detalle
         };
 
         await Envio.create(nuevoEnvio);
@@ -48,7 +49,7 @@ exports.createEnvío = async (req, res) => {
         res.redirect('/admin/envios');
     } catch (error) {
         console.error('Error al crear envío:', error);
-        req.flash('error_msg', 'Error al crear el envío. Revisa los datos.');
+        req.flash('error_msg', `Error al crear el envío: ${error.message}`);
         res.redirect('/admin/envios/nuevo');
     }
 };
@@ -117,7 +118,8 @@ exports.deleteEnvío = async (req, res) => {
 exports.createIncidencia = async (req, res) => {
     try {
         // Multer ya ha procesado el archivo y lo ha puesto en req.file
-        const { codigo_envio, id_detalle_envio_fk, id_usuario_reporta_fk, tipo_incidencia, observaciones } = req.body;
+        const { codigo_envio, id_detalle_envio_fk, tipo_incidencia, observaciones } = req.body;
+        const id_usuario_reporta_fk = req.user ? req.user.id_usuario : req.body.id_usuario_reporta_fk;
         let url_foto_evidencia = null;
 
         if (req.file) {
@@ -199,7 +201,8 @@ exports.showEditIncidenciaForm = async (req, res) => {
 // 11. Procesar Modificación de Incidencia
 exports.updateIncidencia = async (req, res) => {
     try {
-        const { codigo_envio, id_detalle_envio_fk, id_usuario_reporta_fk, tipo_incidencia, observaciones } = req.body;
+        const { codigo_envio, id_detalle_envio_fk, tipo_incidencia, observaciones } = req.body;
+        const id_usuario_reporta_fk = req.user ? req.user.id_usuario : req.body.id_usuario_reporta_fk;
         let url_foto_evidencia = null;
 
         if (req.file) {
