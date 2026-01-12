@@ -2,6 +2,9 @@
 const Envio = require('../models/Envio');
 const Incidencia = require('../models/Incidencia');
 
+const ROLES = require('../config/roles');
+const logger = require('../utils/logger');
+
 
 // 1. Listar y Filtrar (CRUD Read)
 exports.listEnvíos = async (req, res) => {
@@ -31,25 +34,85 @@ exports.showCreateForm = (req, res) => {
 
 // 3. Procesar Creación (CRUD Create)
 exports.createEnvío = async (req, res) => {
+    const userRole = req.user.id_rol_fk;
+    let {
+        ID_Envio,
+        Nombre_Destinatario,
+        Direccion_Completa,
+        Estado_Envio,
+        metodo_pago,
+        precio,
+        estado_pago,
+        products // Array of products
+    } = req.body;
+
+    if (userRole === ROLES.CLIENTE) { // Cliente
+        Estado_Envio = 'Pendiente';
+        ID_Envio = 'C-' + Math.random().toString(36).substr(2, 9);
+        Nombre_Destinatario = req.user.nombre_completo;
+    }
+
+    const errors = [];
+    if (!ID_Envio || ID_Envio.trim() === '') {
+        errors.push({ msg: 'El ID de Envío es obligatorio.' });
+    }
+    if (!Nombre_Destinatario || Nombre_Destinatario.trim() === '') {
+        errors.push({ msg: 'El Nombre del Destinatario es obligatorio.' });
+    }
+    if (!Direccion_Completa || Direccion_Completa.trim() === '') {
+        errors.push({ msg: 'La Dirección Completa es obligatoria.' });
+    }
+    if (!products || !Array.isArray(products) || products.length === 0) {
+        errors.push({ msg: 'Debe agregar al menos un producto.' });
+    }
+    // Verificar que el precio es un número válido y no negativo
+    if (precio === null || precio === '' || isNaN(parseFloat(precio)) || parseFloat(precio) < 0) {
+        errors.push({ msg: 'El Precio debe ser un número válido y positivo.' });
+    }
+
+    if (errors.length > 0) {
+        // Si hay errores, renderiza el formulario de nuevo con los errores y los datos previos
+        return res.render('admin/form', {
+            isEdit: false,
+            errors: errors, // Pasa el array de errores a la vista
+            envio: { // Pasa los datos del formulario para repoblar los campos
+                ID_Envio,
+                Nombre_Destinatario,
+                Direccion_Completa,
+                Estado_Envio,
+                metodo_pago,
+                precio,
+                estado_pago,
+                products
+            }
+        });
+    }
+
     try {
         const nuevoEnvio = {
-            codigo_envio: req.body.ID_Envio,
-            nombre_destinatario: req.body.Nombre_Destinatario,
-            direccion_completa: req.body.Direccion_Completa,
-            estado_envio: req.body.Estado_Envio || 'Nuevo',
-            metodo_pago: req.body.metodo_pago,
-            precio: req.body.precio,
-            estado_pago: req.body.estado_pago,
-            id_producto_fk: req.body.id_producto_fk // Añadido para el detalle
+            codigo_envio: ID_Envio.trim(),
+            nombre_destinatario: Nombre_Destinatario.trim(),
+            direccion_completa: Direccion_Completa.trim(),
+            estado_envio: Estado_Envio || 'Nuevo',
+            metodo_pago,
+            precio: parseFloat(precio),
+            estado_pago,
+            products
         };
 
         await Envio.create(nuevoEnvio);
 
         req.flash('success_msg', `Envío "${nuevoEnvio.codigo_envio}" creado con éxito.`);
+        if (userRole === ROLES.CLIENTE) {
+            return res.redirect('/');
+        }
         res.redirect('/admin/envios');
     } catch (error) {
         console.error('Error al crear envío:', error);
         req.flash('error_msg', `Error al crear el envío: ${error.message}`);
+        if (userRole === ROLES.CLIENTE) {
+            return res.redirect('/');
+        }
         res.redirect('/admin/envios/nuevo');
     }
 };
@@ -76,6 +139,28 @@ exports.showEditForm = async (req, res) => {
 // 5. Procesar Modificación (CRUD Update)
 exports.updateEnvío = async (req, res) => {
     try {
+        const userRole = req.user.id_rol_fk;
+        const currentUserId = req.user.id_usuario;
+        const { id } = req.params;
+
+        if (userRole === ROLES.REPARTIDOR) { // Transportista
+            const { estado_envio } = req.body;
+            // Permitir cambio a Entregado o 'En Ruta' si se quisiera, por ahora solo valida lo pedido
+            // El usuario pidió "no me deja marcar como entregado", asi que esto debe funcionar.
+            if (estado_envio !== 'Entregado') {
+                req.flash('error_msg', 'Como transportista, solo puedes cambiar el estado a "Entregado".');
+                return res.redirect(`/admin/envios/${id}/editar`);
+            }
+            await Envio.update(id, { estado_envio });
+
+            // Audit Log
+            await logger.logAction(currentUserId, 'UPDATE_ESTADO_ENVIO', `Envío ${id} marcado como Entregado por Repartidor`);
+
+            req.flash('success_msg', 'Envío actualizado a "Entregado".');
+            // Redirigir al dashboard de repartidor si es repartidor
+            return res.redirect('/admin/repartidor');
+        }
+
         const datosActualizados = {
             codigo_envio: req.body.ID_Envio,
             nombre_destinatario: req.body.Nombre_Destinatario,
@@ -83,10 +168,14 @@ exports.updateEnvío = async (req, res) => {
             estado_envio: req.body.Estado_Envio,
             metodo_pago: req.body.metodo_pago,
             precio: req.body.precio,
-            estado_pago: req.body.estado_pago
+            estado_pago: req.body.estado_pago,
+            products: req.body.products
         };
 
-        await Envio.update(req.params.id, datosActualizados);
+        await Envio.update(id, datosActualizados);
+
+        // Audit Log
+        await logger.logAction(currentUserId, 'UPDATE_ENVIO', `Actualización completa del envío ${datosActualizados.codigo_envio}`);
 
         req.flash('success_msg', `Envío "${datosActualizados.codigo_envio}" actualizado correctamente.`);
         res.redirect('/admin/envios');
@@ -116,37 +205,59 @@ exports.deleteEnvío = async (req, res) => {
 
 // 7. Procesar Creación de Incidencia (con subida de imagen)
 exports.createIncidencia = async (req, res) => {
-    try {
-        // Multer ya ha procesado el archivo y lo ha puesto en req.file
-        const { codigo_envio, id_detalle_envio_fk, tipo_incidencia, observaciones } = req.body;
-        const id_usuario_reporta_fk = req.user ? req.user.id_usuario : req.body.id_usuario_reporta_fk;
-        let url_foto_evidencia = null;
+    const { codigo_envio, tipo_incidencia, observaciones } = req.body;
+    const id_usuario_reporta_fk = req.user ? req.user.id_usuario : req.body.id_usuario_reporta_fk;
 
-        if (req.file) {
-            // Multer-Cloudinary ya ha subido la imagen y la URL está en req.file.path
-            url_foto_evidencia = req.file.path;
+    const errors = [];
+
+    // 1. Validaciones básicas de campos
+    if (!tipo_incidencia || tipo_incidencia.trim() === '') {
+        errors.push({ msg: 'El tipo de incidencia es obligatorio.' });
+    }
+    if (!observaciones || observaciones.trim() === '') {
+        errors.push({ msg: 'Las observaciones son obligatorias.' });
+    }
+    if (!codigo_envio || codigo_envio.trim() === '') {
+        errors.push({ msg: 'El Código de Envío es obligatorio.' });
+    }
+    if (!id_usuario_reporta_fk) {
+        errors.push({ msg: 'No se pudo identificar al usuario que reporta. Por favor, inicia sesión de nuevo.' });
+    }
+
+    // 2. Si hay errores básicos, retornar antes de consultar la BD
+    if (errors.length > 0) {
+        return res.render('admin/incidenciaForm', {
+            isEdit: false,
+            errors: errors,
+            incidencia: { codigo_envio, tipo_incidencia, observaciones }
+        });
+    }
+
+    try {
+        // 3. Validación contra la base de datos (verificar si el envío existe)
+        const finalIdDetalle = await Envio.findDetailIdByCodigo(codigo_envio.trim());
+        if (!finalIdDetalle) {
+            errors.push({ msg: 'El código de envío proporcionado no existe.' });
+            return res.render('admin/incidenciaForm', {
+                isEdit: false,
+                errors: errors,
+                incidencia: { codigo_envio, tipo_incidencia, observaciones }
+            });
         }
 
-        let finalIdDetalle = id_detalle_envio_fk;
-
-        // Si viene el código de envío (texto), buscamos el ID interno
-        if (codigo_envio) {
-            finalIdDetalle = await Envio.findDetailIdByCodigo(codigo_envio);
-            if (!finalIdDetalle) {
-                req.flash('error_msg', 'El código de envío no existe.');
-                return res.redirect('/admin/incidencias/nueva');
-            }
+        let url_foto_evidencia = null;
+        if (req.file) {
+            url_foto_evidencia = req.file.path;
         }
 
         const nuevaIncidencia = {
             id_detalle_envio_fk: parseInt(finalIdDetalle),
             id_usuario_reporta_fk: parseInt(id_usuario_reporta_fk),
-            tipo_incidencia,
-            observaciones,
+            tipo_incidencia: tipo_incidencia.trim(),
+            observaciones: observaciones.trim(),
             url_foto_evidencia,
         };
 
-        console.log('Nueva Incidencia a crear:', nuevaIncidencia);
         await Incidencia.create(nuevaIncidencia);
 
         req.flash('success_msg', 'Incidencia creada con éxito.');
@@ -158,7 +269,6 @@ exports.createIncidencia = async (req, res) => {
     }
 };
 
-// 8. Mostrar Formulario de Creación de Incidencia
 // 8. Mostrar Formulario de Creación de Incidencia
 exports.showCreateIncidenciaForm = (req, res) => {
     res.render('admin/incidenciaForm', {
@@ -253,5 +363,52 @@ exports.deleteIncidencia = async (req, res) => {
         console.error('Error al eliminar incidencia:', error);
         req.flash('error_msg', 'Error al eliminar la incidencia.');
         res.redirect('/admin/incidencias');
+    }
+};
+
+// 13. Mostrar vista de rastreo para transportista
+exports.showAdminSearch = (req, res) => {
+    res.render('admin/rastreo');
+};
+
+// 14. Mostrar dashboard para repartidor
+// 14. Mostrar dashboard para repartidor
+exports.showRepartidorDashboard = async (req, res) => {
+    try {
+        // Obtener ruta desde la BD
+        const ruta = await Envio.findAll({ id_repartidor: req.user.id_usuario, estado: 'NO_ENTREGADO' });
+        res.render('admin/repartidor', { ruta });
+    } catch (error) {
+        console.error('Error al cargar dashboard repartidor:', error);
+        req.flash('error_msg', 'Error al cargar la ruta.');
+        res.redirect('/');
+    }
+};
+
+// 15. Agregar envío a la ruta del repartidor
+exports.addEnvioToRuta = async (req, res) => {
+    const { codigo_envio } = req.body;
+    const id_usuario = req.user.id_usuario;
+
+    try {
+        const envios = await Envio.findAll({ q: codigo_envio, estado: null });
+        if (envios.length > 0) {
+            const envio = envios[0];
+
+            // Asignar en BD permanentemente
+            await Envio.update(envio._id, { id_repartidor: id_usuario });
+
+            // Audit Log
+            await logger.logAction(id_usuario, 'ASIGNAR_RUTA', `Envío ${envio.ID_Envio} asignado a repartidor ${req.user.nombre_usuario}`);
+
+            req.flash('success_msg', 'Envío asignado a tu ruta.');
+        } else {
+            req.flash('error_msg', 'No se encontró el envío.');
+        }
+        res.redirect('/admin/repartidor');
+    } catch (error) {
+        console.error('Error al agregar envío a la ruta:', error);
+        req.flash('error_msg', 'Error al agregar el envío a la ruta.');
+        res.redirect('/admin/repartidor');
     }
 };

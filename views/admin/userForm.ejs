@@ -1,0 +1,98 @@
+<%- include('../layouts/header', { ...locals, title: (isEdit ? 'Editar Usuario' : 'Nuevo Usuario' ) + ' - SLEE APYCAR' }) %>
+
+<% if (typeof errors !== 'undefined' && errors.length > 0) { %>
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-8">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <h4 class="alert-heading">Por favor, corrige los siguientes errores:</h4>
+                <hr>
+                <% errors.forEach(function(error) { %>
+                    <p class="mb-1"><%= error.msg %></p>
+                <% }); %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+<% } %>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Header Section -->
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h1 class="h3 mb-2">
+                        <%= isEdit ? 'Editar Usuario' : 'Nuevo Usuario' %>
+                    </h1>
+                    <p class="text-muted mb-0">
+                        <%= isEdit ? 'Modifica los detalles del usuario'
+                            : 'Completa el formulario para registrar un nuevo usuario' %>
+                    </p>
+                </div>
+                <a href="/admin/users" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
+            </div>
+
+            <!-- Form Card -->
+            <div class="card">
+                <div class="card-body">
+                    <form action="<%= isEdit ? '/admin/users/' + user.id_usuario + '?_method=PUT' : '/admin/users' %>"
+                        method="POST">
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="nombre_completo" class="form-label">Nombre Completo</label>
+                                <input type="text" class="form-control" id="nombre_completo" name="nombre_completo"
+                                    value="<%= user ? user.nombre_completo : '' %>" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email"
+                                    value="<%= user ? user.email : '' %>" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="nombre_usuario" class="form-label">Nombre de Usuario</label>
+                                <input type="text" class="form-control" id="nombre_usuario" name="nombre_usuario"
+                                    value="<%= user ? user.nombre_usuario : '' %>" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="password" class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" id="password" name="password"
+                                    <%= isEdit ? '' : 'required' %>>
+                                <% if (isEdit) { %>
+                                    <small class="form-text text-muted">Dejar en blanco para no cambiar la contraseña</small>
+                                <% } %>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="id_rol_fk" class="form-label">Rol</label>
+                                <select class="form-select" id="id_rol_fk" name="id_rol_fk">
+                                    <option value="1" <%=(user && user.id_rol_fk===1) ? 'selected' : '' %>>Administrador</option>
+                                    <option value="2" <%=(user && user.id_rol_fk===2) ? 'selected' : '' %>>Almacen</option>
+                                    <option value="3" <%=(user && user.id_rol_fk===3) ? 'selected' : '' %>>Repartidor</option>
+                                    <option value="4" <%=(user && user.id_rol_fk===4) ? 'selected' : '' %>>Sucursal</option>
+                                    <option value="5" <%=(user && user.id_rol_fk===5) ? 'selected' : '' %>>Contabilidad</option>
+                                    <option value="6" <%=(user && user.id_rol_fk===6) ? 'selected' : '' %>>SuperUsuario</option>
+                                    <option value="7" <%=(user && user.id_rol_fk===7) ? 'selected' : '' %>>Cliente</option>
+                                </select>
+                            </div>
+
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <a href="/admin/users" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                <%= isEdit ? 'Actualizar' : 'Guardar' %>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../layouts/footer') %>

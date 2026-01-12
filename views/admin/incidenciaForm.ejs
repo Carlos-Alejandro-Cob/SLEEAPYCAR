@@ -1,6 +1,21 @@
 <%- include('../layouts/header', { ...locals, title: (isEdit ? 'Editar Incidencia' : 'Nueva Incidencia' )
     + ' - SLEE APYCAR' }) %>
 
+<% if (typeof errors !== 'undefined' && errors.length > 0) { %>
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-8">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <h4 class="alert-heading">Por favor, corrige los siguientes errores:</h4>
+                <hr>
+                <% errors.forEach(function(error) { %>
+                    <p class="mb-1"><%= error.msg %></p>
+                <% }); %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+<% } %>
+
     <div class="row justify-content-center">
         <div class="col-md-8">
             <!-- Header Section -->

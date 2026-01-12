@@ -1,5 +1,20 @@
 <%- include('../layouts/header', { ...locals, title: (isEdit ? 'Editar Envío' : 'Nuevo Envío' ) + ' - SLEE APYCAR' }) %>
 
+<% if (typeof errors !== 'undefined' && errors.length > 0) { %>
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-8">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <h4 class="alert-heading">Por favor, corrige los siguientes errores:</h4>
+                <hr>
+                <% errors.forEach(function(error) { %>
+                    <p class="mb-1"><%= error.msg %></p>
+                <% }); %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+<% } %>
+
     <div class="row justify-content-center">
         <div class="col-md-8">
             <!-- Header Section -->
@@ -71,11 +86,6 @@
                                 </select>
                             </div>
 
-                            <div class="col-md-6">
-                                <label for="id_producto_fk" class="form-label">ID de Producto</label>
-                                <input type="number" class="form-control" id="id_producto_fk" name="id_producto_fk" value="<%= envio && envio.id_producto_fk ? envio.id_producto_fk : '' %>" required>
-                            </div>
-
                             <div class="col-12">
                                 <label for="Nombre_Destinatario" class="form-label">Nombre del Destinatario</label>
                                 <input type="text" class="form-control" id="Nombre_Destinatario"
@@ -98,6 +108,37 @@
                                     placeholder="https://...">
                             </div>
                         </div>
+
+                        <hr class="my-4">
+
+                        <h5 class="mb-3">Productos</h5>
+
+                        <div id="product-list">
+                            <% if (envio && envio.products && envio.products.length > 0) { %>
+                                <% envio.products.forEach(function(product, index) { %>
+                                    <div class="row g-3 mb-3 product-item">
+                                        <div class="col-md-5">
+                                            <label for="product-id-<%= index %>" class="form-label">ID Producto</label>
+                                            <input type="text" class="form-control product-id" id="product-id-<%= index %>" name="products[<%= index %>][id_producto]" value="<%= product.id_producto_fk %>">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label for="product-name-<%= index %>" class="form-label">Nombre Producto</label>
+                                            <input type="text" class="form-control product-name" id="product-name-<%= index %>" readonly>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="product-quantity-<%= index %>" class="form-label">Cantidad</label>
+                                            <input type="number" class="form-control" id="product-quantity-<%= index %>" name="products[<%= index %>][cantidad]" value="<%= product.cantidad %>">
+                                        </div>
+                                        <div class="col-md-12">
+                                            <button type="button" class="btn btn-danger btn-sm remove-product">Eliminar</button>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            <% } %>
+                        </div>
+                        
+                        <button type="button" class="btn btn-success" id="add-product">Añadir Producto</button>
+
 
                         <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                             <a href="/admin/envios" class="btn btn-outline-secondary">Cancelar</a>
@@ -126,5 +167,64 @@
                 <% } %>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let productIndex = <%= (envio && envio.products) ? envio.products.length : 0 %>;
+            const productList = document.getElementById('product-list');
+
+            document.getElementById('add-product').addEventListener('click', function() {
+                const productItem = document.createElement('div');
+                productItem.classList.add('row', 'g-3', 'mb-3', 'product-item');
+                productItem.innerHTML = `
+                    <div class="col-md-5">
+                        <label for="product-id-${productIndex}" class="form-label">ID Producto</label>
+                        <input type="text" class="form-control product-id" id="product-id-${productIndex}" name="products[${productIndex}][id_producto]">
+                    </div>
+                    <div class="col-md-5">
+                        <label for="product-name-${productIndex}" class="form-label">Nombre Producto</label>
+                        <input type="text" class="form-control product-name" id="product-name-${productIndex}" readonly>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="product-quantity-${productIndex}" class="form-label">Cantidad</label>
+                        <input type="number" class="form-control" id="product-quantity-${productIndex}" name="products[${productIndex}][cantidad]" value="1">
+                    </div>
+                    <div class="col-md-12">
+                        <button type="button" class="btn btn-danger btn-sm remove-product">Eliminar</button>
+                    </div>
+                `;
+                productList.appendChild(productItem);
+                productIndex++;
+            });
+
+            productList.addEventListener('click', function(e) {
+                if (e.target.classList.contains('remove-product')) {
+                    e.target.closest('.product-item').remove();
+                }
+            });
+
+            productList.addEventListener('change', async function(e) {
+                if (e.target.classList.contains('product-id')) {
+                    const productId = e.target.value;
+                    const productNameInput = e.target.closest('.product-item').querySelector('.product-name');
+                    if (productId) {
+                        try {
+                            const response = await fetch('/api/products/' + productId);
+                            if (response.ok) {
+                                const product = await response.json();
+                                productNameInput.value = product.descripcion;
+                            } else {
+                                productNameInput.value = 'Producto no encontrado';
+                            }
+                        } catch (error) {
+                            productNameInput.value = 'Error al buscar';
+                        }
+                    } else {
+                        productNameInput.value = '';
+                    }
+                }
+            });
+        });
+    </script>
 
     <%- include('../layouts/footer') %>
