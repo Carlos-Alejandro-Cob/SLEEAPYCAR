@@ -20,12 +20,14 @@
                     <a href="/admin/envios/nuevo" class="btn btn-primary">
                         <i class="fas fa-plus me-2"></i>Nuevo Envío
                     </a>
+                    <% if (user.id_rol_fk !== 2) { %>
                     <a href="/admin/incidencias/nueva" class="btn btn-outline-primary">
                         <i class="fas fa-exclamation-triangle me-2"></i>Reportar Incidencia
                     </a>
                     <a href="/admin/incidencias" class="btn btn-outline-primary">
                         <i class="fas fa-list me-2"></i>Incidencias
                     </a>
+                    <% } %>
                 </div>
             </div>
 

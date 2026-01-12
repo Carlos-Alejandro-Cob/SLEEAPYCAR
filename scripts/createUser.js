@@ -15,7 +15,8 @@ async function createUser() {
         console.log('  3: Repartidor');
         console.log('  4: Sucursal');
         console.log('  5: Contabilidad');
-        console.log('  6: SuperUsuario\n');
+        console.log('  6: SuperUsuario');
+        console.log('  7: Cliente\n');
         process.exit(1);
     }
 

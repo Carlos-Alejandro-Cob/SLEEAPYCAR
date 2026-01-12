@@ -1,0 +1,47 @@
+<%- include('../layouts/header', { ...locals, title: 'Panel de Repartidor - SLEE APYCAR' }) %>
+
+<div class="container mt-5">
+    <h1>Panel de Repartidor</h1>
+    <p>Bienvenido a tu panel de repartidor.</p>
+    
+    <h2>Crear Ruta de Entrega</h2>
+    <form action="/admin/repartidor/ruta" method="POST">
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" placeholder="Escanear o ingresar código de envío" name="codigo_envio">
+            <button class="btn btn-outline-secondary" type="submit">Agregar a la Ruta</button>
+        </div>
+    </form>
+
+    <h2>Ruta de Entrega</h2>
+    <% if (ruta && ruta.length > 0) { %>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID Envío</th>
+                    <th>Destinatario</th>
+                    <th>Dirección</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% ruta.forEach(function(envio) { %>
+                    <tr>
+                        <td><%= envio.ID_Envio %></td>
+                        <td><%= envio.Nombre_Destinatario %></td>
+                        <td><%= envio.Direccion_Completa %></td>
+                        <td>
+                            <form action="/admin/envios/<%= envio._id %>?_method=PUT" method="POST">
+                                <input type="hidden" name="estado_envio" value="Entregado">
+                                <button type="submit" class="btn btn-success">Marcar como Entregado</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    <% } else { %>
+        <p>No hay envíos en la ruta de entrega.</p>
+    <% } %>
+</div>
+
+<%- include('../layouts/footer') %>

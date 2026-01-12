@@ -5,8 +5,8 @@ const { queryWithRetry } = require('../utils/dbQuery');
 class Envio {
 
     // 1. Listar y Filtrar (CRUD Read)
-    static async findAll({ q, estado }) {
-        let query = 'SELECT id_envio as _id, codigo_envio as ID_Envio, nombre_destinatario as Nombre_Destinatario, direccion_completa as Direccion_Completa, estado_envio as Estado_Envio, metodo_pago, fecha_entrega, precio, estado_pago, NULL as URL_Foto_Entrega FROM envios WHERE 1=1';
+    static async findAll({ q, estado, id_repartidor }) {
+        let query = 'SELECT id_envio as _id, codigo_envio as ID_Envio, nombre_destinatario as Nombre_Destinatario, direccion_completa as Direccion_Completa, estado_envio as Estado_Envio, metodo_pago, fecha_entrega, precio, estado_pago, id_repartidor, NULL as URL_Foto_Entrega FROM envios WHERE 1=1';
         const params = [];
 
         if (q) {
@@ -14,8 +14,17 @@ class Envio {
             params.push(`%${q}%`, `%${q}%`);
         }
         if (estado) {
-            query += ' AND estado_envio = ?';
-            params.push(estado);
+            if (estado === 'NO_ENTREGADO') {
+                query += ' AND estado_envio != ?';
+                params.push('Entregado');
+            } else {
+                query += ' AND estado_envio = ?';
+                params.push(estado);
+            }
+        }
+        if (id_repartidor) {
+            query += ' AND id_repartidor = ?';
+            params.push(id_repartidor);
         }
 
         query += ' ORDER BY fecha_salida DESC';
@@ -35,15 +44,19 @@ class Envio {
                 e.estado_envio as Estado_Envio, 
                 e.metodo_pago, 
                 e.precio, 
-                e.estado_pago, 
-                de.id_producto_fk,
+                e.estado_pago,
                 NULL as URL_Foto_Entrega 
             FROM envios e
-            LEFT JOIN detalle_envio de ON e.id_envio = de.id_envio_fk
             WHERE e.id_envio = ?
         `;
         const [rows] = await queryWithRetry(query, [id]);
-        return rows[0]; // Devuelve el primer resultado o undefined
+        if (!rows[0]) {
+            return undefined;
+        }
+        const envio = rows[0];
+        const [products] = await queryWithRetry('SELECT id_producto_fk, cantidad FROM envio_productos WHERE id_envio_fk = ?', [id]);
+        envio.products = products;
+        return envio; // Devuelve el primer resultado o undefined
     }
 
     // 3. Crear un nuevo envío (CRUD Create)
@@ -56,12 +69,12 @@ class Envio {
             metodo_pago,
             precio,
             estado_pago,
-            id_producto_fk // Se recibe el ID del producto
+            products
         } = data;
 
         // Validación para asegurar que el producto no sea nulo
-        if (!id_producto_fk) {
-            throw new Error('El ID del producto (id_producto_fk) es obligatorio para crear el detalle del envío.');
+        if (!products || !Array.isArray(products) || products.length === 0) {
+            throw new Error('Debe agregar al menos un producto.');
         }
 
         const connection = await pool.getConnection();
@@ -74,11 +87,16 @@ class Envio {
             `;
             const [result] = await connection.query(queryEnvio, [codigo_envio, nombre_destinatario, direccion_completa, estado_envio, metodo_pago, precio || 0, estado_pago || 'Pendiente']);
 
-            // Se usa el id_producto_fk en la inserción
-            await connection.query('INSERT INTO detalle_envio (id_envio_fk, id_producto_fk) VALUES (?, ?)', [result.insertId, id_producto_fk]);
+            const idEnvio = result.insertId;
+
+            const productQueries = products.map(p => {
+                return connection.query('INSERT INTO envio_productos (id_envio_fk, id_producto_fk, cantidad) VALUES (?, ?, ?)', [idEnvio, p.id_producto, p.cantidad]);
+            });
+
+            await Promise.all(productQueries);
 
             await connection.commit();
-            return { id: result.insertId, ...data };
+            return { id: idEnvio, ...data };
         } catch (error) {
             await connection.rollback();
             throw error;
@@ -89,6 +107,7 @@ class Envio {
 
     // 4. Actualizar un envío (CRUD Update)
     static async update(id, data) {
+        // Obtenemos los campos posibles, incluyendo id_repartidor si se pasa
         const {
             codigo_envio,
             nombre_destinatario,
@@ -96,17 +115,64 @@ class Envio {
             estado_envio,
             metodo_pago,
             precio,
-            estado_pago
+            estado_pago,
+            id_repartidor, // Nuevo campo
+            products
         } = data;
 
-        const query = `
-            UPDATE envios 
-            SET codigo_envio = ?, nombre_destinatario = ?, direccion_completa = ?, estado_envio = ?, metodo_pago = ?, precio = ?, estado_pago = ?
-            WHERE id_envio = ?
-        `;
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
 
-        const [result] = await queryWithRetry(query, [codigo_envio, nombre_destinatario, direccion_completa, estado_envio, metodo_pago, precio, estado_pago, id]);
-        return result.affectedRows; // Devuelve 1 si fue exitoso, 0 si no
+            // Construimos la query dinámicamente o incluimos todos los campos si están disponibles
+            // Para simplificar, asumimos que si no viene en data, no se actualiza, o manejamos undefined.
+            // Pero como es un UPDATE completo en muchos casos, vamos a usar una query fija extendida 
+            // O mejor, una query dinámica simple para evitar nulls no deseados.
+
+            // Query base
+            let query = 'UPDATE envios SET ';
+            const params = [];
+            const updates = [];
+
+            if (codigo_envio !== undefined) { updates.push('codigo_envio = ?'); params.push(codigo_envio); }
+            if (nombre_destinatario !== undefined) { updates.push('nombre_destinatario = ?'); params.push(nombre_destinatario); }
+            if (direccion_completa !== undefined) { updates.push('direccion_completa = ?'); params.push(direccion_completa); }
+            if (estado_envio !== undefined) { updates.push('estado_envio = ?'); params.push(estado_envio); }
+            if (metodo_pago !== undefined) { updates.push('metodo_pago = ?'); params.push(metodo_pago); }
+            if (precio !== undefined) { updates.push('precio = ?'); params.push(precio); }
+            if (estado_pago !== undefined) { updates.push('estado_pago = ?'); params.push(estado_pago); }
+            if (id_repartidor !== undefined) { updates.push('id_repartidor = ?'); params.push(id_repartidor); }
+
+            if (updates.length === 0) {
+                await connection.rollback();
+                return { id, ...data }; // Nada que actualizar
+            }
+
+            query += updates.join(', ');
+            query += ' WHERE id_envio = ?';
+            params.push(id);
+
+            await connection.query(query, params);
+
+            // Eliminar y reinsertar productos solo si se provee el array de products
+            if (products !== undefined) {
+                await connection.query('DELETE FROM envio_productos WHERE id_envio_fk = ?', [id]);
+                if (Array.isArray(products) && products.length > 0) {
+                    const productQueries = products.map(p => {
+                        return connection.query('INSERT INTO envio_productos (id_envio_fk, id_producto_fk, cantidad) VALUES (?, ?, ?)', [id, p.id_producto, p.cantidad]);
+                    });
+                    await Promise.all(productQueries);
+                }
+            }
+
+            await connection.commit();
+            return { id, ...data };
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 
     // 5. Eliminar un envío (CRUD Delete)
@@ -134,7 +200,10 @@ class Envio {
             // 4. Eliminar los detalles del envío.
             await connection.query('DELETE FROM detalle_envio WHERE id_envio_fk = ?', [id]);
 
-            // 5. Finalmente, eliminar el envío principal.
+            // 5. Eliminar los productos del envío.
+            await connection.query('DELETE FROM envio_productos WHERE id_envio_fk = ?', [id]);
+
+            // 6. Finalmente, eliminar el envío principal.
             const [result] = await connection.query('DELETE FROM envios WHERE id_envio = ?', [id]);
 
             await connection.commit(); // Si todo fue bien, confirma los cambios.
