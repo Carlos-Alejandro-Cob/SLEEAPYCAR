@@ -30,7 +30,12 @@
                                 <label for="codigo_envio" class="form-label">ID de Envío</label>
                                 <input type="text" class="form-control" id="codigo_envio" name="codigo_envio"
                                     value="<%= incidencia ? incidencia.codigo_envio : '' %>"
-                                    placeholder="Ej: E-20251023-02" required>
+                                    placeholder="E-2025/10/26-01" 
+                                    pattern="^E-\d{4}\/\d{2}\/\d{2}-\d{2}$"
+                                    title="Formato requerido: E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)"
+                                    required>
+                                <div class="form-text">Formato: E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)</div>
+                                <div class="invalid-feedback" id="codigo_envio-error"></div>
                             </div>
 
                             <div class="col-md-6">
@@ -98,5 +103,79 @@
                 <% } %>
         </div>
     </div>
+
+    <script>
+        // Validación del formato de código de envío
+        document.addEventListener('DOMContentLoaded', function() {
+            const codigoInput = document.getElementById('codigo_envio');
+            const form = codigoInput.closest('form');
+            const errorDiv = document.getElementById('codigo_envio-error');
+
+            // Validación en tiempo real
+            codigoInput.addEventListener('input', function() {
+                const codigo = this.value.trim();
+                const formatoRegex = /^E-\d{4}\/\d{2}\/\d{2}-\d{2}$/;
+                
+                if (codigo && !formatoRegex.test(codigo)) {
+                    this.classList.add('is-invalid');
+                    this.classList.remove('is-valid');
+                    errorDiv.textContent = 'Formato inválido. Debe ser E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)';
+                } else if (codigo && formatoRegex.test(codigo)) {
+                    // Validar fecha
+                    const partes = codigo.match(/^E-(\d{4})\/(\d{2})\/(\d{2})-(\d{2})$/);
+                    if (partes) {
+                        const año = parseInt(partes[1]);
+                        const mes = parseInt(partes[2]);
+                        const dia = parseInt(partes[3]);
+                        const fecha = new Date(año, mes - 1, dia);
+                        
+                        if (fecha.getFullYear() !== año || fecha.getMonth() !== mes - 1 || fecha.getDate() !== dia) {
+                            this.classList.add('is-invalid');
+                            this.classList.remove('is-valid');
+                            errorDiv.textContent = 'La fecha en el código no es válida.';
+                        } else {
+                            this.classList.remove('is-invalid');
+                            this.classList.add('is-valid');
+                            errorDiv.textContent = '';
+                        }
+                    }
+                } else {
+                    this.classList.remove('is-invalid', 'is-valid');
+                    errorDiv.textContent = '';
+                }
+            });
+
+            // Validación al enviar el formulario
+            form.addEventListener('submit', function(e) {
+                const codigo = codigoInput.value.trim();
+                const formatoRegex = /^E-\d{4}\/\d{2}\/\d{2}-\d{2}$/;
+                
+                if (!codigo || !formatoRegex.test(codigo)) {
+                    e.preventDefault();
+                    codigoInput.classList.add('is-invalid');
+                    errorDiv.textContent = 'El código de envío debe tener el formato E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)';
+                    codigoInput.focus();
+                    return false;
+                }
+
+                // Validar fecha
+                const partes = codigo.match(/^E-(\d{4})\/(\d{2})\/(\d{2})-(\d{2})$/);
+                if (partes) {
+                    const año = parseInt(partes[1]);
+                    const mes = parseInt(partes[2]);
+                    const dia = parseInt(partes[3]);
+                    const fecha = new Date(año, mes - 1, dia);
+                    
+                    if (fecha.getFullYear() !== año || fecha.getMonth() !== mes - 1 || fecha.getDate() !== dia) {
+                        e.preventDefault();
+                        codigoInput.classList.add('is-invalid');
+                        errorDiv.textContent = 'La fecha en el código no es válida.';
+                        codigoInput.focus();
+                        return false;
+                    }
+                }
+            });
+        });
+    </script>
 
     <%- include('../layouts/footer') %>

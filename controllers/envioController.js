@@ -1,6 +1,7 @@
 // controllers/envioController.js
 const Envio = require('../models/Envio');
 const Incidencia = require('../models/Incidencia');
+const { validateCodigoEnvio } = require('../utils/validations');
 
 
 // 1. Listar y Filtrar (CRUD Read)
@@ -32,8 +33,17 @@ exports.showCreateForm = (req, res) => {
 // 3. Procesar Creación (CRUD Create)
 exports.createEnvío = async (req, res) => {
     try {
+        const codigoEnvio = req.body.ID_Envio;
+
+        // Validar formato del código de envío
+        const validacion = validateCodigoEnvio(codigoEnvio);
+        if (!validacion.valid) {
+            req.flash('error_msg', validacion.error);
+            return res.redirect('/admin/envios/nuevo');
+        }
+
         const nuevoEnvio = {
-            codigo_envio: req.body.ID_Envio,
+            codigo_envio: codigoEnvio,
             nombre_destinatario: req.body.Nombre_Destinatario,
             direccion_completa: req.body.Direccion_Completa,
             estado_envio: req.body.Estado_Envio || 'Nuevo',
@@ -76,8 +86,17 @@ exports.showEditForm = async (req, res) => {
 // 5. Procesar Modificación (CRUD Update)
 exports.updateEnvío = async (req, res) => {
     try {
+        const codigoEnvio = req.body.ID_Envio;
+
+        // Validar formato del código de envío
+        const validacion = validateCodigoEnvio(codigoEnvio);
+        if (!validacion.valid) {
+            req.flash('error_msg', validacion.error);
+            return res.redirect(`/admin/envios/${req.params.id}/editar`);
+        }
+
         const datosActualizados = {
-            codigo_envio: req.body.ID_Envio,
+            codigo_envio: codigoEnvio,
             nombre_destinatario: req.body.Nombre_Destinatario,
             direccion_completa: req.body.Direccion_Completa,
             estado_envio: req.body.Estado_Envio,
@@ -125,6 +144,15 @@ exports.createIncidencia = async (req, res) => {
         if (req.file) {
             // Multer-Cloudinary ya ha subido la imagen y la URL está en req.file.path
             url_foto_evidencia = req.file.path;
+        }
+
+        // Validar formato del código de envío si se proporciona
+        if (codigo_envio) {
+            const validacion = validateCodigoEnvio(codigo_envio);
+            if (!validacion.valid) {
+                req.flash('error_msg', validacion.error);
+                return res.redirect('/admin/incidencias/nueva');
+            }
         }
 
         let finalIdDetalle = id_detalle_envio_fk;
@@ -207,6 +235,15 @@ exports.updateIncidencia = async (req, res) => {
 
         if (req.file) {
             url_foto_evidencia = req.file.path;
+        }
+
+        // Validar formato del código de envío si se proporciona
+        if (codigo_envio) {
+            const validacion = validateCodigoEnvio(codigo_envio);
+            if (!validacion.valid) {
+                req.flash('error_msg', validacion.error);
+                return res.redirect(`/admin/incidencias/${req.params.id}/editar`);
+            }
         }
 
         let finalIdDetalle = id_detalle_envio_fk;
