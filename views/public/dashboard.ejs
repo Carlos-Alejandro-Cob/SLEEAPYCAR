@@ -407,6 +407,56 @@ if (typeof paypalClientId !== 'undefined') { %>
                 </ul>
             </nav>
         </div>
+        
+        <!-- Modal para seleccionar cantidad -->
+        <div class="modal fade" id="modalCantidad" tabindex="-1" aria-labelledby="modalCantidadLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalCantidadLabel">
+                            <i class="fas fa-shopping-cart me-2"></i>Seleccionar Cantidad
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="producto-nombre-modal" class="form-label">Producto</label>
+                            <input type="text" class="form-control" id="producto-nombre-modal" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="producto-precio-modal" class="form-label">Precio Unitario</label>
+                            <input type="text" class="form-control" id="producto-precio-modal" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cantidad-modal" class="form-label">Cantidad</label>
+                            <div class="input-group" style="max-width: 200px; margin: 0 auto;">
+                                <button class="btn btn-outline-secondary" type="button" id="btn-decrementar-modal">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number" 
+                                       class="form-control text-center" 
+                                       id="cantidad-modal" 
+                                       value="1" 
+                                       min="1" 
+                                       style="font-weight: 700; font-size: 1.25rem; color: #2d5016;">
+                                <button class="btn btn-outline-secondary" type="button" id="btn-incrementar-modal">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="alert alert-info mb-0">
+                            <strong>Total:</strong> <span id="total-modal">$0.00</span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="btn-confirmar-cantidad">
+                            <i class="fas fa-check me-2"></i>Agregar al Carrito
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     <% } else if (activeSection === 'carrito') { %>
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -447,26 +497,30 @@ if (typeof paypalClientId !== 'undefined') { %>
                                                     <strong><%= item.nombre %></strong>
                                                 </td>
                                                 <td>$<%= parseFloat(item.precio).toFixed(2) %></td>
-                                                <td>
-                                                    <div class="input-group" style="max-width: 150px;">
-                                                        <button class="btn btn-outline-secondary btn-sm update-cantidad" 
-                                                                data-product-id="<%= item.id_producto %>" 
-                                                                data-cantidad="<%= item.cantidad - 1 %>"
-                                                                <%= item.cantidad <= 1 ? 'disabled' : '' %>>
-                                                            <i class="fas fa-minus"></i>
-                                                        </button>
-                                                        <input type="number" 
-                                                               class="form-control form-control-sm text-center" 
-                                                               id="cantidad-<%= item.id_producto %>"
-                                                               value="<%= item.cantidad %>" 
-                                                               min="1" 
-                                                               readonly
-                                                               style="font-weight: 600; color: #1a1a1a; background-color: #fff; border-color: #dee2e6;">
-                                                        <button class="btn btn-outline-secondary btn-sm update-cantidad" 
-                                                                data-product-id="<%= item.id_producto %>" 
-                                                                data-cantidad="<%= item.cantidad + 1 %>">
-                                                            <i class="fas fa-plus"></i>
-                                                        </button>
+                                                <td class="text-center align-middle">
+                                                    <div class="d-flex justify-content-center">
+                                                        <div class="input-group" style="max-width: 150px; margin: 0 auto;">
+                                                            <button class="btn btn-outline-secondary btn-sm update-cantidad d-flex align-items-center justify-content-center" 
+                                                                    data-product-id="<%= item.id_producto %>" 
+                                                                    data-cantidad="<%= item.cantidad - 1 %>"
+                                                                    style="width: 38px; height: 38px; padding: 0;"
+                                                                    <%= item.cantidad <= 1 ? 'disabled' : '' %>>
+                                                                <i class="fas fa-minus"></i>
+                                                            </button>
+                                                            <input type="number" 
+                                                                   class="form-control form-control-sm text-center" 
+                                                                   id="cantidad-<%= item.id_producto %>"
+                                                                   value="<%= item.cantidad %>" 
+                                                                   min="1" 
+                                                                   readonly
+                                                                   style="font-weight: 700; font-size: 1rem; color: #2d5016; background-color: #f9fafb; border-color: #e5e7eb; padding: 0; text-align: center; height: 38px; line-height: 38px; vertical-align: middle; box-sizing: border-box; display: block;">
+                                                            <button class="btn btn-outline-secondary btn-sm update-cantidad d-flex align-items-center justify-content-center" 
+                                                                    data-product-id="<%= item.id_producto %>" 
+                                                                    data-cantidad="<%= item.cantidad + 1 %>"
+                                                                    style="width: 38px; height: 38px; padding: 0;">
+                                                                <i class="fas fa-plus"></i>
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td>

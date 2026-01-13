@@ -1,7 +1,55 @@
 // carrito.js - Manejo del carrito de compras
 
-// Agregar producto al carrito
-function agregarAlCarrito(idProducto, nombre, precio) {
+// Variables globales para el modal de cantidad
+let productoActual = {
+    id: null,
+    nombre: null,
+    precio: null
+};
+
+// Abrir modal para seleccionar cantidad
+function abrirModalCantidad(idProducto, nombre, precio) {
+    productoActual.id = idProducto;
+    productoActual.nombre = nombre;
+    productoActual.precio = parseFloat(precio);
+    
+    // Llenar información del modal
+    const nombreInput = document.getElementById('producto-nombre-modal');
+    const precioInput = document.getElementById('producto-precio-modal');
+    const cantidadInput = document.getElementById('cantidad-modal');
+    
+    if (nombreInput && precioInput && cantidadInput) {
+        nombreInput.value = nombre;
+        precioInput.value = '$' + parseFloat(precio).toFixed(2);
+        cantidadInput.value = 1;
+        
+        // Calcular total inicial
+        actualizarTotalModal();
+        
+        // Mostrar modal
+        const modalElement = document.getElementById('modalCantidad');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        } else {
+            console.error('Modal no encontrado');
+            mostrarNotificacion('Error al abrir el modal', 'error');
+        }
+    } else {
+        console.error('Elementos del modal no encontrados');
+        mostrarNotificacion('Error al abrir el modal', 'error');
+    }
+}
+
+// Actualizar total en el modal
+function actualizarTotalModal() {
+    const cantidad = parseInt(document.getElementById('cantidad-modal').value) || 1;
+    const total = productoActual.precio * cantidad;
+    document.getElementById('total-modal').textContent = '$' + total.toFixed(2);
+}
+
+// Agregar producto al carrito con cantidad seleccionada
+function agregarAlCarrito(idProducto, nombre, precio, cantidad) {
     fetch('/api/carrito/agregar', {
         method: 'POST',
         headers: {
@@ -11,12 +59,17 @@ function agregarAlCarrito(idProducto, nombre, precio) {
             id_producto: idProducto,
             nombre: nombre,
             precio: precio,
-            cantidad: 1
+            cantidad: cantidad
         })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalCantidad'));
+            if (modal) {
+                modal.hide();
+            }
             // Mostrar notificación
             mostrarNotificacion('Producto agregado al carrito', 'success');
             // Actualizar contador del carrito
@@ -311,15 +364,69 @@ function procesarPagoPayPal(codigoEnvio, precio) {
 
 // Inicializar eventos cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
-    // Eventos para botones de agregar al carrito
+    // Eventos para botones de agregar al carrito - abrir modal
     document.querySelectorAll('.add-to-cart').forEach(button => {
         button.addEventListener('click', function() {
             const idProducto = this.dataset.productId;
             const nombre = this.dataset.productName;
             const precio = this.dataset.productPrice;
-            agregarAlCarrito(idProducto, nombre, precio);
+            abrirModalCantidad(idProducto, nombre, precio);
         });
     });
+    
+    // Eventos del modal de cantidad
+    const cantidadInput = document.getElementById('cantidad-modal');
+    const btnDecrementar = document.getElementById('btn-decrementar-modal');
+    const btnIncrementar = document.getElementById('btn-incrementar-modal');
+    const btnConfirmar = document.getElementById('btn-confirmar-cantidad');
+    
+    if (cantidadInput) {
+        cantidadInput.addEventListener('input', function() {
+            const valor = parseInt(this.value) || 1;
+            if (valor < 1) {
+                this.value = 1;
+            }
+            actualizarTotalModal();
+        });
+    }
+    
+    if (btnDecrementar) {
+        btnDecrementar.addEventListener('click', function() {
+            const cantidad = parseInt(cantidadInput.value) || 1;
+            if (cantidad > 1) {
+                cantidadInput.value = cantidad - 1;
+                actualizarTotalModal();
+            }
+        });
+    }
+    
+    if (btnIncrementar) {
+        btnIncrementar.addEventListener('click', function() {
+            const cantidad = parseInt(cantidadInput.value) || 1;
+            cantidadInput.value = cantidad + 1;
+            actualizarTotalModal();
+        });
+    }
+    
+    if (btnConfirmar) {
+        btnConfirmar.addEventListener('click', function() {
+            const cantidad = parseInt(cantidadInput.value) || 1;
+            if (cantidad < 1) {
+                mostrarNotificacion('La cantidad debe ser al menos 1', 'error');
+                return;
+            }
+            agregarAlCarrito(productoActual.id, productoActual.nombre, productoActual.precio, cantidad);
+        });
+    }
+    
+    // Permitir Enter en el input de cantidad para confirmar
+    if (cantidadInput && btnConfirmar) {
+        cantidadInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                btnConfirmar.click();
+            }
+        });
+    }
     
     // Eventos para botones de actualizar cantidad
     document.querySelectorAll('.update-cantidad').forEach(button => {
@@ -356,3 +463,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Hacer funciones disponibles globalmente
+window.abrirModalCantidad = abrirModalCantidad;
+window.agregarAlCarrito = agregarAlCarrito;
+window.actualizarTotalModal = actualizarTotalModal;

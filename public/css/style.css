@@ -794,6 +794,19 @@ h1.h3 i {
     cursor: default;
 }
 
+/* Centrado perfecto del número en input de cantidad del carrito */
+.table input[type="number"][readonly] {
+    text-align: center !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+}
+
+.table input[type="number"][readonly]::-webkit-inner-spin-button,
+.table input[type="number"][readonly]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
 /* Badge de contador en el botón del carrito */
 .position-relative .badge {
     font-size: 0.75rem;
@@ -821,8 +834,11 @@ h1.h3 i {
 }
 
 .pagination .page-item.active .page-link {
-    background-color: var(--primary-green);
-    border-color: var(--primary-green);
+    background-color: var(--primary-green) !important;
+    border-color: var(--primary-green) !important;
+    color: var(--white) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 4px rgba(45, 80, 22, 0.2);
 }
 
 .pagination .page-link:hover {
