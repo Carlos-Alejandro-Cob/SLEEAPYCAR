@@ -13,11 +13,11 @@ const ROLES = require('../config/roles');
 // [R]EAD: Listar todos los envíos (con filtros)
 router.get('/envios', checkRole([ROLES.ADMIN, ROLES.BODEGUERO, ROLES.SUPER_ADMIN]), envioController.listEnvíos);
 
-// [C]REATE: Mostrar formulario para nuevo envío
-router.get('/envios/nuevo', checkRole([ROLES.ADMIN, ROLES.BODEGUERO, ROLES.SUPER_ADMIN]), envioController.showCreateForm);
+// [C]REATE: Mostrar formulario para nuevo envío (Bodeguero NO puede crear)
+router.get('/envios/nuevo', checkRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]), envioController.showCreateForm);
 
-// [C]REATE: Procesar el formulario y crear el nuevo envío
-router.post('/envios', checkRole([ROLES.ADMIN, ROLES.BODEGUERO, ROLES.SUPER_ADMIN]), envioController.createEnvío);
+// [C]REATE: Procesar el formulario y crear el nuevo envío (Bodeguero NO puede crear)
+router.post('/envios', checkRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]), envioController.createEnvío);
 
 // [R]EAD: Mostrar formulario para editar un envío específico
 router.get('/envios/:id/editar', checkRole([1, 2, 6]), envioController.showEditForm);
@@ -25,7 +25,7 @@ router.get('/envios/:id/editar', checkRole([1, 2, 6]), envioController.showEditF
 // [U]PDATE: Procesar la modificación de un envío
 router.put('/envios/:id', checkRole([ROLES.ADMIN, ROLES.BODEGUERO, ROLES.REPARTIDOR, ROLES.SUPER_ADMIN]), envioController.updateEnvío);
 
-// [D]ELETE: Eliminar un envío
+// [D]ELETE: Eliminar un envío (Bodeguero NO puede eliminar)
 router.delete('/envios/:id', checkRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]), envioController.deleteEnvío);
 
 // --- RUTAS PARA INCIDENCIAS ---

@@ -21,11 +21,19 @@
             <div class="d-flex justify-content-between align-items-start mb-4">
                 <div>
                     <h1 class="h3 mb-2">
-                        <%= isEdit ? 'Editar Envío' : 'Nuevo Envío' %>
+                        <% if (typeof isBodeguero !== 'undefined' && isBodeguero) { %>
+                            Cambiar Estado del Envío
+                        <% } else { %>
+                            <%= isEdit ? 'Editar Envío' : 'Nuevo Envío' %>
+                        <% } %>
                     </h1>
                     <p class="text-muted mb-0">
-                        <%= isEdit ? 'Modifica los detalles del envío'
-                            : 'Completa el formulario para registrar un nuevo envío' %>
+                        <% if (typeof isBodeguero !== 'undefined' && isBodeguero) { %>
+                            Actualiza el estado logístico del envío
+                        <% } else { %>
+                            <%= isEdit ? 'Modifica los detalles del envío'
+                                : 'Completa el formulario para registrar un nuevo envío' %>
+                        <% } %>
                     </p>
                 </div>
                 <a href="/admin/envios" class="btn btn-outline-secondary">
@@ -39,33 +47,70 @@
                     <form action="<%= isEdit ? '/admin/envios/' + envio._id + '?_method=PUT' : '/admin/envios' %>"
                         method="POST">
 
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="ID_Envio" class="form-label">ID de Envío</label>
-                                <input type="text" class="form-control" id="ID_Envio" name="ID_Envio"
-                                    value="<%= envio ? envio.ID_Envio : '' %>"
-                                    placeholder="E-2025/10/26-01" 
-                                    pattern="^E-\d{4}\/\d{2}\/\d{2}-\d{2}$"
-                                    title="Formato requerido: E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)"
-                                    required>
-                                <div class="form-text">Formato: E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)</div>
-                                <div class="invalid-feedback" id="ID_Envio-error"></div>
+                        <% if (typeof isBodeguero !== 'undefined' && isBodeguero) { %>
+                            <!-- Vista simplificada para bodeguero: Solo estado -->
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="ID_Envio" class="form-label">ID de Envío</label>
+                                    <input type="text" class="form-control" id="ID_Envio" name="ID_Envio"
+                                        value="<%= envio ? envio.ID_Envio : '' %>" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="Nombre_Destinatario" class="form-label">Destinatario</label>
+                                    <input type="text" class="form-control" id="Nombre_Destinatario"
+                                        name="Nombre_Destinatario" value="<%= envio ? envio.Nombre_Destinatario : '' %>" readonly>
+                                </div>
+                                <div class="col-12">
+                                    <label for="Direccion_Completa" class="form-label">Dirección</label>
+                                    <input type="text" class="form-control" id="Direccion_Completa"
+                                        name="Direccion_Completa" value="<%= envio ? envio.Direccion_Completa : '' %>" readonly>
+                                </div>
+                                <div class="col-12">
+                                    <label for="Estado_Envio" class="form-label">Estado del Envío <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="Estado_Envio" name="Estado_Envio" required>
+                                        <option value="Pendiente" <%=(envio && envio.Estado_Envio==='Pendiente' )
+                                            ? 'selected' : '' %>>Pendiente</option>
+                                        <option value="Preparado" <%=(envio && envio.Estado_Envio==='Preparado' )
+                                            ? 'selected' : '' %>>Preparado</option>
+                                        <option value="Despachado" <%=(envio && envio.Estado_Envio==='Despachado' )
+                                            ? 'selected' : '' %>>Despachado</option>
+                                    </select>
+                                    <div class="form-text">Selecciona el estado logístico del envío</div>
+                                </div>
                             </div>
+                        <% } else { %>
+                            <!-- Vista completa para admin -->
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="ID_Envio" class="form-label">ID de Envío</label>
+                                    <input type="text" class="form-control" id="ID_Envio" name="ID_Envio"
+                                        value="<%= envio ? envio.ID_Envio : '' %>"
+                                        placeholder="E-2025/10/26-01" 
+                                        pattern="^E-\d{4}\/\d{2}\/\d{2}-\d{2}$"
+                                        title="Formato requerido: E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)"
+                                        required>
+                                    <div class="form-text">Formato: E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)</div>
+                                    <div class="invalid-feedback" id="ID_Envio-error"></div>
+                                </div>
 
-                            <div class="col-md-6">
-                                <label for="Estado_Envio" class="form-label">Estado</label>
-                                <select class="form-select" id="Estado_Envio" name="Estado_Envio">
-                                    <option value="Pendiente" <%=(envio && envio.Estado_Envio==='Pendiente' )
-                                        ? 'selected' : '' %>>Pendiente</option>
-                                    <option value="En Ruta" <%=(envio && envio.Estado_Envio==='En Ruta' ) ? 'selected'
-                                        : '' %>>En Ruta</option>
-                                    <option value="Entregado" <%=(envio && envio.Estado_Envio==='Entregado' )
-                                        ? 'selected' : '' %>>Entregado</option>
-                                </select>
-                            </div>
+                                <div class="col-md-6">
+                                    <label for="Estado_Envio" class="form-label">Estado</label>
+                                    <select class="form-select" id="Estado_Envio" name="Estado_Envio">
+                                        <option value="Pendiente" <%=(envio && envio.Estado_Envio==='Pendiente' )
+                                            ? 'selected' : '' %>>Pendiente</option>
+                                        <option value="Preparado" <%=(envio && envio.Estado_Envio==='Preparado' )
+                                            ? 'selected' : '' %>>Preparado</option>
+                                        <option value="Despachado" <%=(envio && envio.Estado_Envio==='Despachado' )
+                                            ? 'selected' : '' %>>Despachado</option>
+                                        <option value="En Ruta" <%=(envio && envio.Estado_Envio==='En Ruta' ) ? 'selected'
+                                            : '' %>>En Ruta</option>
+                                        <option value="Entregado" <%=(envio && envio.Estado_Envio==='Entregado' )
+                                            ? 'selected' : '' %>>Entregado</option>
+                                    </select>
+                                </div>
 
-                            <div class="col-md-6">
-                                <label for="metodo_pago" class="form-label">Método de Pago</label>
+                                <div class="col-md-6">
+                                    <label for="metodo_pago" class="form-label">Método de Pago</label>
                                 <select class="form-select" id="metodo_pago" name="metodo_pago">
                                     <option value="Efectivo" <%=(envio && envio.metodo_pago==='Efectivo' ) ? 'selected'
                                         : '' %>>Efectivo</option>
@@ -74,50 +119,52 @@
                                     <option value="Tarjeta" <%=(envio && envio.metodo_pago==='Tarjeta' ) ? 'selected'
                                         : '' %>>Tarjeta</option>
                                 </select>
-                            </div>
+                                </div>
 
-                            <div class="col-md-6">
-                                <label for="precio" class="form-label">Precio ($)</label>
+                                <div class="col-md-6">
+                                    <label for="precio" class="form-label">Precio ($)</label>
                                 <input type="number" step="0.01" class="form-control" id="precio" name="precio"
                                     value="<%= envio ? envio.precio : '0.00' %>" required>
-                            </div>
+                                </div>
 
-                            <div class="col-md-6">
-                                <label for="estado_pago" class="form-label">Estado de Pago</label>
+                                <div class="col-md-6">
+                                    <label for="estado_pago" class="form-label">Estado de Pago</label>
                                 <select class="form-select" id="estado_pago" name="estado_pago">
                                     <option value="Pendiente" <%=(envio && envio.estado_pago==='Pendiente' )
                                         ? 'selected' : '' %>>Pendiente</option>
                                     <option value="Pagado" <%=(envio && envio.estado_pago==='Pagado' ) ? 'selected' : ''
                                         %>>Pagado</option>
-                                </select>
-                            </div>
+                                    </select>
+                                </div>
 
-                            <div class="col-12">
-                                <label for="Nombre_Destinatario" class="form-label">Nombre del Destinatario</label>
+                                <div class="col-12">
+                                    <label for="Nombre_Destinatario" class="form-label">Nombre del Destinatario</label>
                                 <input type="text" class="form-control" id="Nombre_Destinatario"
                                     name="Nombre_Destinatario" value="<%= envio ? envio.Nombre_Destinatario : '' %>"
                                     required>
-                            </div>
+                                </div>
 
-                            <div class="col-12">
-                                <label for="Direccion_Completa" class="form-label">Dirección Completa</label>
+                                <div class="col-12">
+                                    <label for="Direccion_Completa" class="form-label">Dirección Completa</label>
                                 <input type="text" class="form-control" id="Direccion_Completa"
                                     name="Direccion_Completa" value="<%= envio ? envio.Direccion_Completa : '' %>"
                                     required>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="URL_Foto_Entrega" class="form-label">URL de Foto de Entrega <span
+                                            class="text-muted">(Opcional)</span></label>
+                                    <input type="url" class="form-control" id="URL_Foto_Entrega" name="URL_Foto_Entrega"
+                                        value="<%= envio ? (envio.URL_Foto_Entrega || '') : '' %>"
+                                        placeholder="https://...">
+                                </div>
                             </div>
+                        <% } %>
 
-                            <div class="col-12">
-                                <label for="URL_Foto_Entrega" class="form-label">URL de Foto de Entrega <span
-                                        class="text-muted">(Opcional)</span></label>
-                                <input type="url" class="form-control" id="URL_Foto_Entrega" name="URL_Foto_Entrega"
-                                    value="<%= envio ? (envio.URL_Foto_Entrega || '') : '' %>"
-                                    placeholder="https://...">
-                            </div>
-                        </div>
+                        <% if (typeof isBodeguero === 'undefined' || !isBodeguero) { %>
+                            <hr class="my-4">
 
-                        <hr class="my-4">
-
-                        <h5 class="mb-3">Productos</h5>
+                            <h5 class="mb-3">Productos</h5>
 
                         <div id="product-list">
                             <% if (envio && envio.products && envio.products.length > 0) { %>
@@ -141,10 +188,10 @@
                                     </div>
                                 <% }); %>
                             <% } %>
-                        </div>
-                        
-                        <button type="button" class="btn btn-success" id="add-product">Añadir Producto</button>
-
+                            </div>
+                            
+                            <button type="button" class="btn btn-success" id="add-product">Añadir Producto</button>
+                        <% } %>
 
                         <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                             <a href="/admin/envios" class="btn btn-outline-secondary">Cancelar</a>
@@ -157,7 +204,7 @@
                 </div>
             </div>
 
-            <% if (isEdit) { %>
+            <% if (typeof isEdit !== 'undefined' && isEdit && (typeof isBodeguero === 'undefined' || !isBodeguero)) { %>
                 <div class="card mt-4 border-danger">
                     <div class="card-body">
                         <h5 class="mb-2" style="color: #dc2626;">Zona de Peligro</h5>
@@ -170,7 +217,7 @@
                         </form>
                     </div>
                 </div>
-                <% } %>
+            <% } %>
         </div>
     </div>
 
@@ -299,7 +346,7 @@
                                 } else {
                                     productNameInput.value = 'Producto no encontrado';
                                 }
-                            } catch (error) {
+                            } catch (err) {
                                 productNameInput.value = 'Error al buscar';
                             }
                         } else {

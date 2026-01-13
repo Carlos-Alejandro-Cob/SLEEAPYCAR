@@ -11,12 +11,20 @@ const logger = require('../utils/logger');
 exports.listEnvíos = async (req, res) => {
     try {
         const { q, estado } = req.query;
+        const userRole = req.user ? req.user.id_rol_fk : null;
+        
+        // Si es bodeguero, por ahora mostrar todos los envíos (no hay asignación por bodega aún)
+        // TODO: Implementar filtrado por bodega_id cuando se agregue el campo
         const envios = await Envio.findAll({ q, estado });
+
+        // Determinar si es bodeguero para ajustar la vista
+        const isBodeguero = userRole === ROLES.BODEGUERO;
 
         res.render('admin/list', {
             envios: envios,
             query: q || '',
-            estadoFiltro: estado || ''
+            estadoFiltro: estado || '',
+            isBodeguero: isBodeguero || false
         });
     } catch (error) {
         console.error('Error al listar envíos:', error);
@@ -27,9 +35,12 @@ exports.listEnvíos = async (req, res) => {
 
 // 2. Mostrar Formulario de Creación
 exports.showCreateForm = (req, res) => {
+    const userRole = req.user ? req.user.id_rol_fk : null;
+    const isBodeguero = userRole === ROLES.BODEGUERO;
     res.render('admin/form', {
         envio: null, // No hay datos para pre-llenar
-        isEdit: false
+        isEdit: false,
+        isBodeguero: isBodeguero || false
     });
 };
 
@@ -148,9 +159,12 @@ exports.showEditForm = async (req, res) => {
             req.flash('error_msg', 'Envío no encontrado.');
             return res.redirect('/admin/envios');
         }
+        const userRole = req.user ? req.user.id_rol_fk : null;
+        const isBodeguero = userRole === ROLES.BODEGUERO;
         res.render('admin/form', {
             envio: envio,
-            isEdit: true
+            isEdit: true,
+            isBodeguero: isBodeguero || false
         });
     } catch (error) {
         console.error('Error al mostrar formulario de edición:', error);
@@ -167,21 +181,53 @@ exports.updateEnvío = async (req, res) => {
         const { id } = req.params;
 
         if (userRole === ROLES.REPARTIDOR) { // Transportista
-            const { estado_envio } = req.body;
-            // Permitir cambio a Entregado o 'En Ruta' si se quisiera, por ahora solo valida lo pedido
-            // El usuario pidió "no me deja marcar como entregado", asi que esto debe funcionar.
-            if (estado_envio !== 'Entregado') {
-                req.flash('error_msg', 'Como transportista, solo puedes cambiar el estado a "Entregado".');
-                return res.redirect(`/admin/envios/${id}/editar`);
+            const { estado_envio, motivo_cancelacion } = req.body;
+            
+            // Estados permitidos para repartidor
+            const estadosPermitidos = ['Entregado', 'Intento de entrega', 'Devuelto a bodega', 'Cancelado en ruta'];
+            
+            if (!estadosPermitidos.includes(estado_envio)) {
+                req.flash('error_msg', 'Estado no válido para repartidor.');
+                return res.redirect('/admin/repartidor');
             }
+            
+            // Si es cancelado, verificar que tenga motivo
+            if (estado_envio === 'Cancelado en ruta' && (!motivo_cancelacion || motivo_cancelacion.trim() === '')) {
+                req.flash('error_msg', 'Debe proporcionar un motivo para cancelar el envío.');
+                return res.redirect('/admin/repartidor');
+            }
+            
             await Envio.update(id, { estado_envio });
 
             // Audit Log
-            await logger.logAction(currentUserId, 'UPDATE_ESTADO_ENVIO', `Envío ${id} marcado como Entregado por Repartidor`);
+            const mensajeLog = motivo_cancelacion 
+                ? `Envío ${id} actualizado a "${estado_envio}" por Repartidor. Motivo: ${motivo_cancelacion}`
+                : `Envío ${id} actualizado a "${estado_envio}" por Repartidor`;
+            await logger.logAction(currentUserId, 'UPDATE_ESTADO_ENVIO', mensajeLog);
 
-            req.flash('success_msg', 'Envío actualizado a "Entregado".');
+            req.flash('success_msg', `Envío actualizado a "${estado_envio}".`);
             // Redirigir al dashboard de repartidor si es repartidor
             return res.redirect('/admin/repartidor');
+        }
+
+        if (userRole === ROLES.BODEGUERO) { // Bodeguero - Solo puede cambiar estado logístico
+            const { Estado_Envio } = req.body;
+            
+            // Estados permitidos para bodeguero (logísticos)
+            const estadosPermitidos = ['Pendiente', 'Preparado', 'Despachado'];
+            
+            if (!estadosPermitidos.includes(Estado_Envio)) {
+                req.flash('error_msg', 'Estado no válido para bodeguero. Solo puede cambiar a: Pendiente, Preparado o Despachado.');
+                return res.redirect(`/admin/envios/${id}/editar`);
+            }
+            
+            await Envio.update(id, { estado_envio: Estado_Envio });
+
+            // Audit Log
+            await logger.logAction(currentUserId, 'UPDATE_ESTADO_ENVIO', `Envío ${id} actualizado a "${Estado_Envio}" por Bodeguero`);
+
+            req.flash('success_msg', `Estado del envío actualizado a "${Estado_Envio}".`);
+            return res.redirect('/admin/envios');
         }
 
         const codigoEnvio = req.body.ID_Envio;

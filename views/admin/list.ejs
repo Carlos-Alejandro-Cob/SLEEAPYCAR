@@ -13,20 +13,25 @@
             <!-- Header Section -->
             <div class="d-flex justify-content-between align-items-start mb-4">
                 <div>
-                    <h1 class="h3 mb-2">Gestión de Envíos</h1>
-                    <p class="text-muted mb-0">Administra y monitorea todos los envíos del sistema</p>
+                    <% if (typeof isBodeguero !== 'undefined' && isBodeguero) { %>
+                        <h1 class="h3 mb-2">Envíos asignados a mi bodega</h1>
+                        <p class="text-muted mb-0">Gestiona los envíos de tu bodega</p>
+                    <% } else { %>
+                        <h1 class="h3 mb-2">Gestión de Envíos</h1>
+                        <p class="text-muted mb-0">Administra y monitorea todos los envíos del sistema</p>
+                    <% } %>
                 </div>
                 <div class="d-flex gap-2 flex-wrap">
-                    <a href="/admin/envios/nuevo" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Nuevo Envío
-                    </a>
-                    <% if (user.id_rol_fk !== 2) { %>
-                    <a href="/admin/incidencias/nueva" class="btn btn-outline-primary">
-                        <i class="fas fa-exclamation-triangle me-2"></i>Reportar Incidencia
-                    </a>
-                    <a href="/admin/incidencias" class="btn btn-outline-primary">
-                        <i class="fas fa-list me-2"></i>Incidencias
-                    </a>
+                    <% if (typeof isBodeguero === 'undefined' || !isBodeguero) { %>
+                        <a href="/admin/envios/nuevo" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Nuevo Envío
+                        </a>
+                        <a href="/admin/incidencias/nueva" class="btn btn-outline-primary">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Reportar Incidencia
+                        </a>
+                        <a href="/admin/incidencias" class="btn btn-outline-primary">
+                            <i class="fas fa-list me-2"></i>Incidencias
+                        </a>
                     <% } %>
                 </div>
             </div>
@@ -44,12 +49,16 @@
                             <label for="estado" class="form-label">Estado</label>
                             <select class="form-select" id="estado" name="estado">
                                 <option value="">Todos</option>
-                                <option value="Pendiente" <%=estadoFiltro==='Pendiente' ? 'selected' : '' %>>Pendiente
-                                </option>
-                                <option value="En Ruta" <%=estadoFiltro==='En Ruta' ? 'selected' : '' %>>En Ruta
-                                </option>
-                                <option value="Entregado" <%=estadoFiltro==='Entregado' ? 'selected' : '' %>>Entregado
-                                </option>
+                                <option value="Pendiente" <%=estadoFiltro==='Pendiente' ? 'selected' : '' %>>Pendiente</option>
+                                <% if (typeof isBodeguero !== 'undefined' && isBodeguero) { %>
+                                    <option value="Preparado" <%=estadoFiltro==='Preparado' ? 'selected' : '' %>>Preparado</option>
+                                    <option value="Despachado" <%=estadoFiltro==='Despachado' ? 'selected' : '' %>>Despachado</option>
+                                <% } else { %>
+                                    <option value="Preparado" <%=estadoFiltro==='Preparado' ? 'selected' : '' %>>Preparado</option>
+                                    <option value="Despachado" <%=estadoFiltro==='Despachado' ? 'selected' : '' %>>Despachado</option>
+                                    <option value="En Ruta" <%=estadoFiltro==='En Ruta' ? 'selected' : '' %>>En Ruta</option>
+                                    <option value="Entregado" <%=estadoFiltro==='Entregado' ? 'selected' : '' %>>Entregado</option>
+                                <% } %>
                             </select>
                         </div>
                         <div class="col-md-4 d-flex gap-2">
@@ -73,9 +82,11 @@
                                 <%= envios.length===1 ? 'envío' : 'envíos' %>
                         </span>
                     </div>
-                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportarExcel()">
-                        <i class="fas fa-file-excel me-2"></i>Exportar
-                    </button>
+                    <% if (typeof isBodeguero === 'undefined' || !isBodeguero) { %>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportarExcel()">
+                            <i class="fas fa-file-excel me-2"></i>Exportar
+                        </button>
+                    <% } %>
                 </div>
                 <div class="card-body p-0">
                     <% if (envios.length===0) { %>
@@ -83,10 +94,12 @@
                             <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                             <h5 class="text-muted">No se encontraron envíos</h5>
                             <p class="text-muted">Intenta ajustar los filtros de búsqueda</p>
-                            <a href="/admin/envios/nuevo" class="btn btn-primary">
-                                <i class="fas fa-plus me-2"></i>
-                                Crear Primer Envío
-                            </a>
+                            <% if (typeof isBodeguero === 'undefined' || !isBodeguero) { %>
+                                <a href="/admin/envios/nuevo" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Crear Primer Envío
+                                </a>
+                            <% } %>
                         </div>
                         <% } else { %>
                             <div class="table-responsive">
@@ -97,8 +110,12 @@
                                             <th>Destinatario</th>
                                             <th>Dirección</th>
                                             <th>Estado</th>
-                                            <th>Pago</th>
-                                            <th>Foto</th>
+                                            <% if (typeof isBodeguero === 'undefined' || !isBodeguero) { %>
+                                                <th>Pago</th>
+                                                <th>Foto</th>
+                                            <% } else { %>
+                                                <th>Fecha</th>
+                                            <% } %>
                                             <th width="120">Acciones</th>
                                         </tr>
                                     </thead>
@@ -121,56 +138,67 @@
                                                     </small>
                                                 </td>
                                                 <td>
-                                                    <% let badgeClass='bg-secondary' ; if
-                                                        (envio.Estado_Envio==='Entregado' ) badgeClass='bg-success' ;
-                                                        else if (envio.Estado_Envio==='En Ruta' )
-                                                        badgeClass='bg-warning' ; else if
-                                                        (envio.Estado_Envio==='Pendiente' ) badgeClass='bg-info' ; %>
-                                                        <span class="badge <%= badgeClass %>">
-                                                            <%= envio.Estado_Envio %>
-                                                        </span>
-                                                </td>
-                                                <td>
-                                                    <span class="badge bg-light text-dark border">
-                                                        <%= envio.metodo_pago || '—' %>
+                                                    <% 
+                                                    let badgeClass = 'bg-secondary';
+                                                    if (envio.Estado_Envio === 'Entregado') badgeClass = 'bg-success';
+                                                    else if (envio.Estado_Envio === 'En Ruta' || envio.Estado_Envio === 'Despachado') badgeClass = 'bg-warning';
+                                                    else if (envio.Estado_Envio === 'Pendiente' || envio.Estado_Envio === 'Preparado') badgeClass = 'bg-info';
+                                                    %>
+                                                    <span class="badge <%= badgeClass %>">
+                                                        <%= envio.Estado_Envio %>
                                                     </span>
-                                                    <br>
-                                                    <small class="text-muted">$<%= envio.precio ?
-                                                            parseFloat(envio.precio).toFixed(2) : '0.00' %></small>
-                                                    <% if (envio.estado_pago==='Pagado' ) { %>
-                                                        <span class="badge bg-success"
-                                                            style="font-size: 0.65rem;">Pagado</span>
+                                                </td>
+                                                <% if (typeof isBodeguero === 'undefined' || !isBodeguero) { %>
+                                                    <td>
+                                                        <span class="badge bg-light text-dark border">
+                                                            <%= envio.metodo_pago || '—' %>
+                                                        </span>
+                                                        <br>
+                                                        <small class="text-muted">$<%= envio.precio ?
+                                                                parseFloat(envio.precio).toFixed(2) : '0.00' %></small>
+                                                        <% if (envio.estado_pago === 'Pagado') { %>
+                                                            <span class="badge bg-success"
+                                                                style="font-size: 0.65rem;">Pagado</span>
                                                         <% } else { %>
                                                             <span class="badge bg-warning text-dark"
                                                                 style="font-size: 0.65rem;">Pendiente</span>
-                                                            <% } %>
-                                                </td>
-                                                <td>
-                                                    <% if (envio.URL_Foto_Entrega) { %>
-                                                        <a href="<%= envio.URL_Foto_Entrega %>" target="_blank">
-                                                            <img src="<%= envio.URL_Foto_Entrega %>" alt="Foto"
-                                                                class="img-thumbnail"
-                                                                style="height: 40px; width: auto; padding: 2px;">
-                                                        </a>
+                                                        <% } %>
+                                                    </td>
+                                                    <td>
+                                                        <% if (envio.URL_Foto_Entrega) { %>
+                                                            <a href="<%= envio.URL_Foto_Entrega %>" target="_blank">
+                                                                <img src="<%= envio.URL_Foto_Entrega %>" alt="Foto"
+                                                                    class="img-thumbnail"
+                                                                    style="height: 40px; width: auto; padding: 2px;">
+                                                            </a>
                                                         <% } else { %>
                                                             <span class="text-muted"
                                                                 style="font-size: 0.8125rem;">—</span>
-                                                            <% } %>
-                                                </td>
+                                                        <% } %>
+                                                    </td>
+                                                <% } else { %>
+                                                    <td>
+                                                        <small class="text-muted">
+                                                            <%= envio.fecha_salida ? new Date(envio.fecha_salida).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' }) : '—' %>
+                                                        </small>
+                                                    </td>
+                                                <% } %>
                                                 <td>
                                                     <div class="d-flex gap-1">
                                                         <a href="/admin/envios/<%= envio._id %>/editar"
-                                                            class="btn btn-sm btn-outline-primary" title="Editar">
+                                                            class="btn btn-sm btn-outline-primary" title="<%= isBodeguero ? 'Cambiar Estado' : 'Editar' %>">
                                                             <i class="fas fa-edit"></i>
                                                         </a>
-                                                        <form action="/admin/envios/<%= envio._id %>?_method=DELETE"
-                                                            method="POST" class="d-inline"
-                                                            onsubmit="return confirm('¿Estás seguro de que quieres eliminar el envío <%= envio.ID_Envio %>?');">
-                                                            <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                                title="Eliminar">
-                                                                <i class="fas fa-trash"></i>
-                                                            </button>
-                                                        </form>
+                                                        <% if (typeof isBodeguero === 'undefined' || !isBodeguero) { %>
+                                                            <form action="/admin/envios/<%= envio._id %>?_method=DELETE"
+                                                                method="POST" class="d-inline"
+                                                                onsubmit="return confirm('¿Estás seguro de que quieres eliminar el envío <%= envio.ID_Envio %>?');">
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                                    title="Eliminar">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            </form>
+                                                        <% } %>
                                                     </div>
                                                 </td>
                                             </tr>

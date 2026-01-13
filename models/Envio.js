@@ -6,7 +6,7 @@ class Envio {
 
     // 1. Listar y Filtrar (CRUD Read)
     static async findAll({ q, estado, id_repartidor }) {
-        let query = 'SELECT id_envio as _id, codigo_envio as ID_Envio, nombre_destinatario as Nombre_Destinatario, direccion_completa as Direccion_Completa, estado_envio as Estado_Envio, metodo_pago, fecha_entrega, precio, estado_pago, id_repartidor, NULL as URL_Foto_Entrega FROM envios WHERE 1=1';
+        let query = 'SELECT id_envio as _id, codigo_envio as ID_Envio, nombre_destinatario as Nombre_Destinatario, direccion_completa as Direccion_Completa, estado_envio as Estado_Envio, metodo_pago, fecha_entrega, fecha_salida, precio, estado_pago, id_repartidor, NULL as URL_Foto_Entrega FROM envios WHERE 1=1';
         const params = [];
 
         if (q) {
