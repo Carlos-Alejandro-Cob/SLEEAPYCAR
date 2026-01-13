@@ -1,311 +1,345 @@
 <%- include('../layouts/header', { ...locals, title: (isEdit ? 'Editar Envío' : 'Nuevo Envío' ) + ' - SLEE APYCAR' }) %>
 
-<% if (typeof errors !== 'undefined' && errors.length > 0) { %>
-    <div class="row justify-content-center mb-4">
-        <div class="col-md-8">
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <h4 class="alert-heading">Por favor, corrige los siguientes errores:</h4>
-                <hr>
-                <% errors.forEach(function(error) { %>
-                    <p class="mb-1"><%= error.msg %></p>
-                <% }); %>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <% if (typeof errors !=='undefined' && errors.length> 0) { %>
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-8">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <h4 class="alert-heading">Por favor, corrige los siguientes errores:</h4>
+                    <hr>
+                    <% errors.forEach(function(error) { %>
+                        <p class="mb-1">
+                            <%= error.msg %>
+                        </p>
+                        <% }); %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             </div>
         </div>
-    </div>
-<% } %>
+        <% } %>
 
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <!-- Header Section -->
-            <div class="d-flex justify-content-between align-items-start mb-4">
-                <div>
-                    <h1 class="h3 mb-2">
-                        <% if (typeof isBodeguero !== 'undefined' && isBodeguero) { %>
-                            Cambiar Estado del Envío
-                        <% } else { %>
-                            <%= isEdit ? 'Editar Envío' : 'Nuevo Envío' %>
-                        <% } %>
-                    </h1>
-                    <p class="text-muted mb-0">
-                        <% if (typeof isBodeguero !== 'undefined' && isBodeguero) { %>
-                            Actualiza el estado logístico del envío
-                        <% } else { %>
-                            <%= isEdit ? 'Modifica los detalles del envío'
-                                : 'Completa el formulario para registrar un nuevo envío' %>
-                        <% } %>
-                    </p>
-                </div>
-                <a href="/admin/envios" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left me-2"></i>Volver
-                </a>
-            </div>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <!-- Header Section -->
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <h1 class="h3 mb-2">
+                                <% if (typeof isBodeguero !=='undefined' && isBodeguero) { %>
+                                    Cambiar Estado del Envío
+                                    <% } else { %>
+                                        <%= isEdit ? 'Editar Envío' : 'Nuevo Envío' %>
+                                            <% } %>
+                            </h1>
+                            <p class="text-muted mb-0">
+                                <% if (typeof isBodeguero !=='undefined' && isBodeguero) { %>
+                                    Actualiza el estado logístico del envío
+                                    <% } else { %>
+                                        <%= isEdit ? 'Modifica los detalles del envío'
+                                            : 'Completa el formulario para registrar un nuevo envío' %>
+                                            <% } %>
+                            </p>
+                        </div>
+                        <a href="/admin/envios" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Volver
+                        </a>
+                    </div>
 
-            <!-- Form Card -->
-            <div class="card">
-                <div class="card-body">
-                    <form action="<%= isEdit ? '/admin/envios/' + envio._id + '?_method=PUT' : '/admin/envios' %>"
-                        method="POST">
+                    <!-- Form Card -->
+                    <div class="card">
+                        <div class="card-body">
+                            <form
+                                action="<%= isEdit ? '/admin/envios/' + envio._id + '?_method=PUT' : '/admin/envios' %>"
+                                method="POST">
 
-                        <% if (typeof isBodeguero !== 'undefined' && isBodeguero) { %>
-                            <!-- Vista simplificada para bodeguero: Solo estado -->
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="ID_Envio" class="form-label">ID de Envío</label>
-                                    <input type="text" class="form-control" id="ID_Envio" name="ID_Envio"
-                                        value="<%= envio ? envio.ID_Envio : '' %>" readonly>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="Nombre_Destinatario" class="form-label">Destinatario</label>
-                                    <input type="text" class="form-control" id="Nombre_Destinatario"
-                                        name="Nombre_Destinatario" value="<%= envio ? envio.Nombre_Destinatario : '' %>" readonly>
-                                </div>
-                                <div class="col-12">
-                                    <label for="Direccion_Completa" class="form-label">Dirección</label>
-                                    <input type="text" class="form-control" id="Direccion_Completa"
-                                        name="Direccion_Completa" value="<%= envio ? envio.Direccion_Completa : '' %>" readonly>
-                                </div>
-                                <div class="col-12">
-                                    <label for="Estado_Envio" class="form-label">Estado del Envío <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="Estado_Envio" name="Estado_Envio" required>
-                                        <option value="Pendiente" <%=(envio && envio.Estado_Envio==='Pendiente' )
-                                            ? 'selected' : '' %>>Pendiente</option>
-                                        <option value="Preparado" <%=(envio && envio.Estado_Envio==='Preparado' )
-                                            ? 'selected' : '' %>>Preparado</option>
-                                        <option value="Despachado" <%=(envio && envio.Estado_Envio==='Despachado' )
-                                            ? 'selected' : '' %>>Despachado</option>
-                                    </select>
-                                    <div class="form-text">Selecciona el estado logístico del envío</div>
-                                </div>
-                            </div>
-                        <% } else { %>
-                            <!-- Vista completa para admin -->
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="ID_Envio" class="form-label">ID de Envío</label>
-                                    <input type="text" class="form-control" id="ID_Envio" name="ID_Envio"
-                                        value="<%= envio ? envio.ID_Envio : '' %>"
-                                        placeholder="E-2025/10/26-01" 
-                                        pattern="^E-\d{4}\/\d{2}\/\d{2}-\d{2}$"
-                                        title="Formato requerido: E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)"
-                                        required>
-                                    <div class="form-text">Formato: E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)</div>
-                                    <div class="invalid-feedback" id="ID_Envio-error"></div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label for="Estado_Envio" class="form-label">Estado</label>
-                                    <select class="form-select" id="Estado_Envio" name="Estado_Envio">
-                                        <option value="Pendiente" <%=(envio && envio.Estado_Envio==='Pendiente' )
-                                            ? 'selected' : '' %>>Pendiente</option>
-                                        <option value="Preparado" <%=(envio && envio.Estado_Envio==='Preparado' )
-                                            ? 'selected' : '' %>>Preparado</option>
-                                        <option value="Despachado" <%=(envio && envio.Estado_Envio==='Despachado' )
-                                            ? 'selected' : '' %>>Despachado</option>
-                                        <option value="En Ruta" <%=(envio && envio.Estado_Envio==='En Ruta' ) ? 'selected'
-                                            : '' %>>En Ruta</option>
-                                        <option value="Entregado" <%=(envio && envio.Estado_Envio==='Entregado' )
-                                            ? 'selected' : '' %>>Entregado</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label for="metodo_pago" class="form-label">Método de Pago</label>
-                                <select class="form-select" id="metodo_pago" name="metodo_pago">
-                                    <option value="Efectivo" <%=(envio && envio.metodo_pago==='Efectivo' ) ? 'selected'
-                                        : '' %>>Efectivo</option>
-                                    <option value="Transferencia" <%=(envio && envio.metodo_pago==='Transferencia' )
-                                        ? 'selected' : '' %>>Transferencia</option>
-                                    <option value="Tarjeta" <%=(envio && envio.metodo_pago==='Tarjeta' ) ? 'selected'
-                                        : '' %>>Tarjeta</option>
-                                </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label for="precio" class="form-label">Precio ($)</label>
-                                <input type="number" step="0.01" class="form-control" id="precio" name="precio"
-                                    value="<%= envio ? envio.precio : '0.00' %>" required>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label for="estado_pago" class="form-label">Estado de Pago</label>
-                                <select class="form-select" id="estado_pago" name="estado_pago">
-                                    <option value="Pendiente" <%=(envio && envio.estado_pago==='Pendiente' )
-                                        ? 'selected' : '' %>>Pendiente</option>
-                                    <option value="Pagado" <%=(envio && envio.estado_pago==='Pagado' ) ? 'selected' : ''
-                                        %>>Pagado</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-12">
-                                    <label for="Nombre_Destinatario" class="form-label">Nombre del Destinatario</label>
-                                <input type="text" class="form-control" id="Nombre_Destinatario"
-                                    name="Nombre_Destinatario" value="<%= envio ? envio.Nombre_Destinatario : '' %>"
-                                    required>
-                                </div>
-
-                                <div class="col-12">
-                                    <label for="Direccion_Completa" class="form-label">Dirección Completa</label>
-                                <input type="text" class="form-control" id="Direccion_Completa"
-                                    name="Direccion_Completa" value="<%= envio ? envio.Direccion_Completa : '' %>"
-                                    required>
-                                </div>
-
-                                <div class="col-12">
-                                    <label for="URL_Foto_Entrega" class="form-label">URL de Foto de Entrega <span
-                                            class="text-muted">(Opcional)</span></label>
-                                    <input type="url" class="form-control" id="URL_Foto_Entrega" name="URL_Foto_Entrega"
-                                        value="<%= envio ? (envio.URL_Foto_Entrega || '') : '' %>"
-                                        placeholder="https://...">
-                                </div>
-                            </div>
-                        <% } %>
-
-                        <% if (typeof isBodeguero === 'undefined' || !isBodeguero) { %>
-                            <hr class="my-4">
-
-                            <h5 class="mb-3">Productos</h5>
-
-                        <div id="product-list">
-                            <% if (envio && envio.products && envio.products.length > 0) { %>
-                                <% envio.products.forEach(function(product, index) { %>
-                                    <div class="row g-3 mb-3 product-item">
-                                        <div class="col-md-5">
-                                            <label for="product-id-<%= index %>" class="form-label">ID Producto</label>
-                                            <input type="text" class="form-control product-id" id="product-id-<%= index %>" name="products[<%= index %>][id_producto]" value="<%= product.id_producto_fk %>">
+                                <% if (typeof isBodeguero !=='undefined' && isBodeguero) { %>
+                                    <!-- Vista simplificada para bodeguero: Solo estado -->
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="ID_Envio" class="form-label">ID de Envío</label>
+                                            <input type="text" class="form-control" id="ID_Envio" name="ID_Envio"
+                                                value="<%= envio ? envio.ID_Envio : '' %>" readonly>
                                         </div>
-                                        <div class="col-md-5">
-                                            <label for="product-name-<%= index %>" class="form-label">Nombre Producto</label>
-                                            <input type="text" class="form-control product-name" id="product-name-<%= index %>" readonly>
+                                        <div class="col-md-6">
+                                            <label for="Nombre_Destinatario" class="form-label">Destinatario</label>
+                                            <input type="text" class="form-control" id="Nombre_Destinatario"
+                                                name="Nombre_Destinatario"
+                                                value="<%= envio ? envio.Nombre_Destinatario : '' %>" readonly>
                                         </div>
-                                        <div class="col-md-2">
-                                            <label for="product-quantity-<%= index %>" class="form-label">Cantidad</label>
-                                            <input type="number" class="form-control" id="product-quantity-<%= index %>" name="products[<%= index %>][cantidad]" value="<%= product.cantidad %>">
+                                        <div class="col-12">
+                                            <label for="Direccion_Completa" class="form-label">Dirección</label>
+                                            <input type="text" class="form-control" id="Direccion_Completa"
+                                                name="Direccion_Completa"
+                                                value="<%= envio ? envio.Direccion_Completa : '' %>" readonly>
                                         </div>
-                                        <div class="col-md-12">
-                                            <button type="button" class="btn btn-danger btn-sm remove-product">Eliminar</button>
+                                        <div class="col-12">
+                                            <label for="Estado_Envio" class="form-label">Estado del Envío <span
+                                                    class="text-danger">*</span></label>
+                                            <select class="form-select" id="Estado_Envio" name="Estado_Envio" required>
+                                                <option value="Pendiente" <%=(envio && envio.Estado_Envio==='Pendiente'
+                                                    ) ? 'selected' : '' %>>Pendiente</option>
+                                                <option value="Preparado" <%=(envio && envio.Estado_Envio==='Preparado'
+                                                    ) ? 'selected' : '' %>>Preparado</option>
+                                                <option value="Despachado" <%=(envio &&
+                                                    envio.Estado_Envio==='Despachado' ) ? 'selected' : '' %>>Despachado
+                                                </option>
+                                            </select>
+                                            <div class="form-text">Selecciona el estado logístico del envío</div>
                                         </div>
                                     </div>
-                                <% }); %>
-                            <% } %>
-                            </div>
-                            
-                            <button type="button" class="btn btn-success" id="add-product">Añadir Producto</button>
-                        <% } %>
+                                    <% } else { %>
+                                        <!-- Vista completa para admin -->
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label for="ID_Envio" class="form-label">ID de Envío</label>
+                                                <input type="text" class="form-control" id="ID_Envio" name="ID_Envio"
+                                                    value="<%= envio ? envio.ID_Envio : '' %>"
+                                                    placeholder="E-2025/10/26-01"
+                                                    pattern="^E-\d{4}\/\d{2}\/\d{2}-\d{2}$"
+                                                    title="Formato requerido: E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)"
+                                                    required>
+                                                <div class="form-text">Formato: E-yyyy/mm/dd-NN (ejemplo:
+                                                    E-2025/10/26-01)</div>
+                                                <div class="invalid-feedback" id="ID_Envio-error"></div>
+                                            </div>
 
-                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                            <a href="/admin/envios" class="btn btn-outline-secondary">Cancelar</a>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>
-                                <%= isEdit ? 'Actualizar' : 'Guardar' %>
-                            </button>
+                                            <div class="col-md-6">
+                                                <label for="Estado_Envio" class="form-label">Estado</label>
+                                                <select class="form-select" id="Estado_Envio" name="Estado_Envio">
+                                                    <option value="Pendiente" <%=(envio &&
+                                                        envio.Estado_Envio==='Pendiente' ) ? 'selected' : '' %>
+                                                        >Pendiente</option>
+                                                    <option value="Preparado" <%=(envio &&
+                                                        envio.Estado_Envio==='Preparado' ) ? 'selected' : '' %>
+                                                        >Preparado</option>
+                                                    <option value="Despachado" <%=(envio &&
+                                                        envio.Estado_Envio==='Despachado' ) ? 'selected' : '' %>
+                                                        >Despachado</option>
+                                                    <option value="En Ruta" <%=(envio && envio.Estado_Envio==='En Ruta'
+                                                        ) ? 'selected' : '' %>>En Ruta</option>
+                                                    <option value="Entregado" <%=(envio &&
+                                                        envio.Estado_Envio==='Entregado' ) ? 'selected' : '' %>
+                                                        >Entregado</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label for="metodo_pago" class="form-label">Método de Pago</label>
+                                                <select class="form-select" id="metodo_pago" name="metodo_pago">
+                                                    <option value="Efectivo" <%=(envio && envio.metodo_pago==='Efectivo'
+                                                        ) ? 'selected' : '' %>>Efectivo</option>
+                                                    <option value="Transferencia" <%=(envio &&
+                                                        envio.metodo_pago==='Transferencia' ) ? 'selected' : '' %>
+                                                        >Transferencia</option>
+                                                    <option value="Tarjeta" <%=(envio && envio.metodo_pago==='Tarjeta' )
+                                                        ? 'selected' : '' %>>Tarjeta</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label for="precio" class="form-label">Precio ($)</label>
+                                                <input type="number" step="0.01" class="form-control" id="precio"
+                                                    name="precio" value="<%= envio ? envio.precio : '0.00' %>" required>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label for="estado_pago" class="form-label">Estado de Pago</label>
+                                                <select class="form-select" id="estado_pago" name="estado_pago">
+                                                    <option value="Pendiente" <%=(envio &&
+                                                        envio.estado_pago==='Pendiente' ) ? 'selected' : '' %>>Pendiente
+                                                    </option>
+                                                    <option value="Pagado" <%=(envio && envio.estado_pago==='Pagado' )
+                                                        ? 'selected' : '' %>>Pagado</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-12">
+                                                <label for="Nombre_Destinatario" class="form-label">Nombre del
+                                                    Destinatario</label>
+                                                <input type="text" class="form-control" id="Nombre_Destinatario"
+                                                    name="Nombre_Destinatario"
+                                                    value="<%= envio ? envio.Nombre_Destinatario : '' %>" required>
+                                            </div>
+
+                                            <div class="col-12">
+                                                <label for="Direccion_Completa" class="form-label">Dirección
+                                                    Completa</label>
+                                                <input type="text" class="form-control" id="Direccion_Completa"
+                                                    name="Direccion_Completa"
+                                                    value="<%= envio ? envio.Direccion_Completa : '' %>" required>
+                                            </div>
+
+                                            <div class="col-12">
+                                                <label for="URL_Foto_Entrega" class="form-label">URL de Foto de Entrega
+                                                    <span class="text-muted">(Opcional)</span></label>
+                                                <input type="url" class="form-control" id="URL_Foto_Entrega"
+                                                    name="URL_Foto_Entrega"
+                                                    value="<%= envio ? (envio.URL_Foto_Entrega || '') : '' %>"
+                                                    placeholder="https://...">
+                                            </div>
+                                        </div>
+                                        <% } %>
+
+                                            <!-- Ahora la sección de productos es visible para todos (incluido Bodeguero) -->
+                                            <hr class="my-4">
+                                            <h5 class="mb-3">Productos</h5>
+
+                                            <div id="product-list">
+                                                <% if (envio && envio.products && envio.products.length> 0) { %>
+                                                    <% envio.products.forEach(function(product, index) { %>
+                                                        <div class="row g-3 mb-3 product-item">
+                                                            <div class="col-md-5">
+                                                                <label for="product-id-<%= index %>"
+                                                                    class="form-label">ID Producto</label>
+                                                                <input type="text" class="form-control product-id"
+                                                                    id="product-id-<%= index %>"
+                                                                    name="products[<%= index %>][id_producto]"
+                                                                    value="<%= product.id_producto_fk %>">
+                                                            </div>
+                                                            <div class="col-md-5">
+                                                                <label for="product-name-<%= index %>"
+                                                                    class="form-label">Nombre Producto</label>
+                                                                <input type="text" class="form-control product-name"
+                                                                    id="product-name-<%= index %>"
+                                                                    value="<%= product.descripcion %>" readonly>
+                                                            </div>
+                                                            <div class="col-md-2">
+                                                                <label for="product-quantity-<%= index %>"
+                                                                    class="form-label">Cantidad</label>
+                                                                <input type="number" class="form-control"
+                                                                    id="product-quantity-<%= index %>"
+                                                                    name="products[<%= index %>][cantidad]"
+                                                                    value="<%= product.cantidad %>">
+                                                            </div>
+                                                            <div class="col-md-12">
+                                                                <button type="button"
+                                                                    class="btn btn-danger btn-sm remove-product">Eliminar</button>
+                                                            </div>
+                                                        </div>
+                                                        <% }); %>
+                                                            <% } %>
+                                            </div>
+
+                                            <% if (typeof isBodeguero==='undefined' || !isBodeguero) { %>
+                                                <button type="button" class="btn btn-success" id="add-product">Añadir
+                                                    Producto</button>
+                                                <% } %>
+
+                                                    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                                                        <a href="/admin/envios"
+                                                            class="btn btn-outline-secondary">Cancelar</a>
+                                                        <button type="submit" class="btn btn-primary">
+                                                            <i class="fas fa-save me-2"></i>
+                                                            <%= isEdit ? 'Actualizar' : 'Guardar' %>
+                                                        </button>
+                                                    </div>
+                            </form>
                         </div>
-                    </form>
+                    </div>
+
+                    <% if (typeof isEdit !=='undefined' && isEdit && (typeof isBodeguero==='undefined' || !isBodeguero))
+                        { %>
+                        <div class="card mt-4 border-danger">
+                            <div class="card-body">
+                                <h5 class="mb-2" style="color: #dc2626;">Zona de Peligro</h5>
+                                <p class="text-muted mb-3" style="font-size: 0.875rem;">Esta acción no se puede
+                                    deshacer.</p>
+                                <form action="/admin/envios/<%= envio._id %>?_method=DELETE" method="POST"
+                                    class="d-inline"
+                                    onsubmit="return confirm('¿Estás seguro de que quieres eliminar este envío?');">
+                                    <button type="submit" class="btn btn-outline-danger">
+                                        <i class="fas fa-trash me-2"></i>Eliminar Envío
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <% } %>
                 </div>
             </div>
 
-            <% if (typeof isEdit !== 'undefined' && isEdit && (typeof isBodeguero === 'undefined' || !isBodeguero)) { %>
-                <div class="card mt-4 border-danger">
-                    <div class="card-body">
-                        <h5 class="mb-2" style="color: #dc2626;">Zona de Peligro</h5>
-                        <p class="text-muted mb-3" style="font-size: 0.875rem;">Esta acción no se puede deshacer.</p>
-                        <form action="/admin/envios/<%= envio._id %>?_method=DELETE" method="POST" class="d-inline"
-                            onsubmit="return confirm('¿Estás seguro de que quieres eliminar este envío?');">
-                            <button type="submit" class="btn btn-outline-danger">
-                                <i class="fas fa-trash me-2"></i>Eliminar Envío
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            <% } %>
-        </div>
-    </div>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    // Validación del formato de código de envío
+                    const codigoInput = document.getElementById('ID_Envio');
+                    const form = codigoInput ? codigoInput.closest('form') : null;
+                    const errorDiv = document.getElementById('ID_Envio-error');
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Validación del formato de código de envío
-            const codigoInput = document.getElementById('ID_Envio');
-            const form = codigoInput ? codigoInput.closest('form') : null;
-            const errorDiv = document.getElementById('ID_Envio-error');
+                    if (codigoInput && form) {
+                        // Validación en tiempo real
+                        codigoInput.addEventListener('input', function () {
+                            const codigo = this.value.trim();
+                            const formatoRegex = /^E-\d{4}\/\d{2}\/\d{2}-\d{2}$/;
 
-            if (codigoInput && form) {
-                // Validación en tiempo real
-                codigoInput.addEventListener('input', function() {
-                    const codigo = this.value.trim();
-                    const formatoRegex = /^E-\d{4}\/\d{2}\/\d{2}-\d{2}$/;
-                    
-                    if (codigo && !formatoRegex.test(codigo)) {
-                        this.classList.add('is-invalid');
-                        this.classList.remove('is-valid');
-                        if (errorDiv) errorDiv.textContent = 'Formato inválido. Debe ser E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)';
-                    } else if (codigo && formatoRegex.test(codigo)) {
-                        // Validar fecha
-                        const partes = codigo.match(/^E-(\d{4})\/(\d{2})\/(\d{2})-(\d{2})$/);
-                        if (partes) {
-                            const año = parseInt(partes[1]);
-                            const mes = parseInt(partes[2]);
-                            const dia = parseInt(partes[3]);
-                            const fecha = new Date(año, mes - 1, dia);
-                            
-                            if (fecha.getFullYear() !== año || fecha.getMonth() !== mes - 1 || fecha.getDate() !== dia) {
+                            if (codigo && !formatoRegex.test(codigo)) {
                                 this.classList.add('is-invalid');
                                 this.classList.remove('is-valid');
-                                if (errorDiv) errorDiv.textContent = 'La fecha en el código no es válida.';
+                                if (errorDiv) errorDiv.textContent = 'Formato inválido. Debe ser E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)';
+                            } else if (codigo && formatoRegex.test(codigo)) {
+                                // Validar fecha
+                                const partes = codigo.match(/^E-(\d{4})\/(\d{2})\/(\d{2})-(\d{2})$/);
+                                if (partes) {
+                                    const año = parseInt(partes[1]);
+                                    const mes = parseInt(partes[2]);
+                                    const dia = parseInt(partes[3]);
+                                    const fecha = new Date(año, mes - 1, dia);
+
+                                    if (fecha.getFullYear() !== año || fecha.getMonth() !== mes - 1 || fecha.getDate() !== dia) {
+                                        this.classList.add('is-invalid');
+                                        this.classList.remove('is-valid');
+                                        if (errorDiv) errorDiv.textContent = 'La fecha en el código no es válida.';
+                                    } else {
+                                        this.classList.remove('is-invalid');
+                                        this.classList.add('is-valid');
+                                        if (errorDiv) errorDiv.textContent = '';
+                                    }
+                                }
                             } else {
-                                this.classList.remove('is-invalid');
-                                this.classList.add('is-valid');
+                                this.classList.remove('is-invalid', 'is-valid');
                                 if (errorDiv) errorDiv.textContent = '';
                             }
-                        }
-                    } else {
-                        this.classList.remove('is-invalid', 'is-valid');
-                        if (errorDiv) errorDiv.textContent = '';
+                        });
+
+                        // Validación al enviar el formulario
+                        form.addEventListener('submit', function (e) {
+                            const codigo = codigoInput.value.trim();
+                            const formatoRegex = /^E-\d{4}\/\d{2}\/\d{2}-\d{2}$/;
+
+                            if (!codigo || !formatoRegex.test(codigo)) {
+                                e.preventDefault();
+                                codigoInput.classList.add('is-invalid');
+                                if (errorDiv) errorDiv.textContent = 'El código de envío debe tener el formato E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)';
+                                codigoInput.focus();
+                                return false;
+                            }
+
+                            // Validar fecha
+                            const partes = codigo.match(/^E-(\d{4})\/(\d{2})\/(\d{2})-(\d{2})$/);
+                            if (partes) {
+                                const año = parseInt(partes[1]);
+                                const mes = parseInt(partes[2]);
+                                const dia = parseInt(partes[3]);
+                                const fecha = new Date(año, mes - 1, dia);
+
+                                if (fecha.getFullYear() !== año || fecha.getMonth() !== mes - 1 || fecha.getDate() !== dia) {
+                                    e.preventDefault();
+                                    codigoInput.classList.add('is-invalid');
+                                    if (errorDiv) errorDiv.textContent = 'La fecha en el código no es válida.';
+                                    codigoInput.focus();
+                                    return false;
+                                }
+                            }
+                        });
                     }
-                });
 
-                // Validación al enviar el formulario
-                form.addEventListener('submit', function(e) {
-                    const codigo = codigoInput.value.trim();
-                    const formatoRegex = /^E-\d{4}\/\d{2}\/\d{2}-\d{2}$/;
-                    
-                    if (!codigo || !formatoRegex.test(codigo)) {
-                        e.preventDefault();
-                        codigoInput.classList.add('is-invalid');
-                        if (errorDiv) errorDiv.textContent = 'El código de envío debe tener el formato E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)';
-                        codigoInput.focus();
-                        return false;
-                    }
+                    // Funcionalidad de productos
+                    const productList = document.getElementById('product-list');
+                    if (productList) {
+                        let productIndex = <%= (envio && envio.products) ? envio.products.length : 0 %>;
 
-                    // Validar fecha
-                    const partes = codigo.match(/^E-(\d{4})\/(\d{2})\/(\d{2})-(\d{2})$/);
-                    if (partes) {
-                        const año = parseInt(partes[1]);
-                        const mes = parseInt(partes[2]);
-                        const dia = parseInt(partes[3]);
-                        const fecha = new Date(año, mes - 1, dia);
-                        
-                        if (fecha.getFullYear() !== año || fecha.getMonth() !== mes - 1 || fecha.getDate() !== dia) {
-                            e.preventDefault();
-                            codigoInput.classList.add('is-invalid');
-                            if (errorDiv) errorDiv.textContent = 'La fecha en el código no es válida.';
-                            codigoInput.focus();
-                            return false;
-                        }
-                    }
-                });
-            }
-
-            // Funcionalidad de productos
-            const productList = document.getElementById('product-list');
-            if (productList) {
-                let productIndex = <%= (envio && envio.products) ? envio.products.length : 0 %>;
-
-                const addProductBtn = document.getElementById('add-product');
-                if (addProductBtn) {
-                    addProductBtn.addEventListener('click', function() {
-                        const productItem = document.createElement('div');
-                        productItem.classList.add('row', 'g-3', 'mb-3', 'product-item');
-                        productItem.innerHTML = `
+                        const addProductBtn = document.getElementById('add-product');
+                        if (addProductBtn) {
+                            addProductBtn.addEventListener('click', function () {
+                                const productItem = document.createElement('div');
+                                productItem.classList.add('row', 'g-3', 'mb-3', 'product-item');
+                                productItem.innerHTML = `
                             <div class="col-md-5">
                                 <label for="product-id-${productIndex}" class="form-label">ID Producto</label>
                                 <input type="text" class="form-control product-id" id="product-id-${productIndex}" name="products[${productIndex}][id_producto]">
@@ -322,40 +356,40 @@
                                 <button type="button" class="btn btn-danger btn-sm remove-product">Eliminar</button>
                             </div>
                         `;
-                        productList.appendChild(productItem);
-                        productIndex++;
-                    });
-                }
-
-                productList.addEventListener('click', function(e) {
-                    if (e.target.classList.contains('remove-product')) {
-                        e.target.closest('.product-item').remove();
-                    }
-                });
-
-                productList.addEventListener('change', async function(e) {
-                    if (e.target.classList.contains('product-id')) {
-                        const productId = e.target.value;
-                        const productNameInput = e.target.closest('.product-item').querySelector('.product-name');
-                        if (productId) {
-                            try {
-                                const response = await fetch('/api/products/' + productId);
-                                if (response.ok) {
-                                    const product = await response.json();
-                                    productNameInput.value = product.descripcion;
-                                } else {
-                                    productNameInput.value = 'Producto no encontrado';
-                                }
-                            } catch (err) {
-                                productNameInput.value = 'Error al buscar';
-                            }
-                        } else {
-                            productNameInput.value = '';
+                                productList.appendChild(productItem);
+                                productIndex++;
+                            });
                         }
+
+                        productList.addEventListener('click', function (e) {
+                            if (e.target.classList.contains('remove-product')) {
+                                e.target.closest('.product-item').remove();
+                            }
+                        });
+
+                        productList.addEventListener('change', async function (e) {
+                            if (e.target.classList.contains('product-id')) {
+                                const productId = e.target.value;
+                                const productNameInput = e.target.closest('.product-item').querySelector('.product-name');
+                                if (productId) {
+                                    try {
+                                        const response = await fetch('/api/products/' + productId);
+                                        if (response.ok) {
+                                            const product = await response.json();
+                                            productNameInput.value = product.descripcion;
+                                        } else {
+                                            productNameInput.value = 'Producto no encontrado';
+                                        }
+                                    } catch (err) {
+                                        productNameInput.value = 'Error al buscar';
+                                    }
+                                } else {
+                                    productNameInput.value = '';
+                                }
+                            }
+                        });
                     }
                 });
-            }
-        });
-    </script>
+            </script>
 
-    <%- include('../layouts/footer') %>
+            <%- include('../layouts/footer') %>

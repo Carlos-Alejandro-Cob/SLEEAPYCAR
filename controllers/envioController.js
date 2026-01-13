@@ -12,7 +12,7 @@ exports.listEnvíos = async (req, res) => {
     try {
         const { q, estado } = req.query;
         const userRole = req.user ? req.user.id_rol_fk : null;
-        
+
         // Si es bodeguero, por ahora mostrar todos los envíos (no hay asignación por bodega aún)
         // TODO: Implementar filtrado por bodega_id cuando se agregue el campo
         const envios = await Envio.findAll({ q, estado });
@@ -182,25 +182,25 @@ exports.updateEnvío = async (req, res) => {
 
         if (userRole === ROLES.REPARTIDOR) { // Transportista
             const { estado_envio, motivo_cancelacion } = req.body;
-            
+
             // Estados permitidos para repartidor
             const estadosPermitidos = ['Entregado', 'Intento de entrega', 'Devuelto a bodega', 'Cancelado en ruta'];
-            
+
             if (!estadosPermitidos.includes(estado_envio)) {
                 req.flash('error_msg', 'Estado no válido para repartidor.');
                 return res.redirect('/admin/repartidor');
             }
-            
+
             // Si es cancelado, verificar que tenga motivo
             if (estado_envio === 'Cancelado en ruta' && (!motivo_cancelacion || motivo_cancelacion.trim() === '')) {
                 req.flash('error_msg', 'Debe proporcionar un motivo para cancelar el envío.');
                 return res.redirect('/admin/repartidor');
             }
-            
+
             await Envio.update(id, { estado_envio });
 
             // Audit Log
-            const mensajeLog = motivo_cancelacion 
+            const mensajeLog = motivo_cancelacion
                 ? `Envío ${id} actualizado a "${estado_envio}" por Repartidor. Motivo: ${motivo_cancelacion}`
                 : `Envío ${id} actualizado a "${estado_envio}" por Repartidor`;
             await logger.logAction(currentUserId, 'UPDATE_ESTADO_ENVIO', mensajeLog);
@@ -212,15 +212,15 @@ exports.updateEnvío = async (req, res) => {
 
         if (userRole === ROLES.BODEGUERO) { // Bodeguero - Solo puede cambiar estado logístico
             const { Estado_Envio } = req.body;
-            
+
             // Estados permitidos para bodeguero (logísticos)
             const estadosPermitidos = ['Pendiente', 'Preparado', 'Despachado'];
-            
+
             if (!estadosPermitidos.includes(Estado_Envio)) {
                 req.flash('error_msg', 'Estado no válido para bodeguero. Solo puede cambiar a: Pendiente, Preparado o Despachado.');
                 return res.redirect(`/admin/envios/${id}/editar`);
             }
-            
+
             await Envio.update(id, { estado_envio: Estado_Envio });
 
             // Audit Log
@@ -489,7 +489,9 @@ exports.addEnvioToRuta = async (req, res) => {
     const id_usuario = req.user.id_usuario;
 
     try {
-        const envios = await Envio.findAll({ q: codigo_envio, estado: null });
+        // Buscar envío por código. Para asignación, idealmente no debería tener repartidor o no estar entregado.
+        // El modelo Envio.findAll soporta 'NO_ENTREGADO' como filtro especial.
+        const envios = await Envio.findAll({ q: codigo_envio, estado: 'NO_ENTREGADO' });
         if (envios.length > 0) {
             const envio = envios[0];
 

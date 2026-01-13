@@ -26,6 +26,47 @@ class User {
             throw error;
         }
     }
+
+    // Crear nuevo usuario
+    static async create(userData) {
+        const { nombre_completo, email, nombre_usuario, password_hash, id_rol_fk } = userData;
+        const query = 'INSERT INTO usuarios (nombre_completo, email, nombre_usuario, password_hash, id_rol_fk) VALUES (?, ?, ?, ?, ?)';
+        const [result] = await queryWithRetry(query, [nombre_completo, email, nombre_usuario, password_hash, id_rol_fk]);
+        return result.insertId;
+    }
+
+    // Actualizar usuario
+    static async update(id, userData) {
+        let query = 'UPDATE usuarios SET nombre_completo = ?, email = ?, nombre_usuario = ?, id_rol_fk = ?';
+        const params = [userData.nombre_completo, userData.email, userData.nombre_usuario, userData.id_rol_fk];
+
+        if (userData.password_hash) {
+            query += ', password_hash = ?';
+            params.push(userData.password_hash);
+        }
+
+        query += ' WHERE id_usuario = ?';
+        params.push(id);
+
+        await queryWithRetry(query, params);
+    }
+
+    // Eliminar usuario con manejo de errores de FK
+    static async delete(id) {
+        try {
+            const query = 'DELETE FROM usuarios WHERE id_usuario = ?';
+            await queryWithRetry(query, [id]);
+            return true;
+        } catch (error) {
+            // Verificar si es un error de integridad referencial (clave foránea)
+            if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.errno === 1451) {
+                const newError = new Error('No se puede eliminar el usuario porque tiene registros asociados (envíos, auditoría, etc.).');
+                newError.code = 'ER_FK_CONSTRAINT';
+                throw newError;
+            }
+            throw error;
+        }
+    }
 }
 
 module.exports = User;

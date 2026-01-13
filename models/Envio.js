@@ -54,7 +54,12 @@ class Envio {
             return undefined;
         }
         const envio = rows[0];
-        const [products] = await queryWithRetry('SELECT id_producto_fk, cantidad FROM envio_productos WHERE id_envio_fk = ?', [id]);
+        const [products] = await queryWithRetry(`
+            SELECT ep.id_producto_fk, ep.cantidad, p.descripcion 
+            FROM envio_productos ep 
+            LEFT JOIN productos p ON ep.id_producto_fk = p.id_producto 
+            WHERE ep.id_envio_fk = ?
+        `, [id]);
         envio.products = products;
         return envio; // Devuelve el primer resultado o undefined
     }
