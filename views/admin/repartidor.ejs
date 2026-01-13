@@ -128,7 +128,7 @@
                         <input type="hidden" name="estado_envio" value="Entregado">
                         <button type="submit" class="btn btn-success w-100 text-start">
                             <i class="fas fa-check me-2"></i><span class="fw-semibold">Entregado</span>
-                            <small class="d-block text-white-50 ms-4 mt-1" style="font-size: 0.75rem;">Marcar como entregado exitosamente</small>
+                            <small class="d-block ms-4 mt-1" style="font-size: 0.75rem;">Marcar como entregado exitosamente</small>
                         </button>
                     </form>
                     
@@ -137,7 +137,7 @@
                         <input type="hidden" name="estado_envio" value="Intento de entrega">
                         <button type="submit" class="btn btn-warning w-100 text-start">
                             <i class="fas fa-exclamation-triangle me-2"></i><span class="fw-semibold">Intento de entrega</span>
-                            <small class="d-block text-white-50 ms-4 mt-1" style="font-size: 0.75rem;">Fue al destino pero no pudo entregar</small>
+                            <small class="d-block ms-4 mt-1" style="font-size: 0.75rem;">Fue al destino pero no pudo entregar</small>
                         </button>
                     </form>
                     
@@ -146,7 +146,7 @@
                         <input type="hidden" name="estado_envio" value="Devuelto a bodega">
                         <button type="submit" class="btn btn-secondary w-100 text-start">
                             <i class="fas fa-undo me-2"></i><span class="fw-semibold">Devuelto a bodega</span>
-                            <small class="d-block text-white-50 ms-4 mt-1" style="font-size: 0.75rem;">No se logró entregar</small>
+                            <small class="d-block ms-4 mt-1" style="font-size: 0.75rem;">No se logró entregar</small>
                         </button>
                     </form>
                     
@@ -156,7 +156,7 @@
                             class="btn btn-danger w-100 text-start" 
                             onclick="abrirModalCancelar()">
                         <i class="fas fa-times-circle me-2"></i><span class="fw-semibold">Cancelado en ruta</span>
-                        <small class="d-block text-white-50 ms-4 mt-1" style="font-size: 0.75rem;">Opcional, con motivo</small>
+                        <small class="d-block ms-4 mt-1" style="font-size: 0.75rem;">Opcional, con motivo</small>
                     </button>
                 </div>
             </div>
@@ -354,6 +354,8 @@
         padding: 0.75rem 1rem;
         margin-bottom: 0.5rem;
         transition: all 0.2s ease;
+        border-radius: 8px;
+        font-weight: 500;
     }
     
     .modal-body .btn:last-child {
@@ -361,13 +363,84 @@
     }
     
     .modal-body .btn:hover {
-        transform: translateX(5px);
+        transform: translateX(3px);
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     }
     
     .modal-body .btn small {
         display: block;
         margin-top: 0.25rem;
+        font-weight: 400;
         opacity: 0.9;
+    }
+
+    /* Ajustes de color de texto para mejor legibilidad en botones del modal */
+    .modal-body .btn-success {
+        background-color: var(--medium-green);
+        border-color: var(--medium-green);
+        color: var(--white);
+    }
+
+    .modal-body .btn-success:hover {
+        background-color: var(--primary-green);
+        border-color: var(--primary-green);
+        color: var(--white);
+    }
+
+    .modal-body .btn-success small {
+        color: var(--white);
+        opacity: 0.85;
+    }
+
+    .modal-body .btn-warning {
+        background-color: #f59e0b;
+        border-color: #f59e0b;
+        color: var(--white);
+    }
+
+    .modal-body .btn-warning:hover {
+        background-color: #d97706;
+        border-color: #d97706;
+        color: var(--white);
+    }
+
+    .modal-body .btn-warning small {
+        color: var(--white);
+        opacity: 0.85;
+    }
+
+    .modal-body .btn-secondary {
+        background-color: var(--text-light);
+        border-color: var(--text-light);
+        color: var(--white);
+    }
+
+    .modal-body .btn-secondary:hover {
+        background-color: var(--text-medium);
+        border-color: var(--text-medium);
+        color: var(--white);
+    }
+
+    .modal-body .btn-secondary small {
+        color: var(--white);
+        opacity: 0.85;
+    }
+
+    .modal-body .btn-danger {
+        background-color: #ef4444;
+        border-color: #ef4444;
+        color: var(--white);
+    }
+
+    .modal-body .btn-danger:hover {
+        background-color: #dc2626;
+        border-color: #dc2626;
+        color: var(--white);
+    }
+
+    .modal-body .btn-danger small {
+        color: var(--white);
+        opacity: 0.85;
     }
 
     /* Cards optimizados */

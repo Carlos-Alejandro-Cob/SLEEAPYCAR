@@ -210,16 +210,32 @@ if (typeof paypalClientId !== 'undefined') { %>
                                                 <%= pedido.metodo_pago || 'No especificado' %>
                                             </span>
                                         </td>
-                                        <td>
-                                            <% 
-                                                let pagoClass = pedido.estado_pago === 'Pagado' ? 'bg-success' : 'bg-warning';
-                                            %>
-                                            <span class="badge <%= pagoClass %>">
-                                                <%= pedido.estado_pago || 'Pendiente' %>
-                                            </span>
+                                        <td style="min-width: 120px;">
+                                            <div class="d-flex flex-column gap-1">
+                                                <% 
+                                                    let pagoClass = pedido.estado_pago === 'Pagado' ? 'bg-success' : 'bg-warning';
+                                                %>
+                                                <span class="badge <%= pagoClass %>" style="font-size: 0.8125rem;">
+                                                    <% if (pedido.estado_pago === 'Pagado') { %>
+                                                        <i class="fas fa-check-circle me-1"></i>
+                                                    <% } else { %>
+                                                        <i class="fas fa-clock me-1"></i>
+                                                    <% } %>
+                                                    <%= pedido.estado_pago || 'Pendiente' %>
+                                                </span>
+                                            </div>
                                         </td>
-                                        <td>
-                                            <strong>$<%= parseFloat(pedido.precio || 0).toFixed(2) %></strong>
+                                        <td style="min-width: 100px;">
+                                            <div class="d-flex flex-column">
+                                                <strong class="text-dark" style="font-size: 1rem;">
+                                                    $<%= parseFloat(pedido.precio || 0).toFixed(2) %>
+                                                </strong>
+                                                <% if (pedido.estado_pago !== 'Pagado') { %>
+                                                    <small class="text-muted mt-1" style="font-size: 0.75rem;">
+                                                        <i class="fas fa-exclamation-circle me-1"></i>Adeudo pendiente
+                                                    </small>
+                                                <% } %>
+                                            </div>
                                         </td>
                                         <td>
                                             <a href="/rastreo/<%= pedido.codigo_envio %>" class="btn btn-sm btn-outline-primary" title="Rastrear">
