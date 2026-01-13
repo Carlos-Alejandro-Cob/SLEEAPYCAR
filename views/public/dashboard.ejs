@@ -1,14 +1,545 @@
 <%- include('../layouts/header', { ...locals, title: 'Mi Cuenta - SLEE APYCAR' }) %>
+<% 
+// Variable global para PayPal Client ID
+if (typeof paypalClientId !== 'undefined') { %>
+<script>
+    window.paypalClientId = '<%= paypalClientId || "sb" %>';
+</script>
+<% } %>
 
-<div class="container mt-5">
-    <h1><%= title %></h1>
-    <p>Bienvenido a tu panel de cliente.</p>
-    
-    <h2>Mis Pedidos</h2>
-    <p>Aquí se mostrarán tus pedidos.</p>
+<!-- Panel de Navegación Superior -->
+<div class="customer-nav-panel">
+    <div class="container">
+        <nav class="customer-nav">
+            <a href="/" class="nav-item <%= typeof activeSection !== 'undefined' && activeSection === 'cuenta' ? 'active' : '' %>">
+                <i class="fas fa-user-circle"></i>
+                <span>Mi Cuenta</span>
+            </a>
+            <a href="/catalogo" class="nav-item <%= typeof activeSection !== 'undefined' && activeSection === 'catalogo' ? 'active' : '' %>">
+                <i class="fas fa-store"></i>
+                <span>Catálogo</span>
+            </a>
+            <a href="/pedidos" class="nav-item <%= typeof activeSection !== 'undefined' && activeSection === 'pedidos' ? 'active' : '' %>">
+                <i class="fas fa-shopping-bag"></i>
+                <span>Pedidos</span>
+            </a>
+            <a href="/carrito" class="nav-item <%= typeof activeSection !== 'undefined' && activeSection === 'carrito' ? 'active' : '' %>">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Carrito</span>
+            </a>
+        </nav>
+    </div>
+</div>
 
-    <h2>Realizar un Pedido</h2>
-    <p>Aquí se mostrará el formulario para realizar un pedido.</p>
+<div class="container mt-4">
+    <% if (typeof activeSection === 'undefined' || activeSection === 'cuenta') { %>
+        <h1>Mi Cuenta</h1>
+        <p class="text-muted">Bienvenido a tu panel de cliente.</p>
+        
+        <% if (typeof userInfo !== 'undefined' && userInfo) { %>
+            <div class="row mt-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">
+                                <i class="fas fa-user-circle text-primary me-2"></i>
+                                Información de la Cuenta
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="account-info">
+                                <div class="info-row">
+                                    <div class="info-label">
+                                        <i class="fas fa-id-card me-2"></i>
+                                        <span>ID de Usuario:</span>
+                                    </div>
+                                    <div class="info-value">
+                                        <%= userInfo.id_usuario %>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-row">
+                                    <div class="info-label">
+                                        <i class="fas fa-user me-2"></i>
+                                        <span>Nombre Completo:</span>
+                                    </div>
+                                    <div class="info-value">
+                                        <%= userInfo.nombre_completo || 'No especificado' %>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-row">
+                                    <div class="info-label">
+                                        <i class="fas fa-at me-2"></i>
+                                        <span>Nombre de Usuario:</span>
+                                    </div>
+                                    <div class="info-value">
+                                        <%= userInfo.nombre_usuario %>
+                                    </div>
+                                </div>
+                                
+                                <% if (userInfo.email) { %>
+                                <div class="info-row">
+                                    <div class="info-label">
+                                        <i class="fas fa-envelope me-2"></i>
+                                        <span>Correo Electrónico:</span>
+                                    </div>
+                                    <div class="info-value">
+                                        <%= userInfo.email %>
+                                    </div>
+                                </div>
+                                <% } %>
+                                
+                                <div class="info-row">
+                                    <div class="info-label">
+                                        <i class="fas fa-user-tag me-2"></i>
+                                        <span>Rol:</span>
+                                    </div>
+                                    <div class="info-value">
+                                        <span class="badge bg-primary">
+                                            <%= userInfo.nombre_rol || 'Cliente' %>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">
+                                <i class="fas fa-cog text-primary me-2"></i>
+                                Acciones Rápidas
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="/pedidos" class="btn btn-outline-primary">
+                                    <i class="fas fa-shopping-bag me-2"></i>
+                                    Ver Mis Pedidos
+                                </a>
+                                <a href="/catalogo" class="btn btn-success">
+                                    <i class="fas fa-store me-2"></i>
+                                    Ver Catálogo
+                                </a>
+                                <a href="/carrito" class="btn btn-outline-success">
+                                    <i class="fas fa-shopping-cart me-2"></i>
+                                    Ver Carrito
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% } else { %>
+            <div class="card mt-4">
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No se pudo cargar la información de tu cuenta. Por favor, intenta recargar la página.
+                    </div>
+                </div>
+            </div>
+        <% } %>
+    <% } else if (activeSection === 'pedidos') { %>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>Mis Pedidos</h1>
+                <p class="text-muted mb-0">Historial de todos tus pedidos realizados.</p>
+            </div>
+            <a href="/catalogo" class="btn btn-success">
+                <i class="fas fa-store me-2"></i>
+                Ver Catálogo
+            </a>
+        </div>
+        
+        <% if (typeof pedidos !== 'undefined' && pedidos && pedidos.length > 0) { %>
+            <div class="card mt-4">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Fecha</th>
+                                    <th>Destinatario</th>
+                                    <th>Dirección</th>
+                                    <th>Estado</th>
+                                    <th>Método de Pago</th>
+                                    <th>Pago</th>
+                                    <th>Total</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% pedidos.forEach(function(pedido) { %>
+                                    <tr>
+                                        <td>
+                                            <strong><%= pedido.codigo_envio %></strong>
+                                        </td>
+                                        <td>
+                                            <% if (pedido.fecha_salida) { %>
+                                                <%= new Date(pedido.fecha_salida).toLocaleDateString('es-ES', { 
+                                                    year: 'numeric', 
+                                                    month: 'short', 
+                                                    day: 'numeric' 
+                                                }) %>
+                                            <% } else { %>
+                                                <span class="text-muted">-</span>
+                                            <% } %>
+                                        </td>
+                                        <td><%= pedido.nombre_destinatario %></td>
+                                        <td>
+                                            <small class="text-muted"><%= pedido.direccion_completa %></small>
+                                        </td>
+                                        <td>
+                                            <% 
+                                                let estadoClass = 'bg-secondary';
+                                                if (pedido.estado_envio === 'Entregado') estadoClass = 'bg-success';
+                                                else if (pedido.estado_envio === 'En Ruta') estadoClass = 'bg-warning';
+                                                else if (pedido.estado_envio === 'Pendiente') estadoClass = 'bg-info';
+                                            %>
+                                            <span class="badge <%= estadoClass %>">
+                                                <%= pedido.estado_envio || 'Pendiente' %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-outline-secondary">
+                                                <%= pedido.metodo_pago || 'No especificado' %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <% 
+                                                let pagoClass = pedido.estado_pago === 'Pagado' ? 'bg-success' : 'bg-warning';
+                                            %>
+                                            <span class="badge <%= pagoClass %>">
+                                                <%= pedido.estado_pago || 'Pendiente' %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <strong>$<%= parseFloat(pedido.precio || 0).toFixed(2) %></strong>
+                                        </td>
+                                        <td>
+                                            <a href="/rastreo/<%= pedido.codigo_envio %>" class="btn btn-sm btn-outline-primary" title="Rastrear">
+                                                <i class="fas fa-search"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <% if (pedido.productos && pedido.productos.length > 0) { %>
+                                        <tr class="table-light">
+                                            <td colspan="9" class="py-2">
+                                                <small class="text-muted">
+                                                    <strong>Productos:</strong>
+                                                    <% pedido.productos.forEach(function(producto, index) { %>
+                                                        <%= producto.cantidad %>x <%= producto.descripcion %>
+                                                        <% if (index < pedido.productos.length - 1) { %>, <% } %>
+                                                    <% }); %>
+                                                </small>
+                                            </td>
+                                        </tr>
+                                    <% } %>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        <% } else { %>
+            <div class="card mt-4">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No tienes pedidos aún</h4>
+                    <p class="text-muted">Realiza tu primer pedido para comenzar.</p>
+                    <a href="/catalogo" class="btn btn-success mt-3">
+                        <i class="fas fa-store me-2"></i>
+                        Ver Catálogo de Productos
+                    </a>
+                </div>
+            </div>
+        <% } %>
+    <% } else if (activeSection === 'catalogo') { %>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>Catálogo de Productos</h1>
+                <p class="text-muted mb-0">Explora nuestro catálogo completo de productos disponibles.</p>
+            </div>
+            <a href="/carrito" class="btn btn-primary position-relative">
+                <i class="fas fa-shopping-cart me-2"></i>
+                Carrito
+                <% if (typeof carritoCount !== 'undefined' && carritoCount > 0) { %>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        <%= carritoCount %>
+                    </span>
+                <% } %>
+            </a>
+        </div>
+        
+        <!-- Barra de búsqueda y filtros -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="buscar-producto" placeholder="Buscar productos por nombre, código o descripción...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="filtro-grupo">
+                            <option value="">Todos los grupos</option>
+                            <% if (typeof grupos !== 'undefined' && grupos) { %>
+                                <% grupos.forEach(function(grupo) { %>
+                                    <option value="<%= grupo %>"><%= grupo %></option>
+                                <% }); %>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="ordenar-productos">
+                            <option value="nombre-asc">Nombre A-Z</option>
+                            <option value="nombre-desc">Nombre Z-A</option>
+                            <option value="precio-asc">Precio: Menor a Mayor</option>
+                            <option value="precio-desc">Precio: Mayor a Menor</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <span id="contador-productos">
+                            <% if (typeof productos !== 'undefined' && productos) { %>
+                                Mostrando <%= productos.length %> producto(s)
+                            <% } else { %>
+                                0 productos
+                            <% } %>
+                        </span>
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Grid de productos -->
+        <div class="row" id="catalogo-productos">
+            <% if (typeof productos !== 'undefined' && productos && productos.length > 0) { %>
+                <% productos.forEach(function(producto) { %>
+                    <div class="col-md-4 col-lg-3 mb-4 producto-item" 
+                         data-nombre="<%= (producto.descripcion || '').toLowerCase() %>"
+                         data-codigo="<%= (producto.codigo || '').toLowerCase() %>"
+                         data-grupo="<%= (producto.detalles || '').toLowerCase() %>"
+                         data-precio="<%= producto.precio || 0 %>">
+                        <div class="card h-100 product-card">
+                            <div class="card-body d-flex flex-column">
+                                <% if (producto.detalles) { %>
+                                    <span class="badge bg-info mb-2" style="font-size: 0.75rem;"><%= producto.detalles %></span>
+                                <% } %>
+                                <h5 class="card-title" style="font-size: 1rem; min-height: 2.5rem;">
+                                    <%= producto.descripcion || producto.nombre || 'Producto' %>
+                                </h5>
+                                <% if (producto.codigo) { %>
+                                    <small class="text-muted mb-2">Código: <%= producto.codigo %></small>
+                                <% } %>
+                                <div class="mt-auto">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="h5 mb-0 text-success">
+                                            $<%= parseFloat(producto.precio || 0).toFixed(2) %>
+                                        </span>
+                                        <% if (producto.existencia && parseInt(producto.existencia) > 0) { %>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle me-1"></i>
+                                                Disponible
+                                            </span>
+                                        <% } else { %>
+                                            <span class="badge bg-secondary">
+                                                Sin existencia
+                                            </span>
+                                        <% } %>
+                                    </div>
+                                    <% if (producto.um) { %>
+                                        <small class="text-muted d-block mb-2">Unidad: <%= producto.um %></small>
+                                    <% } %>
+                                    <button class="btn btn-primary w-100 add-to-cart" 
+                                            data-product-id="<%= producto.id_producto || producto.id %>" 
+                                            data-product-name="<%= producto.descripcion || producto.nombre %>" 
+                                            data-product-price="<%= producto.precio || 0 %>"
+                                            <%= (!producto.existencia || parseInt(producto.existencia) <= 0) ? 'disabled' : '' %>>
+                                        <i class="fas fa-cart-plus me-2"></i>
+                                        Agregar al Carrito
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No se encontraron productos</h4>
+                            <p class="text-muted">Intenta ajustar los filtros de búsqueda.</p>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+        
+        <!-- Paginación -->
+        <div id="paginacion-container" class="mt-4 d-none">
+            <nav aria-label="Paginación de productos">
+                <ul class="pagination justify-content-center" id="paginacion">
+                </ul>
+            </nav>
+        </div>
+    <% } else if (activeSection === 'carrito') { %>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1>Carrito de Compras</h1>
+                <p class="text-muted mb-0">Revisa los productos en tu carrito antes de realizar el pedido.</p>
+            </div>
+            <a href="/catalogo" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Continuar Comprando
+            </a>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <% if (typeof carrito !== 'undefined' && carrito && carrito.length > 0) { %>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Precio Unitario</th>
+                                            <th>Cantidad</th>
+                                            <th>Subtotal</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% 
+                                            let subtotalTotal = 0;
+                                            carrito.forEach(function(item) {
+                                                const subtotal = item.precio * item.cantidad;
+                                                subtotalTotal += subtotal;
+                                        %>
+                                            <tr>
+                                                <td>
+                                                    <strong><%= item.nombre %></strong>
+                                                </td>
+                                                <td>$<%= parseFloat(item.precio).toFixed(2) %></td>
+                                                <td>
+                                                    <div class="input-group" style="max-width: 150px;">
+                                                        <button class="btn btn-outline-secondary btn-sm update-cantidad" 
+                                                                data-product-id="<%= item.id_producto %>" 
+                                                                data-cantidad="<%= item.cantidad - 1 %>"
+                                                                <%= item.cantidad <= 1 ? 'disabled' : '' %>>
+                                                            <i class="fas fa-minus"></i>
+                                                        </button>
+                                                        <input type="number" 
+                                                               class="form-control form-control-sm text-center" 
+                                                               id="cantidad-<%= item.id_producto %>"
+                                                               value="<%= item.cantidad %>" 
+                                                               min="1" 
+                                                               readonly
+                                                               style="font-weight: 600; color: #1a1a1a; background-color: #fff; border-color: #dee2e6;">
+                                                        <button class="btn btn-outline-secondary btn-sm update-cantidad" 
+                                                                data-product-id="<%= item.id_producto %>" 
+                                                                data-cantidad="<%= item.cantidad + 1 %>">
+                                                            <i class="fas fa-plus"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <strong>$<%= parseFloat(subtotal).toFixed(2) %></strong>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-danger eliminar-producto" 
+                                                            data-product-id="<%= item.id_producto %>"
+                                                            title="Eliminar">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <% } else { %>
+                            <div id="carrito-items">
+                                <p class="text-muted text-center py-5">
+                                    <i class="fas fa-shopping-cart fa-3x mb-3 d-block"></i>
+                                    Tu carrito está vacío. <a href="/catalogo">Agrega productos</a> para comenzar.
+                                </p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Información de Entrega</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="form-realizar-pedido">
+                            <div class="mb-3">
+                                <label for="direccion-entrega" class="form-label">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    Dirección de Entrega <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" id="direccion-entrega" rows="3" required 
+                                          placeholder="Ingresa la dirección completa de entrega..."></textarea>
+                                <small class="form-text text-muted">Incluye calle, número, colonia, ciudad y código postal</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="metodo-pago" class="form-label">
+                                    <i class="fas fa-credit-card me-2"></i>
+                                    Método de Pago
+                                </label>
+                                <select class="form-select" id="metodo-pago">
+                                    <option value="Pendiente">Se definirá después</option>
+                                    <option value="Efectivo">Efectivo</option>
+                                    <option value="Tarjeta">Tarjeta</option>
+                                    <option value="Transferencia">Transferencia</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Resumen del Pedido</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <strong id="subtotal">$<%= typeof carrito !== 'undefined' && carrito ? carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0).toFixed(2) : '0.00' %></strong>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="h5 mb-0">Total:</span>
+                            <span class="h5 mb-0 text-success" id="total">$<%= typeof carrito !== 'undefined' && carrito ? carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0).toFixed(2) : '0.00' %></span>
+                        </div>
+                        <button class="btn btn-success w-100" id="btn-realizar-pedido" <%= typeof carrito === 'undefined' || !carrito || carrito.length === 0 ? 'disabled' : '' %>>
+                            <i class="fas fa-check me-2"></i>
+                            Realizar Pedido
+                        </button>
+                        <small class="text-muted d-block mt-2 text-center">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Tu pedido será enviado como solicitud al administrador
+                        </small>
+                        <!-- Contenedor para botones de PayPal (se mostrará cuando se seleccione Tarjeta) -->
+                        <div id="paypal-button-container" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% } %>
 </div>
 
 <%- include('../layouts/footer') %>

@@ -49,6 +49,7 @@
                             <label for="estado" class="form-label">Estado</label>
                             <select class="form-select" id="estado" name="estado">
                                 <option value="">Todos</option>
+                                <option value="Solicitud" <%=estadoFiltro==='Solicitud' ? 'selected' : '' %>>Solicitud</option>
                                 <option value="Pendiente" <%=estadoFiltro==='Pendiente' ? 'selected' : '' %>>Pendiente</option>
                                 <% if (typeof isBodeguero !== 'undefined' && isBodeguero) { %>
                                     <option value="Preparado" <%=estadoFiltro==='Preparado' ? 'selected' : '' %>>Preparado</option>
@@ -142,6 +143,7 @@
                                                     let badgeClass = 'bg-secondary';
                                                     if (envio.Estado_Envio === 'Entregado') badgeClass = 'bg-success';
                                                     else if (envio.Estado_Envio === 'En Ruta' || envio.Estado_Envio === 'Despachado') badgeClass = 'bg-warning';
+                                                    else if (envio.Estado_Envio === 'Solicitud') badgeClass = 'bg-primary';
                                                     else if (envio.Estado_Envio === 'Pendiente' || envio.Estado_Envio === 'Preparado') badgeClass = 'bg-info';
                                                     %>
                                                     <span class="badge <%= badgeClass %>">

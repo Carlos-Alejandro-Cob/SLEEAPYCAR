@@ -13,7 +13,7 @@ class User {
 
     // Encontrar un usuario por su ID
     static async findById(id) {
-        const query = 'SELECT id_usuario, nombre_completo, nombre_usuario, id_rol_fk FROM usuarios WHERE id_usuario = ?';
+        const query = 'SELECT id_usuario, nombre_completo, nombre_usuario, email, id_rol_fk FROM usuarios WHERE id_usuario = ?';
         const [rows] = await queryWithRetry(query, [id]);
         return rows[0];
     }

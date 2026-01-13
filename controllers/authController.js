@@ -78,7 +78,8 @@ exports.login = (req, res, next) => {
                 case ROLES.SUPER_ADMIN:
                     return res.redirect('/admin/envios');
                 default:
-                    return res.redirect('/');
+                    // Clientes van al catálogo
+                    return res.redirect('/catalogo');
             }
         });
     })(req, res, next);

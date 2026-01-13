@@ -13,13 +13,26 @@ const client = new MercadoPagoConfig({
 const paypal = require('@paypal/checkout-server-sdk');
 
 // Initialize PayPal Client
-const environment = new paypal.core.LiveEnvironment(
-    process.env.PAYPAL_CLIENT_ID,
-    process.env.PAYPAL_CLIENT_SECRET
-);
-const paypalClient = new paypal.core.PayPalHttpClient(environment);
+let paypalClient = null;
+try {
+    // Intentar usar entorno de producción si hay credenciales
+    if (process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET) {
+        const environment = process.env.NODE_ENV === 'production' 
+            ? new paypal.core.LiveEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET)
+            : new paypal.core.SandboxEnvironment(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET);
+        paypalClient = new paypal.core.PayPalHttpClient(environment);
+    } else {
+        console.warn('WARNING: PayPal credentials not set. PayPal integration will fail.');
+    }
+} catch (error) {
+    console.error('Error initializing PayPal client:', error);
+}
 
 exports.createPaypalOrder = async (req, res) => {
+    if (!paypalClient) {
+        return res.status(500).json({ error: 'PayPal client not initialized. Please configure PayPal credentials.' });
+    }
+    
     const { orderId, amount } = req.body;
     console.log('Creating PayPal Order:', { orderId, amount });
 
@@ -33,7 +46,11 @@ exports.createPaypalOrder = async (req, res) => {
                 currency_code: 'MXN',
                 value: String(amount)
             }
-        }]
+        }],
+        application_context: {
+            return_url: `${req.protocol}://${req.get('host')}/pedidos`,
+            cancel_url: `${req.protocol}://${req.get('host')}/carrito`
+        }
     });
 
     try {
@@ -50,6 +67,10 @@ exports.createPaypalOrder = async (req, res) => {
 };
 
 exports.capturePaypalOrder = async (req, res) => {
+    if (!paypalClient) {
+        return res.status(500).json({ error: 'PayPal client not initialized.' });
+    }
+    
     const { orderID, envioId } = req.body;
     const request = new paypal.orders.OrdersCaptureRequest(orderID);
     request.requestBody({});
@@ -59,20 +80,50 @@ exports.capturePaypalOrder = async (req, res) => {
 
         // Update DB if payment is successful
         if (capture.result.status === 'COMPLETED') {
-            const envio = await Envio.findById(envioId);
-            if (envio) {
-                await Envio.update(envioId, {
-                    ...envio,
-                    codigo_envio: envio.ID_Envio,
-                    nombre_destinatario: envio.Nombre_Destinatario,
-                    direccion_completa: envio.Direccion_Completa,
-                    estado_envio: envio.Estado_Envio,
-                    metodo_pago: envio.metodo_pago,
-                    precio: envio.precio,
-                    estado_pago: 'Pagado'
-                });
+            // Si hay un envioId, actualizar el envío existente
+            if (envioId) {
+                const envio = await Envio.findById(envioId);
+                if (envio) {
+                    await Envio.update(envioId, {
+                        ...envio,
+                        codigo_envio: envio.ID_Envio,
+                        nombre_destinatario: envio.Nombre_Destinatario,
+                        direccion_completa: envio.Direccion_Completa,
+                        estado_envio: envio.Estado_Envio,
+                        metodo_pago: envio.metodo_pago,
+                        precio: envio.precio,
+                        estado_pago: 'Pagado'
+                    });
+                }
             }
-            res.json({ status: 'COMPLETED', capture: capture.result });
+            // Si no hay envioId pero hay pedido pendiente en sesión, crear el pedido
+            else if (req.session.pedidoPendiente) {
+                const customerController = require('./customerController');
+                // Crear el pedido después del pago exitoso
+                const pedidoPendiente = req.session.pedidoPendiente;
+                const nuevoEnvio = {
+                    codigo_envio: pedidoPendiente.codigo_envio,
+                    nombre_destinatario: pedidoPendiente.nombre_destinatario,
+                    direccion_completa: pedidoPendiente.direccion_completa,
+                    estado_envio: 'Solicitud',
+                    metodo_pago: pedidoPendiente.metodo_pago,
+                    precio: pedidoPendiente.precio,
+                    estado_pago: 'Pagado',
+                    products: pedidoPendiente.products
+                };
+                
+                await Envio.create(nuevoEnvio);
+                
+                // Limpiar sesión
+                req.session.carrito = [];
+                req.session.pedidoPendiente = null;
+            }
+            
+            res.json({ 
+                status: 'COMPLETED', 
+                capture: capture.result,
+                codigo_envio: req.session.pedidoPendiente ? req.session.pedidoPendiente.codigo_envio : null
+            });
         } else {
             res.status(400).json({ error: 'Payment not completed', status: capture.result.status });
         }

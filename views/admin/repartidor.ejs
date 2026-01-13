@@ -1,4 +1,4 @@
-<%- include('../layouts/header', { ...locals, title: 'Panel de Repartidor - APYCAR' }) %>
+<%- include('../layouts/header', { ...locals, title: 'Panel de Repartidor - APYCAR' }); %>
 
 <div class="container-fluid px-3 px-md-4">
     <div class="row">
@@ -74,88 +74,16 @@
                                             <span class="badge <%= estadoBadgeClass %>"><%= envio.Estado_Envio %></span>
                                         </td>
                                         <td class="text-end">
-                                            <div class="btn-group" role="group">
-                                                <button type="button" 
-                                                        class="btn btn-sm btn-outline-primary dropdown-toggle" 
-                                                        data-bs-toggle="dropdown" 
-                                                        aria-expanded="false">
-                                                    <i class="fas fa-cog me-1"></i>Acciones
-                                                </button>
-                                                <ul class="dropdown-menu" style="min-width: 280px;">
-                                                    <li>
-                                                        <form action="/admin/envios/<%= envio._id %>?_method=PUT" method="POST" class="d-inline w-100">
-                                                            <input type="hidden" name="estado_envio" value="Entregado">
-                                                            <button type="submit" class="dropdown-item text-success py-2">
-                                                                <i class="fas fa-check me-2"></i><span class="fw-semibold">Entregado</span>
-                                                                <small class="d-block text-muted ms-4 mt-1" style="font-size: 0.7rem;">Marcar como entregado exitosamente</small>
-                                                            </button>
-                                                        </form>
-                                                    </li>
-                                                    <li><hr class="dropdown-divider my-1"></li>
-                                                    <li>
-                                                        <form action="/admin/envios/<%= envio._id %>?_method=PUT" method="POST" class="d-inline w-100">
-                                                            <input type="hidden" name="estado_envio" value="Intento de entrega">
-                                                            <button type="submit" class="dropdown-item py-2">
-                                                                <i class="fas fa-exclamation-triangle me-2 text-warning"></i><span class="fw-semibold">Intento de entrega</span>
-                                                                <small class="d-block text-muted ms-4 mt-1" style="font-size: 0.7rem;">Fue al destino pero no pudo entregar</small>
-                                                            </button>
-                                                        </form>
-                                                    </li>
-                                                    <li>
-                                                        <form action="/admin/envios/<%= envio._id %>?_method=PUT" method="POST" class="d-inline w-100">
-                                                            <input type="hidden" name="estado_envio" value="Devuelto a bodega">
-                                                            <button type="submit" class="dropdown-item py-2">
-                                                                <i class="fas fa-undo me-2 text-secondary"></i><span class="fw-semibold">Devuelto a bodega</span>
-                                                                <small class="d-block text-muted ms-4 mt-1" style="font-size: 0.7rem;">No se logró entregar</small>
-                                                            </button>
-                                                        </form>
-                                                    </li>
-                                                    <li><hr class="dropdown-divider my-1"></li>
-                                                    <li>
-                                                        <button type="button" 
-                                                                class="dropdown-item text-danger py-2" 
-                                                                data-bs-toggle="modal" 
-                                                                data-bs-target="#cancelarModal<%= envio._id %>">
-                                                            <i class="fas fa-times-circle me-2"></i><span class="fw-semibold">Cancelado en ruta</span>
-                                                            <small class="d-block text-muted ms-4 mt-1" style="font-size: 0.7rem;">Opcional, con motivo</small>
-                                                        </button>
-                                                    </li>
-                                                </ul>
-                                            </div>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-primary btn-acciones" 
+                                                    data-envio-id="<%= envio._id %>"
+                                                    data-envio-codigo="<%= envio.ID_Envio %>"
+                                                    data-destinatario="<%= envio.Nombre_Destinatario %>"
+                                                    data-direccion="<%= envio.Direccion_Completa %>">
+                                                <i class="fas fa-cog me-1"></i>Acciones
+                                            </button>
                                         </td>
                                     </tr>
-                                    
-                                    <!-- Modal para Cancelar en ruta -->
-                                    <div class="modal fade" id="cancelarModal<%= envio._id %>" tabindex="-1" aria-labelledby="cancelarModalLabel<%= envio._id %>" aria-hidden="true">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="cancelarModalLabel<%= envio._id %>">Cancelar Envío en Ruta</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <form action="/admin/envios/<%= envio._id %>?_method=PUT" method="POST">
-                                                    <div class="modal-body">
-                                                        <input type="hidden" name="estado_envio" value="Cancelado en ruta">
-                                                        <div class="mb-3">
-                                                            <label for="motivo_cancelacion<%= envio._id %>" class="form-label">Motivo de cancelación <span class="text-danger">*</span></label>
-                                                            <textarea class="form-control" 
-                                                                      id="motivo_cancelacion<%= envio._id %>" 
-                                                                      name="motivo_cancelacion" 
-                                                                      rows="3" 
-                                                                      placeholder="Ingrese el motivo de la cancelación..."
-                                                                      required></textarea>
-                                                        </div>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                        <button type="submit" class="btn btn-danger">
-                                                            <i class="fas fa-times-circle me-2"></i>Confirmar Cancelación
-                                                        </button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
                                 <% }); %>
                                 </tbody>
                             </table>
@@ -172,6 +100,102 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Acciones - Template único reutilizable -->
+<div class="modal fade" id="accionesModalTemplate" tabindex="-1" aria-labelledby="accionesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="accionesModalLabel">
+                    <i class="fas fa-cog me-2"></i>Acciones - <span id="modal-codigo-envio"></span>
+                </h5>
+                <button type="button" class="btn-close" onclick="cerrarModalAcciones()" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <p class="text-muted mb-3">
+                        <strong>Destinatario:</strong> <span id="modal-destinatario"></span><br>
+                        <strong>Dirección:</strong> <span id="modal-direccion"></span>
+                    </p>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <form id="form-entregado" method="POST" class="d-inline">
+                        <input type="hidden" name="_method" value="PUT">
+                        <input type="hidden" name="estado_envio" value="Entregado">
+                        <button type="submit" class="btn btn-success w-100 text-start">
+                            <i class="fas fa-check me-2"></i><span class="fw-semibold">Entregado</span>
+                            <small class="d-block text-white-50 ms-4 mt-1" style="font-size: 0.75rem;">Marcar como entregado exitosamente</small>
+                        </button>
+                    </form>
+                    
+                    <form id="form-intento" method="POST" class="d-inline">
+                        <input type="hidden" name="_method" value="PUT">
+                        <input type="hidden" name="estado_envio" value="Intento de entrega">
+                        <button type="submit" class="btn btn-warning w-100 text-start">
+                            <i class="fas fa-exclamation-triangle me-2"></i><span class="fw-semibold">Intento de entrega</span>
+                            <small class="d-block text-white-50 ms-4 mt-1" style="font-size: 0.75rem;">Fue al destino pero no pudo entregar</small>
+                        </button>
+                    </form>
+                    
+                    <form id="form-devuelto" method="POST" class="d-inline">
+                        <input type="hidden" name="_method" value="PUT">
+                        <input type="hidden" name="estado_envio" value="Devuelto a bodega">
+                        <button type="submit" class="btn btn-secondary w-100 text-start">
+                            <i class="fas fa-undo me-2"></i><span class="fw-semibold">Devuelto a bodega</span>
+                            <small class="d-block text-white-50 ms-4 mt-1" style="font-size: 0.75rem;">No se logró entregar</small>
+                        </button>
+                    </form>
+                    
+                    <hr class="my-2">
+                    
+                    <button type="button" 
+                            class="btn btn-danger w-100 text-start" 
+                            onclick="abrirModalCancelar()">
+                        <i class="fas fa-times-circle me-2"></i><span class="fw-semibold">Cancelado en ruta</span>
+                        <small class="d-block text-white-50 ms-4 mt-1" style="font-size: 0.75rem;">Opcional, con motivo</small>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" onclick="cerrarModalAcciones()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Cancelar en ruta - Template único -->
+<div class="modal fade" id="cancelarModalTemplate" tabindex="-1" aria-labelledby="cancelarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelarModalLabel">Cancelar Envío en Ruta</h5>
+                <button type="button" class="btn-close" onclick="cerrarModalCancelar()" aria-label="Close"></button>
+            </div>
+            <form id="form-cancelar" method="POST">
+                <input type="hidden" name="_method" value="PUT">
+                <input type="hidden" name="estado_envio" value="Cancelado en ruta">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="motivo_cancelacion" class="form-label">Motivo de cancelación <span class="text-danger">*</span></label>
+                        <textarea class="form-control" 
+                                  id="motivo_cancelacion" 
+                                  name="motivo_cancelacion" 
+                                  rows="3" 
+                                  placeholder="Ingrese el motivo de la cancelación..."
+                                  required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" onclick="cerrarModalCancelar()">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times-circle me-2"></i>Confirmar Cancelación
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -247,44 +271,103 @@
         border-bottom: none;
     }
 
-    /* Estilos compactos para el dropdown - Expandible completamente */
+    /* Estilos para tabla responsive */
     .table-responsive {
+        overflow-x: auto;
+    }
+    
+    /* Estilos para modales de acciones */
+    .modal {
+        z-index: 1055 !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+    }
+    
+    .modal.show {
+        display: block !important;
+        opacity: 1 !important;
+    }
+    
+    .modal.fade {
+        transition: opacity 0.15s linear;
+    }
+    
+    .modal.fade:not(.show) {
+        opacity: 0;
+    }
+    
+    .modal-backdrop {
+        z-index: 1050 !important;
+        background-color: rgba(0, 0, 0, 0.5) !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+    }
+    
+    .modal-backdrop.show {
+        opacity: 0.5 !important;
+    }
+    
+    .modal-dialog {
+        z-index: 1056 !important;
+        margin: 1.75rem auto;
         position: relative;
+        width: auto;
+        max-width: 500px;
     }
-
-    .dropdown-menu {
-        font-size: 0.875rem;
-        padding: 0.25rem 0;
+    
+    .modal-dialog-centered {
+        display: flex !important;
+        align-items: center !important;
+        min-height: calc(100% - 3.5rem);
+    }
+    
+    .modal-content {
+        border-radius: 0.5rem;
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-        max-height: none !important;
+        position: relative;
+        z-index: 1057 !important;
+        background-color: #fff !important;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        pointer-events: auto;
     }
-
-    @media (max-width: 991.98px) {
-        .table-responsive {
-            overflow-x: auto;
-        }
+    
+    .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+        position: relative;
+        flex: 1 1 auto;
+        padding: 1rem;
     }
-
-    .dropdown-item {
-        font-size: 0.875rem;
-        line-height: 1.4;
-        padding: 0.5rem 1rem;
+    
+    .modal-body .btn {
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        transition: all 0.2s ease;
     }
-
-    .dropdown-item:hover {
-        background-color: #f8f9fa;
+    
+    .modal-body .btn:last-child {
+        margin-bottom: 0;
     }
-
-    .dropdown-item small {
-        line-height: 1.3;
+    
+    .modal-body .btn:hover {
+        transform: translateX(5px);
     }
-
-    .dropdown-item i {
-        font-size: 0.875rem;
-    }
-
-    .dropdown-divider {
-        margin: 0.25rem 0;
+    
+    .modal-body .btn small {
+        display: block;
+        margin-top: 0.25rem;
+        opacity: 0.9;
     }
 
     /* Cards optimizados */
@@ -315,5 +398,118 @@
         padding-bottom: 2rem !important;
     }
 </style>
+
+<script>
+    let envioActualId = null;
+    
+    // Función para abrir el modal de acciones
+    function abrirModalAcciones(envioId, codigoEnvio, destinatario, direccion) {
+        envioActualId = envioId;
+        
+        // Actualizar contenido del modal
+        document.getElementById('modal-codigo-envio').textContent = codigoEnvio;
+        document.getElementById('modal-destinatario').textContent = destinatario;
+        document.getElementById('modal-direccion').textContent = direccion;
+        
+        // Actualizar acciones de los formularios con método override en query string
+        const baseUrl = '/admin/envios/' + envioId + '?_method=PUT';
+        document.getElementById('form-entregado').action = baseUrl;
+        document.getElementById('form-intento').action = baseUrl;
+        document.getElementById('form-devuelto').action = baseUrl;
+        
+        // Mostrar modal
+        const modal = document.getElementById('accionesModalTemplate');
+        modal.style.display = 'block';
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        
+        // Crear backdrop
+        if (!document.querySelector('.modal-backdrop')) {
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade show';
+            backdrop.style.zIndex = '1050';
+            backdrop.onclick = cerrarModalAcciones;
+            document.body.appendChild(backdrop);
+        }
+    }
+    
+    // Función para cerrar el modal de acciones
+    function cerrarModalAcciones() {
+        const modal = document.getElementById('accionesModalTemplate');
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        
+        // Remover backdrop
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+    }
+    
+    // Función para abrir modal de cancelar
+    function abrirModalCancelar() {
+        cerrarModalAcciones();
+        
+        // Actualizar acción del formulario con método override en query string
+        document.getElementById('form-cancelar').action = '/admin/envios/' + envioActualId + '?_method=PUT';
+        document.getElementById('motivo_cancelacion').value = '';
+        
+        // Mostrar modal
+        const modal = document.getElementById('cancelarModalTemplate');
+        modal.style.display = 'block';
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        
+        // Crear backdrop
+        if (!document.querySelector('.modal-backdrop')) {
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade show';
+            backdrop.style.zIndex = '1050';
+            backdrop.onclick = cerrarModalCancelar;
+            document.body.appendChild(backdrop);
+        }
+    }
+    
+    // Función para cerrar modal de cancelar
+    function cerrarModalCancelar() {
+        const modal = document.getElementById('cancelarModalTemplate');
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        
+        // Remover backdrop
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+    }
+    
+    // Inicializar botones de acciones
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.btn-acciones').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const envioId = this.getAttribute('data-envio-id');
+                const codigoEnvio = this.getAttribute('data-envio-codigo');
+                const destinatario = this.getAttribute('data-destinatario');
+                const direccion = this.getAttribute('data-direccion');
+                
+                abrirModalAcciones(envioId, codigoEnvio, destinatario, direccion);
+            });
+        });
+        
+        // Cerrar modales con ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                cerrarModalAcciones();
+                cerrarModalCancelar();
+            }
+        });
+    });
+</script>
 
 <%- include('../layouts/footer') %>
