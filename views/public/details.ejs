@@ -140,8 +140,8 @@
                 body: JSON.stringify({
                     envioId: '<%= envio._id %>',
                     title: 'Envío #<%= envio.ID_Envio %>',
-                    price: <%= envio.precio %>
-            })
+                    price: Number('<%= envio.precio || 0 %>')
+                })
             })
                 .then(response => response.json())
                 .then(preference => {

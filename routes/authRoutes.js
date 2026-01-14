@@ -18,4 +18,18 @@ router.post('/register', authController.register);
 // Ruta para cerrar sesión
 router.get('/logout', authController.logout);
 
+// Rutas de Perfil
+router.get('/profile', isAuthenticated, authController.showProfile);
+router.post('/profile/change-password', isAuthenticated, authController.changePassword);
+router.post('/profile/delete', isAuthenticated, authController.deleteAccount);
+
 module.exports = router;
+
+// Middleware simple para asegurar que está logueado (si no existe uno global, lo definimos aquí o lo importamos)
+function isAuthenticated(req, res, next) {
+    if (req.isAuthenticated()) {
+        return next();
+    }
+    req.flash('error_msg', 'Por favor inicia sesión para ver tu perfil.');
+    res.redirect('/auth/login');
+}
