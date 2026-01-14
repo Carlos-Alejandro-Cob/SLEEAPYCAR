@@ -8,6 +8,7 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const passport = require('passport');
 const helmet = require('helmet');
+const cors = require('cors');
 require('dotenv').config(); // Carga las variables de entorno desde .env
 require('./config/db'); // Importa y ejecuta la configuración de la BD
 const app = express();
@@ -21,6 +22,18 @@ app.set('view engine', 'ejs');
 require('./config/passport')(passport);
 
 // --- MIDDLEWARES ---
+
+// 2.0. CORS - Permitir solicitudes desde Flutter Web
+app.use(cors({
+    origin: function (origin, callback) {
+        // Permitir cualquier origen en desarrollo
+        callback(null, true);
+    },
+    credentials: true, // CRÍTICO: Permitir cookies/sesiones
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
+    exposedHeaders: ['Set-Cookie']
+}));
 
 // 2.1. Parseo de Peticiones
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -73,12 +86,37 @@ app.use(helmet({
 app.use(session({
     secret: process.env.SECRET_KEY || 'fallback-secret-key',
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: true,
+    name: 'connect.sid', // Nombre de la cookie de sesión
+    cookie: {
+        secure: false, // En desarrollo con HTTP, usar false. En producción con HTTPS, usar true
+        httpOnly: true, // Mantener httpOnly para seguridad
+        sameSite: 'lax', // 'lax' permite cookies en navegación cross-site (mejor para desarrollo local)
+        maxAge: 24 * 60 * 60 * 1000, // 24 horas
+        path: '/', // Asegurar que la cookie esté disponible en todas las rutas
+        domain: undefined // No especificar dominio para que funcione en localhost
+    }
 }));
 app.use(flash()); // Re-habilitado
 // Inicialización de Passport
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Middleware para debug de cookies (solo en desarrollo)
+if (process.env.NODE_ENV !== 'production') {
+    app.use((req, res, next) => {
+        if (req.path.startsWith('/mobile/api')) {
+            console.log('Request path:', req.path);
+            console.log('Cookies recibidas:', req.headers.cookie);
+            console.log('Headers completos:', JSON.stringify(req.headers, null, 2));
+            console.log('Usuario autenticado:', req.isAuthenticated());
+            if (req.user) {
+                console.log('Usuario:', req.user.nombre_usuario);
+            }
+        }
+        next();
+    });
+}
 
 // 2.5. Variables Locales para Vistas
 app.use((req, res, next) => {
@@ -94,6 +132,7 @@ app.use((req, res, next) => {
 const adminRoutes = require('./routes/adminRoutes');
 const authRoutes = require('./routes/authRoutes');
 const publicRoutes = require('./routes/publicRoutes');
+const mobileRoutes = require('./routes/mobileRoutes');
 
 // Middleware to handle favicon.ico requests and prevent 404 errors in the console
 app.get('/favicon.ico', (req, res) => res.status(204).send());
@@ -101,6 +140,7 @@ app.get('/favicon.ico', (req, res) => res.status(204).send());
 app.use('/', publicRoutes);
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
+app.use('/mobile', mobileRoutes);
 
 // Ruta principal simple
 app.get('/', (req, res) => {

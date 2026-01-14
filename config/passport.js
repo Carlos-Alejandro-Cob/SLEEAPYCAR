@@ -5,8 +5,9 @@ const User = require('../models/User');
 module.exports = function(passport) {
     passport.use(new LocalStrategy({ usernameField: 'nombre_usuario' }, async (username, password, done) => {
         try {
-            // 1. Buscar el usuario en la base de datos
-            const user = await User.findByUsername(username);
+            // 1. Buscar el usuario en la base de datos (case-insensitive)
+            // Convertir a minúsculas para la búsqueda
+            const user = await User.findByUsername(username.toLowerCase());
             if (!user) {
                 return done(null, false, { message: 'El nombre de usuario no existe.' });
             }

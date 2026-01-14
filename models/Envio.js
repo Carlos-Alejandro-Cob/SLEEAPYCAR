@@ -45,6 +45,7 @@ class Envio {
                 e.metodo_pago, 
                 e.precio, 
                 e.estado_pago,
+                e.id_repartidor,
                 NULL as URL_Foto_Entrega 
             FROM envios e
             WHERE e.id_envio = ?

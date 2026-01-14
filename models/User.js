@@ -4,9 +4,10 @@ const bcrypt = require('bcryptjs');
 const { queryWithRetry } = require('../utils/dbQuery');
 
 class User {
-    // Encontrar un usuario por su nombre de usuario
+    // Encontrar un usuario por su nombre de usuario (case-insensitive)
     static async findByUsername(username) {
-        const query = 'SELECT id_usuario, nombre_completo, nombre_usuario, password_hash, id_rol_fk FROM usuarios WHERE nombre_usuario = ? AND activo = TRUE';
+        // Buscar sin importar mayúsculas/minúsculas usando LOWER()
+        const query = 'SELECT id_usuario, nombre_completo, nombre_usuario, password_hash, id_rol_fk FROM usuarios WHERE LOWER(nombre_usuario) = LOWER(?) AND activo = TRUE';
         const [rows] = await queryWithRetry(query, [username]);
         return rows[0];
     }
