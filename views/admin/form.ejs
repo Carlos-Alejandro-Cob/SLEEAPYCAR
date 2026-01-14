@@ -332,7 +332,7 @@
                     // Funcionalidad de productos
                     const productList = document.getElementById('product-list');
                     if (productList) {
-                        let productIndex = <%= (envio && envio.products) ? envio.products.length : 0 %>;
+                        let productIndex = Number('<%= (envio && envio.products) ? envio.products.length : 0 %>');
 
                         const addProductBtn = document.getElementById('add-product');
                         if (addProductBtn) {

@@ -37,18 +37,18 @@
             <div class="header-actions">
                 <div class="nav-links">
                     <% if (user) { %>
-                        <% if (user.id_rol_fk === 1 || user.id_rol_fk === 6) { %>
+                        <% if (user.id_rol_fk===1 || user.id_rol_fk===6) { %>
                             <a href="/admin/users">Gestión de Usuarios</a>
-                        <% } %>
-                        <a href="/admin/envios">
-                            <i class="fas fa-user-circle me-1"></i>
-                            <%= user.nombre_completo %>
-                        </a>
-                        <a href="/auth/logout">Cerrar Sesión</a>
-                        <% } else { %>
-                            <a href="/auth/login">Iniciar sesión</a>
-                            <a href="/auth/register">Registrarse</a>
-                        <% } %>
+                            <% } %>
+                                <a href="/auth/profile" title="Ver mi perfil">
+                                    <i class="fas fa-user-circle me-1"></i>
+                                    <%= user.nombre_completo %>
+                                </a>
+                                <a href="/auth/logout">Cerrar Sesión</a>
+                                <% } else { %>
+                                    <a href="/auth/login">Iniciar sesión</a>
+                                    <a href="/auth/register">Registrarse</a>
+                                    <% } %>
                 </div>
             </div>
         </div>
