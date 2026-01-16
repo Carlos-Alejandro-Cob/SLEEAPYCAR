@@ -8,9 +8,11 @@ class AuthService {
   static const String _keyUserId = 'user_id';
   static const String _keyUserName = 'user_name';
 
-  Future<bool> login(String username, String password) async {
+  Future<Map<String, dynamic>> login(String username, String password) async {
     try {
+      print('Intentando login con usuario: $username');
       final response = await _apiService.login(username, password);
+      print('Respuesta del servidor: $response');
       
       if (response['success'] == true) {
         final prefs = await SharedPreferences.getInstance();
@@ -22,11 +24,18 @@ class AuthService {
           await prefs.setString(_keyUserName, response['user']['nombre'] ?? '');
         }
         
-        return true;
+        return {'success': true};
       }
-      return false;
+      return {
+        'success': false,
+        'message': response['message'] ?? 'Error al iniciar sesión'
+      };
     } catch (e) {
-      return false;
+      print('Error en login: $e');
+      return {
+        'success': false,
+        'message': e.toString().replaceAll('Exception: ', '')
+      };
     }
   }
 

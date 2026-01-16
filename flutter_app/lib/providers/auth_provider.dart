@@ -11,17 +11,27 @@ class AuthProvider with ChangeNotifier {
   String? get username => _username;
   String? get userName => _userName;
 
+  String? _lastError;
+  String? get lastError => _lastError;
+
   Future<bool> login(String username, String password) async {
     try {
-      final success = await _authService.login(username, password);
-      if (success) {
+      _lastError = null;
+      final result = await _authService.login(username, password);
+      if (result['success'] == true) {
         _isAuthenticated = true;
         _username = await _authService.getUsername();
         _userName = await _authService.getUserName();
         notifyListeners();
+        return true;
+      } else {
+        _lastError = result['message'] ?? 'Error al iniciar sesión';
+        notifyListeners();
+        return false;
       }
-      return success;
     } catch (e) {
+      _lastError = e.toString();
+      notifyListeners();
       return false;
     }
   }

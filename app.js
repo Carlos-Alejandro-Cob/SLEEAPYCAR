@@ -151,9 +151,10 @@ app.get('/', (req, res) => {
     }
 });
 
-// Inicia el servidor
-const server = app.listen(port, () => {
+// Inicia el servidor - escuchar en todas las interfaces (0.0.0.0) para permitir conexiones desde la red
+const server = app.listen(port, '0.0.0.0', () => {
     console.log(`Servidor SLEE corriendo en http://localhost:${port}`);
+    console.log(`Servidor también disponible en la red local: http://10.3.1.134:${port}`);
 });
 
 server.on('error', (err) => {
