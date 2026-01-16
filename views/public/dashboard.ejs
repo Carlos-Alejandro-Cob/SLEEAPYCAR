@@ -7,11 +7,12 @@ if (typeof paypalClientId !== 'undefined') { %>
 </script>
 <% } %>
 
-<!-- Panel de Navegación Superior -->
+<!-- Panel de Navegación Superior - Solo mostrar si no es la sección de cuenta -->
+<% if (typeof activeSection === 'undefined' || activeSection !== 'cuenta') { %>
 <div class="customer-nav-panel">
     <div class="container">
         <nav class="customer-nav">
-            <a href="/" class="nav-item <%= typeof activeSection !== 'undefined' && activeSection === 'cuenta' ? 'active' : '' %>">
+            <a href="/cuenta" class="nav-item <%= typeof activeSection !== 'undefined' && activeSection === 'cuenta' ? 'active' : '' %>">
                 <i class="fas fa-user-circle"></i>
                 <span>Mi Cuenta</span>
             </a>
@@ -30,6 +31,7 @@ if (typeof paypalClientId !== 'undefined') { %>
         </nav>
     </div>
 </div>
+<% } %>
 
 <div class="container mt-4">
     <% if (typeof activeSection === 'undefined' || activeSection === 'cuenta') { %>
@@ -42,7 +44,7 @@ if (typeof paypalClientId !== 'undefined') { %>
                     <div class="card">
                         <div class="card-header">
                             <h3 class="h5 mb-0">
-                                <i class="fas fa-user-circle text-primary me-2"></i>
+                                <i class="fas fa-user-circle me-2" style="color: var(--primary-green);"></i>
                                 Información de la Cuenta
                             </h3>
                         </div>
@@ -96,7 +98,7 @@ if (typeof paypalClientId !== 'undefined') { %>
                                         <span>Rol:</span>
                                     </div>
                                     <div class="info-value">
-                                        <span class="badge bg-primary">
+                                        <span class="badge" style="background-color: var(--primary-green); color: var(--white);">
                                             <%= userInfo.nombre_rol || 'Cliente' %>
                                         </span>
                                     </div>
@@ -110,13 +112,13 @@ if (typeof paypalClientId !== 'undefined') { %>
                     <div class="card">
                         <div class="card-header">
                             <h3 class="h5 mb-0">
-                                <i class="fas fa-cog text-primary me-2"></i>
+                                <i class="fas fa-cog me-2" style="color: var(--primary-green);"></i>
                                 Acciones Rápidas
                             </h3>
                         </div>
                         <div class="card-body">
                             <div class="d-grid gap-2">
-                                <a href="/pedidos" class="btn btn-outline-primary">
+                                <a href="/pedidos" class="btn btn-outline-success">
                                     <i class="fas fa-shopping-bag me-2"></i>
                                     Ver Mis Pedidos
                                 </a>
@@ -127,6 +129,11 @@ if (typeof paypalClientId !== 'undefined') { %>
                                 <a href="/carrito" class="btn btn-outline-success">
                                     <i class="fas fa-shopping-cart me-2"></i>
                                     Ver Carrito
+                                </a>
+                                <hr class="my-2" style="border-color: var(--border-color);">
+                                <a href="/auth/profile?from=cuenta" class="btn" style="border-color: var(--text-medium); color: var(--text-medium);">
+                                    <i class="fas fa-sliders-h me-2"></i>
+                                    Configuración Avanzada
                                 </a>
                             </div>
                         </div>

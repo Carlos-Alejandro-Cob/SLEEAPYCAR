@@ -662,6 +662,22 @@ h1.h3 i {
     padding: 0.5rem 0.75rem;
 }
 
+/* Estilos para botones del panel de cuenta */
+.account-info .btn,
+.card-body .btn[style*="border-color: var(--primary-green)"] {
+    border: 1px solid var(--primary-green);
+    color: var(--primary-green);
+    background-color: transparent;
+    transition: all 0.2s ease;
+}
+
+.account-info .btn:hover,
+.card-body .btn[style*="border-color: var(--primary-green)"]:hover {
+    background-color: var(--primary-green);
+    color: var(--white);
+    border-color: var(--primary-green);
+}
+
 /* Responsive para información de cuenta */
 @media (min-width: 768px) {
     .info-row {
