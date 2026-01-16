@@ -6,9 +6,8 @@ const productController = require('../controllers/productController');
 const customerController = require('../controllers/customerController');
 const { ensureAuthenticated } = require('../middleware/auth');
 
-// Customer Dashboard - Redirigir a catálogo por defecto
-// Customer Dashboard - Redirigir a catálogo por defecto
-// La ruta '/' ya no se maneja aquí, se delega a app.js para redirección inteligente
+// Customer Dashboard - Rutas del cliente
+router.get('/cuenta', ensureAuthenticated, customerController.showDashboard);
 router.get('/catalogo', ensureAuthenticated, customerController.showCatalogo);
 router.get('/pedidos', ensureAuthenticated, customerController.showPedidos);
 router.get('/carrito', ensureAuthenticated, customerController.showCarrito);

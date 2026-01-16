@@ -22,7 +22,7 @@
 
                                 <!-- User Info Card -->
                                 <div class="card shadow-sm mb-4">
-                                    <div class="card-header bg-primary text-white">
+                                    <div class="card-header" style="background-color: var(--primary-green); color: var(--white);">
                                         <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i>Información Personal
                                         </h5>
                                     </div>
@@ -52,7 +52,7 @@
                                 <!-- Change Password Card -->
                                 <div class="card shadow-sm mb-4">
                                     <div class="card-header bg-light">
-                                        <h5 class="mb-0"><i class="fas fa-key me-2"></i>Cambiar Contraseña</h5>
+                                        <h5 class="mb-0"><i class="fas fa-key me-2" style="color: var(--primary-green);"></i>Cambiar Contraseña</h5>
                                     </div>
                                     <div class="card-body">
                                         <form action="/auth/profile/change-password" method="POST">
@@ -73,7 +73,7 @@
                                                 <input type="password" class="form-control" id="confirm_password"
                                                     name="confirm_password" required>
                                             </div>
-                                            <button type="submit" class="btn btn-primary">Actualizar Contraseña</button>
+                                            <button type="submit" class="btn btn-success">Actualizar Contraseña</button>
                                         </form>
                                     </div>
                                 </div>

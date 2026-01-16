@@ -23,7 +23,19 @@
     <header class="apycar-header">
         <div class="header-container">
             <!-- Logo -->
-            <a href="/admin/envios" class="logo-section">
+            <% 
+                let logoHref = '/admin/envios'; // Por defecto para administradores
+                if (user) {
+                    // Si es cliente (rol 7) o no es admin/super usuario, redirigir al catálogo
+                    if (user.id_rol_fk === 7 || (user.id_rol_fk !== 1 && user.id_rol_fk !== 6)) {
+                        logoHref = '/catalogo';
+                    }
+                } else {
+                    // Si no está autenticado, redirigir al login
+                    logoHref = '/auth/login';
+                }
+            %>
+            <a href="<%= logoHref %>" class="logo-section">
                 <img src="/assets/logo/logo%20apycar%20sin%20fondo.png" alt="APYCAR Logo">
             </a>
 
@@ -40,7 +52,15 @@
                         <% if (user.id_rol_fk===1 || user.id_rol_fk===6) { %>
                             <a href="/admin/users">Gestión de Usuarios</a>
                             <% } %>
-                                <a href="/auth/profile" title="Ver mi perfil">
+                                <% 
+                                    // Determinar la ruta según el rol
+                                    let profileHref = '/auth/profile';
+                                    if (user.id_rol_fk === 7 || (user.id_rol_fk !== 1 && user.id_rol_fk !== 6)) {
+                                        // Clientes van a Mi Cuenta
+                                        profileHref = '/cuenta';
+                                    }
+                                %>
+                                <a href="<%= profileHref %>" title="Ver mi cuenta">
                                     <i class="fas fa-user-circle me-1"></i>
                                     <%= user.nombre_completo %>
                                 </a>

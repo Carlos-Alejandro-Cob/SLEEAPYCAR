@@ -96,6 +96,16 @@ exports.logout = (req, res, next) => {
 
 // Muestra el perfil del usuario
 exports.showProfile = (req, res) => {
+    // Verificar que el acceso viene desde "Mi Cuenta"
+    const fromCuenta = req.query.from === 'cuenta';
+    const referer = req.get('Referer') || '';
+    const comesFromCuenta = fromCuenta || referer.includes('/cuenta');
+    
+    if (!comesFromCuenta) {
+        req.flash('error_msg', 'Debes acceder a la configuración avanzada desde el panel "Mi Cuenta".');
+        return res.redirect('/cuenta');
+    }
+    
     res.render('auth/profile', {
         title: 'Mi Perfil',
         user: req.user
