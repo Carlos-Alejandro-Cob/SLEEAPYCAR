@@ -17,8 +17,9 @@ class ApiService {
   // Para iOS Simulator: http://localhost:3001/mobile/api
   // Para dispositivo físico Android/iOS: http://TU_IP_LOCAL:3001/mobile/api
   // Ejemplo con IP local: http://192.168.1.100:3001/mobile/api
-  // IP local detectada: 10.3.1.134
-  static const String baseUrl = 'http://10.3.1.134:3001/mobile/api';
+  // IPs detectadas: 192.168.137.1, 10.28.48.216
+  // Usando: 192.168.137.1 (red local)
+  static const String baseUrl = 'http://192.168.137.1:3001/mobile/api';
   
   // Cliente HTTP con soporte de cookies
   final http.Client _client = http.Client();
@@ -129,9 +130,9 @@ class ApiService {
         },
         body: body,
       ).timeout(
-        const Duration(seconds: 10),
+        const Duration(seconds: 30),
         onTimeout: () {
-          throw Exception('Tiempo de espera agotado. Verifica que el servidor esté corriendo y la URL sea correcta.');
+          throw Exception('Tiempo de espera agotado. Verifica que:\n1. El servidor esté corriendo en el puerto 3001\n2. El firewall de Windows permita conexiones en el puerto 3001\n3. Tu dispositivo móvil esté en la misma red WiFi que la computadora\n4. La URL sea correcta (ejecuta: solucionar_conexion_movil.bat como administrador)');
         },
       );
 
@@ -152,8 +153,12 @@ class ApiService {
       }
     } catch (e) {
       print('Error en login: $e');
-      if (e.toString().contains('Failed host lookup') || e.toString().contains('Connection refused')) {
-        throw Exception('No se pudo conectar al servidor. Verifica que:\n1. El servidor esté corriendo en el puerto 3001\n2. Si usas dispositivo físico, cambia la URL a tu IP local (ej: http://192.168.1.100:3001/mobile/api)');
+      String errorMessage = e.toString();
+      
+      if (errorMessage.contains('Failed host lookup') || errorMessage.contains('Connection refused') || errorMessage.contains('Network is unreachable')) {
+        throw Exception('No se pudo conectar al servidor. Verifica que:\n\n1. El servidor esté corriendo (ejecuta: npm start)\n2. El firewall de Windows permita conexiones (ejecuta: solucionar_conexion_movil.bat como administrador)\n3. Tu dispositivo móvil esté en la misma red WiFi\n4. La URL sea correcta: $baseUrl\n\nEjecuta el script solucionar_conexion_movil.bat para solucionar automáticamente el firewall.');
+      } else if (errorMessage.contains('Tiempo de espera')) {
+        throw Exception('El servidor no responde. Posibles causas:\n\n1. Firewall bloqueando conexiones (ejecuta: solucionar_conexion_movil.bat)\n2. El servidor no está corriendo\n3. IP incorrecta - verifica tu IP local\n4. Dispositivo móvil en red WiFi diferente');
       }
       throw Exception('Error de conexión: $e');
     }
@@ -170,7 +175,7 @@ class ApiService {
         urlUri,
         headers: headers,
       ).timeout(
-        const Duration(seconds: 10),
+        const Duration(seconds: 30),
         onTimeout: () {
           return http.Response('Timeout', 408);
         },
@@ -194,7 +199,7 @@ class ApiService {
       
       final urlUri = Uri.parse(url);
       final response = await _client.get(urlUri, headers: headers).timeout(
-        const Duration(seconds: 10),
+        const Duration(seconds: 30),
         onTimeout: () {
           throw Exception('Tiempo de espera agotado');
         },
@@ -230,7 +235,7 @@ class ApiService {
       
       final urlUri = Uri.parse(url);
       final response = await _client.get(urlUri, headers: headers).timeout(
-        const Duration(seconds: 10),
+        const Duration(seconds: 30),
         onTimeout: () {
           throw Exception('Tiempo de espera agotado');
         },
@@ -270,7 +275,7 @@ class ApiService {
         headers: headers,
         body: bodyData,
       ).timeout(
-        const Duration(seconds: 10),
+        const Duration(seconds: 30),
         onTimeout: () {
           throw Exception('Tiempo de espera agotado');
         },
@@ -312,7 +317,7 @@ class ApiService {
         headers: headers,
         body: bodyData,
       ).timeout(
-        const Duration(seconds: 10),
+        const Duration(seconds: 30),
         onTimeout: () {
           throw Exception('Tiempo de espera agotado');
         },
@@ -339,7 +344,7 @@ class ApiService {
       
       final urlUri = Uri.parse(url);
       final response = await _client.get(urlUri, headers: headers).timeout(
-        const Duration(seconds: 10),
+        const Duration(seconds: 30),
         onTimeout: () {
           throw Exception('Tiempo de espera agotado');
         },
