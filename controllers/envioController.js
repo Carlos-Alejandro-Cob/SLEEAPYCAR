@@ -1,6 +1,7 @@
 // controllers/envioController.js
 const Envio = require('../models/Envio');
 const Incidencia = require('../models/Incidencia');
+const CodigoConfirmacion = require('../models/CodigoConfirmacion');
 const { validateCodigoEnvio } = require('../utils/validations');
 
 const ROLES = require('../config/roles');
@@ -181,14 +182,52 @@ exports.updateEnvío = async (req, res) => {
         const { id } = req.params;
 
         if (userRole === ROLES.REPARTIDOR) { // Transportista
-            const { estado_envio, motivo_cancelacion } = req.body;
+            const { estado_envio, motivo_cancelacion, codigo_confirmacion } = req.body;
 
             // Estados permitidos para repartidor
-            const estadosPermitidos = ['Entregado', 'Intento de entrega', 'Devuelto a bodega', 'Cancelado en ruta'];
+            const estadosPermitidos = ['En envío', 'Entregado', 'Intento de entrega', 'Devuelto a bodega', 'Cancelado en ruta'];
 
             if (!estadosPermitidos.includes(estado_envio)) {
                 req.flash('error_msg', 'Estado no válido para repartidor.');
                 return res.redirect('/admin/repartidor');
+            }
+
+            // Si es "En envío", requiere código del bodeguero
+            if (estado_envio === 'En envío') {
+                if (!codigo_confirmacion || codigo_confirmacion.trim() === '') {
+                    req.flash('error_msg', 'Debe ingresar el código de confirmación proporcionado por el bodeguero.');
+                    return res.redirect('/admin/repartidor');
+                }
+
+                const validacion = await CodigoConfirmacion.validarYUsar(codigo_confirmacion.trim(), id, currentUserId);
+                if (!validacion.valido) {
+                    req.flash('error_msg', validacion.mensaje);
+                    return res.redirect('/admin/repartidor');
+                }
+
+                if (validacion.tipo !== 'BODEGUERO_CHOFER') {
+                    req.flash('error_msg', 'El código ingresado no es válido para este proceso.');
+                    return res.redirect('/admin/repartidor');
+                }
+            }
+
+            // Si es "Entregado", requiere código del cliente
+            if (estado_envio === 'Entregado') {
+                if (!codigo_confirmacion || codigo_confirmacion.trim() === '') {
+                    req.flash('error_msg', 'Debe ingresar el código de confirmación proporcionado por el cliente.');
+                    return res.redirect('/admin/repartidor');
+                }
+
+                const validacion = await CodigoConfirmacion.validarYUsar(codigo_confirmacion.trim(), id, currentUserId);
+                if (!validacion.valido) {
+                    req.flash('error_msg', validacion.mensaje);
+                    return res.redirect('/admin/repartidor');
+                }
+
+                if (validacion.tipo !== 'CLIENTE_CHOFER') {
+                    req.flash('error_msg', 'El código ingresado no es válido para confirmar la entrega.');
+                    return res.redirect('/admin/repartidor');
+                }
             }
 
             // Si es cancelado, verificar que tenga motivo
@@ -223,10 +262,23 @@ exports.updateEnvío = async (req, res) => {
 
             await Envio.update(id, { estado_envio: Estado_Envio });
 
+            // Si el estado es "Despachado", generar código de confirmación
+            if (Estado_Envio === 'Despachado') {
+                try {
+                    const codigoData = await CodigoConfirmacion.generar(id, 'BODEGUERO_CHOFER', currentUserId);
+                    await logger.logAction(currentUserId, 'GENERAR_CODIGO', `Código de confirmación ${codigoData.codigo} generado para envío ${id}`);
+                    req.flash('success_msg', `Estado actualizado a "${Estado_Envio}". Código de confirmación: <strong>${codigoData.codigo}</strong>`);
+                } catch (error) {
+                    console.error('Error al generar código:', error);
+                    req.flash('success_msg', `Estado actualizado a "${Estado_Envio}". Error al generar código de confirmación.`);
+                }
+            } else {
+                req.flash('success_msg', `Estado del envío actualizado a "${Estado_Envio}".`);
+            }
+
             // Audit Log
             await logger.logAction(currentUserId, 'UPDATE_ESTADO_ENVIO', `Envío ${id} actualizado a "${Estado_Envio}" por Bodeguero`);
 
-            req.flash('success_msg', `Estado del envío actualizado a "${Estado_Envio}".`);
             return res.redirect('/admin/envios');
         }
 

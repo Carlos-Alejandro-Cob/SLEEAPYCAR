@@ -1,4 +1,5 @@
 const Envio = require('../models/Envio');
+const CodigoConfirmacion = require('../models/CodigoConfirmacion');
 
 exports.showSearch = (req, res) => {
     res.render('public/search', {
@@ -68,9 +69,13 @@ exports.showDetails = async (req, res) => {
             // Optional: Flash message could be added here
         }
 
+        // Verificar si ya existe un código activo para este envío
+        const codigoActivo = await CodigoConfirmacion.obtenerCodigoActivo(id, 'CLIENTE_CHOFER');
+
         res.render('public/details', {
             title: `Envío ${envio.ID_Envio}`,
             envio,
+            codigoActivo: codigoActivo ? codigoActivo.codigo : null,
             layout: 'public/layout',
             paypalClientId: process.env.PAYPAL_CLIENT_ID || 'sb', // Fallback to sandbox
             mpPublicKey: process.env.MP_PUBLIC_KEY || 'TEST-PUBLIC-KEY'
@@ -78,5 +83,40 @@ exports.showDetails = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.redirect('/rastreo');
+    }
+};
+
+// Generar código de confirmación para cliente
+exports.generarCodigoConfirmacion = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const envio = await Envio.findById(id);
+        if (!envio) {
+            return res.status(404).json({ success: false, message: 'Envío no encontrado' });
+        }
+
+        // Verificar que el envío esté en estado "En envío"
+        if (envio.Estado_Envio !== 'En envío') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Solo se puede generar código cuando el envío está "En envío"' 
+            });
+        }
+
+        // Generar código
+        const codigoData = await CodigoConfirmacion.generar(id, 'CLIENTE_CHOFER', null);
+
+        res.json({
+            success: true,
+            codigo: codigoData.codigo,
+            message: 'Código generado exitosamente'
+        });
+    } catch (error) {
+        console.error('Error al generar código:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al generar el código de confirmación'
+        });
     }
 };
