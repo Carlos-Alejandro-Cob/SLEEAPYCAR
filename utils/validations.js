@@ -81,8 +81,61 @@ function generarCodigoEnvio(secuencial = 1) {
     return `E-${año}/${mes}/${dia}-${numSecuencial}`;
 }
 
+/**
+ * Obtiene el siguiente número secuencial para códigos de envío del día actual
+ * @returns {Promise<number>} - El siguiente número secuencial (1-99)
+ */
+async function obtenerSiguienteSecuencial() {
+    const pool = require('../config/db');
+    const { queryWithRetry } = require('../utils/dbQuery');
+    
+    const ahora = new Date();
+    const año = ahora.getFullYear();
+    const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+    const dia = String(ahora.getDate()).padStart(2, '0');
+    const prefijoFecha = `E-${año}/${mes}/${dia}-`;
+    
+    // Buscar todos los códigos que empiecen con el prefijo de hoy
+    const query = `
+        SELECT codigo_envio 
+        FROM envios 
+        WHERE codigo_envio LIKE ? 
+        ORDER BY codigo_envio DESC 
+        LIMIT 1
+    `;
+    
+    try {
+        const [rows] = await queryWithRetry(query, [`${prefijoFecha}%`]);
+        
+        if (rows.length === 0) {
+            return 1; // Es el primer envío del día
+        }
+        
+        // Extraer el número secuencial del último código
+        const ultimoCodigo = rows[0].codigo_envio;
+        const match = ultimoCodigo.match(/E-\d{4}\/\d{2}\/\d{2}-(\d{2})$/);
+        
+        if (match && match[1]) {
+            const ultimoSecuencial = parseInt(match[1], 10);
+            const siguienteSecuencial = ultimoSecuencial + 1;
+            
+            if (siguienteSecuencial > 99) {
+                throw new Error('Se ha alcanzado el límite de 99 envíos por día.');
+            }
+            
+            return siguienteSecuencial;
+        }
+        
+        return 1; // Si no se puede extraer, empezar desde 1
+    } catch (error) {
+        console.error('Error al obtener siguiente secuencial:', error);
+        return 1; // En caso de error, empezar desde 1
+    }
+}
+
 module.exports = {
     validateCodigoEnvio,
-    generarCodigoEnvio
+    generarCodigoEnvio,
+    obtenerSiguienteSecuencial
 };
 

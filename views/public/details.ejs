@@ -13,22 +13,28 @@
                 </div>
                 <div class="card-body p-4">
                     <!-- Status Steps -->
+                    <% 
+                        const estadoCliente = envio.Estado_Envio_Cliente || 'Aceptado';
+                        const progressWidth = estadoCliente === 'Entregado' ? '100%' : (estadoCliente === 'En reparto' ? '66%' : '33%');
+                        const paso2Active = (estadoCliente === 'En reparto' || estadoCliente === 'Entregado');
+                        const paso3Active = (estadoCliente === 'Entregado');
+                    %>
                     <div class="position-relative m-4">
                         <div class="progress" style="height: 2px;">
                             <div class="progress-bar" role="progressbar"
-                                style="width: <%= envio.Estado_Envio === 'Entregado' ? '100%' : (envio.Estado_Envio === 'En envío' || envio.Estado_Envio === 'En Ruta' ? '66%' : '0%') %>;">
+                                style="width: <%= progressWidth %>;">
                             </div>
                         </div>
                         <div class="position-absolute top-0 start-0 translate-middle btn btn-sm btn-primary rounded-pill"
                             style="width: 2rem; height:2rem;">1</div>
-                        <div class="position-absolute top-0 start-50 translate-middle btn btn-sm <%= (envio.Estado_Envio === 'En envío' || envio.Estado_Envio === 'En Ruta' || envio.Estado_Envio === 'Entregado') ? 'btn-primary' : 'btn-secondary' %> rounded-pill"
+                        <div class="position-absolute top-0 start-50 translate-middle btn btn-sm <%= paso2Active ? 'btn-primary' : 'btn-secondary' %> rounded-pill"
                             style="width: 2rem; height:2rem;">2</div>
-                        <div class="position-absolute top-0 start-100 translate-middle btn btn-sm <%= envio.Estado_Envio === 'Entregado' ? 'btn-primary' : 'btn-secondary' %> rounded-pill"
+                        <div class="position-absolute top-0 start-100 translate-middle btn btn-sm <%= paso3Active ? 'btn-primary' : 'btn-secondary' %> rounded-pill"
                             style="width: 2rem; height:2rem;">3</div>
 
                         <div class="d-flex justify-content-between mt-2 text-muted small">
-                            <span>Preparado</span>
-                            <span>En envío</span>
+                            <span>Aceptado</span>
+                            <span>En reparto</span>
                             <span>Entregado</span>
                         </div>
                     </div>
@@ -45,8 +51,16 @@
                         </div>
                         <div class="col-6 text-end">
                             <small class="text-muted d-block">Estado Actual</small>
-                            <span class="badge bg-primary">
-                                <%= envio.Estado_Envio %>
+                            <% 
+                                const estadoCliente = envio.Estado_Envio_Cliente || 'Aceptado';
+                                let estadoBadgeClass = 'bg-info';
+                                if (estadoCliente === 'Entregado') estadoBadgeClass = 'bg-success';
+                                else if (estadoCliente === 'En reparto') estadoBadgeClass = 'bg-warning';
+                                else if (estadoCliente === 'Aceptado') estadoBadgeClass = 'bg-info';
+                                else if (estadoCliente === 'Rechazado') estadoBadgeClass = 'bg-danger';
+                            %>
+                            <span class="badge <%= estadoBadgeClass %>">
+                                <%= estadoCliente %>
                             </span>
                         </div>
                         <div class="col-12">
@@ -58,7 +72,7 @@
                     </div>
 
                     <!-- Código de Confirmación para Cliente -->
-                    <% if (envio.Estado_Envio === 'En envío') { %>
+                    <% if (envio.Estado_Envio_Cliente === 'En reparto' || envio.Estado_Envio === 'En envío' || envio.Estado_Envio === 'En reparto' || envio.Estado_Envio === 'En Ruta') { %>
                         <div class="mt-4 p-3 bg-light rounded border">
                             <h6 class="fw-bold mb-3">
                                 <i class="fas fa-key me-2"></i>Código de Confirmación

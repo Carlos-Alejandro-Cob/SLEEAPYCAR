@@ -84,14 +84,8 @@ exports.capturePaypalOrder = async (req, res) => {
             if (envioId) {
                 const envio = await Envio.findById(envioId);
                 if (envio) {
+                    // Solo actualizar el estado de pago, no otros campos
                     await Envio.update(envioId, {
-                        ...envio,
-                        codigo_envio: envio.ID_Envio,
-                        nombre_destinatario: envio.Nombre_Destinatario,
-                        direccion_completa: envio.Direccion_Completa,
-                        estado_envio: envio.Estado_Envio,
-                        metodo_pago: envio.metodo_pago,
-                        precio: envio.precio,
                         estado_pago: 'Pagado'
                     });
                 }

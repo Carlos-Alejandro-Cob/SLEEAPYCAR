@@ -1,5 +1,6 @@
 const Envio = require('../models/Envio');
 const CodigoConfirmacion = require('../models/CodigoConfirmacion');
+const { mapearEstadoCliente } = require('../utils/estadoEnvio');
 
 exports.showSearch = (req, res) => {
     res.render('public/search', {
@@ -72,6 +73,10 @@ exports.showDetails = async (req, res) => {
         // Verificar si ya existe un código activo para este envío
         const codigoActivo = await CodigoConfirmacion.obtenerCodigoActivo(id, 'CLIENTE_CHOFER');
 
+        // Mapear el estado interno al estado visible para el cliente
+        const estadoCliente = mapearEstadoCliente(envio.Estado_Envio);
+        envio.Estado_Envio_Cliente = estadoCliente;
+
         res.render('public/details', {
             title: `Envío ${envio.ID_Envio}`,
             envio,
@@ -96,11 +101,12 @@ exports.generarCodigoConfirmacion = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Envío no encontrado' });
         }
 
-        // Verificar que el envío esté en estado "En envío"
-        if (envio.Estado_Envio !== 'En envío') {
+        // Verificar que el envío esté en estado "En reparto" o "En envío" (visible como "En reparto" para el cliente)
+        const estadosValidos = ['En reparto', 'En envío', 'En Ruta'];
+        if (!estadosValidos.includes(envio.Estado_Envio)) {
             return res.status(400).json({ 
                 success: false, 
-                message: 'Solo se puede generar código cuando el envío está "En envío"' 
+                message: 'Solo se puede generar código cuando el envío está "En reparto"' 
             });
         }
 

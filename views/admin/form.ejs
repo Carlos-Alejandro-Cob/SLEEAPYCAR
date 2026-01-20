@@ -91,34 +91,38 @@
                                             <div class="col-md-6">
                                                 <label for="ID_Envio" class="form-label">ID de Envío</label>
                                                 <input type="text" class="form-control" id="ID_Envio" name="ID_Envio"
-                                                    value="<%= envio ? envio.ID_Envio : '' %>"
+                                                    value="<%= envio && envio.ID_Envio ? envio.ID_Envio : '' %>"
                                                     placeholder="E-2025/10/26-01"
-                                                    pattern="^E-\d{4}\/\d{2}\/\d{2}-\d{2}$"
-                                                    title="Formato requerido: E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)"
-                                                    required>
-                                                <div class="form-text">Formato: E-yyyy/mm/dd-NN (ejemplo:
-                                                    E-2025/10/26-01)</div>
+                                                    readonly
+                                                    style="background-color: #e9ecef; cursor: not-allowed;"
+                                                    <% if (!isEdit) { %>
+                                                        pattern="^E-\d{4}\/\d{2}\/\d{2}-\d{2}$"
+                                                        title="Formato requerido: E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)"
+                                                        required
+                                                    <% } %>>
+                                                <div class="form-text">
+                                                    <% if (isEdit) { %>
+                                                        <i class="fas fa-info-circle me-1"></i>
+                                                        El ID de envío no se puede modificar
+                                                    <% } else { %>
+                                                        <i class="fas fa-info-circle me-1"></i>
+                                                        El ID se genera automáticamente
+                                                    <% } %>
+                                                </div>
                                                 <div class="invalid-feedback" id="ID_Envio-error"></div>
                                             </div>
 
                                             <div class="col-md-6">
-                                                <label for="Estado_Envio" class="form-label">Estado</label>
-                                                <select class="form-select" id="Estado_Envio" name="Estado_Envio">
-                                                    <option value="Pendiente" <%=(envio &&
-                                                        envio.Estado_Envio==='Pendiente' ) ? 'selected' : '' %>
-                                                        >Pendiente</option>
-                                                    <option value="Preparado" <%=(envio &&
-                                                        envio.Estado_Envio==='Preparado' ) ? 'selected' : '' %>
-                                                        >Preparado</option>
-                                                    <option value="Despachado" <%=(envio &&
-                                                        envio.Estado_Envio==='Despachado' ) ? 'selected' : '' %>
-                                                        >Despachado</option>
-                                                    <option value="En Ruta" <%=(envio && envio.Estado_Envio==='En Ruta'
-                                                        ) ? 'selected' : '' %>>En Ruta</option>
-                                                    <option value="Entregado" <%=(envio &&
-                                                        envio.Estado_Envio==='Entregado' ) ? 'selected' : '' %>
-                                                        >Entregado</option>
+                                                <label for="Estado_Envio" class="form-label">Estado <span class="text-danger">*</span></label>
+                                                <select class="form-select" id="Estado_Envio" name="Estado_Envio" required>
+                                                    <option value="Aceptado" <%=(envio && (envio.Estado_Envio==='Aceptado' || envio.Estado_Envio==='Pendiente' || envio.Estado_Envio==='Preparado' || envio.Estado_Envio==='Despachado' || envio.Estado_Envio==='En envío' || envio.Estado_Envio==='En Ruta' || envio.Estado_Envio==='En reparto')) ? 'selected' : '' %>>
+                                                        Aceptado
+                                                    </option>
+                                                    <option value="Rechazado" <%=(envio && envio.Estado_Envio==='Rechazado') ? 'selected' : '' %>>
+                                                        Rechazado
+                                                    </option>
                                                 </select>
+                                                <small class="form-text text-muted">El administrador solo puede cambiar entre Aceptado o Rechazado. Los demás estados se actualizan automáticamente.</small>
                                             </div>
 
                                             <div class="col-md-6">
@@ -137,7 +141,9 @@
                                             <div class="col-md-6">
                                                 <label for="precio" class="form-label">Precio ($)</label>
                                                 <input type="number" step="0.01" class="form-control" id="precio"
-                                                    name="precio" value="<%= envio ? envio.precio : '0.00' %>" required>
+                                                    name="precio" value="<%= envio ? envio.precio : '0.00' %>" readonly
+                                                    style="background-color: #e9ecef; cursor: not-allowed;">
+                                                <small class="form-text text-muted">El precio no se puede modificar</small>
                                             </div>
 
                                             <div class="col-md-6">
@@ -152,19 +158,12 @@
                                             </div>
 
                                             <div class="col-12">
-                                                <label for="Nombre_Destinatario" class="form-label">Nombre del
-                                                    Destinatario</label>
+                                                <label for="Nombre_Destinatario" class="form-label">Cliente Destinatario</label>
                                                 <input type="text" class="form-control" id="Nombre_Destinatario"
                                                     name="Nombre_Destinatario"
-                                                    value="<%= envio ? envio.Nombre_Destinatario : '' %>" required>
-                                            </div>
-
-                                            <div class="col-12">
-                                                <label for="Direccion_Completa" class="form-label">Dirección
-                                                    Completa</label>
-                                                <input type="text" class="form-control" id="Direccion_Completa"
-                                                    name="Direccion_Completa"
-                                                    value="<%= envio ? envio.Direccion_Completa : '' %>" required>
+                                                    value="<%= envio ? envio.Nombre_Destinatario : '' %>" readonly
+                                                    style="background-color: #e9ecef; cursor: not-allowed;">
+                                                <small class="form-text text-muted">Este campo es solo informativo y no se puede editar</small>
                                             </div>
 
                                             <div class="col-12">

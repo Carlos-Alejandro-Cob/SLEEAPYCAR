@@ -14,7 +14,7 @@ class User {
 
     // Encontrar un usuario por su ID
     static async findById(id) {
-        const query = 'SELECT id_usuario, nombre_completo, nombre_usuario, email, id_rol_fk FROM usuarios WHERE id_usuario = ?';
+        const query = 'SELECT id_usuario, nombre_completo, nombre_usuario, email, direccion, id_rol_fk FROM usuarios WHERE id_usuario = ?';
         const [rows] = await queryWithRetry(query, [id]);
         return rows[0];
     }
@@ -30,16 +30,16 @@ class User {
 
     // Crear nuevo usuario
     static async create(userData) {
-        const { nombre_completo, email, nombre_usuario, password_hash, id_rol_fk } = userData;
-        const query = 'INSERT INTO usuarios (nombre_completo, email, nombre_usuario, password_hash, id_rol_fk) VALUES (?, ?, ?, ?, ?)';
-        const [result] = await queryWithRetry(query, [nombre_completo, email, nombre_usuario, password_hash, id_rol_fk]);
+        const { nombre_completo, email, nombre_usuario, password_hash, id_rol_fk, direccion } = userData;
+        const query = 'INSERT INTO usuarios (nombre_completo, email, nombre_usuario, password_hash, id_rol_fk, direccion) VALUES (?, ?, ?, ?, ?, ?)';
+        const [result] = await queryWithRetry(query, [nombre_completo, email || null, nombre_usuario, password_hash, id_rol_fk, direccion || null]);
         return result.insertId;
     }
 
     // Actualizar usuario
     static async update(id, userData) {
-        let query = 'UPDATE usuarios SET nombre_completo = ?, email = ?, nombre_usuario = ?, id_rol_fk = ?';
-        const params = [userData.nombre_completo, userData.email, userData.nombre_usuario, userData.id_rol_fk];
+        let query = 'UPDATE usuarios SET nombre_completo = ?, email = ?, nombre_usuario = ?, id_rol_fk = ?, direccion = ?';
+        const params = [userData.nombre_completo, userData.email || null, userData.nombre_usuario, userData.id_rol_fk, userData.direccion || null];
 
         if (userData.password_hash) {
             query += ', password_hash = ?';

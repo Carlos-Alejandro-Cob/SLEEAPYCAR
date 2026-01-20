@@ -178,15 +178,8 @@ function mostrarNotificacion(mensaje, tipo) {
 
 // Realizar pedido desde el carrito
 function realizarPedido() {
-    const direccion = document.getElementById('direccion-entrega');
     const metodoPago = document.getElementById('metodo-pago');
     const btnRealizarPedido = document.getElementById('btn-realizar-pedido');
-    
-    if (!direccion || !direccion.value.trim()) {
-        mostrarNotificacion('Por favor, ingresa la dirección de entrega', 'error');
-        direccion.focus();
-        return;
-    }
     
     // Deshabilitar botón mientras se procesa
     btnRealizarPedido.disabled = true;
@@ -198,7 +191,7 @@ function realizarPedido() {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            direccion_completa: direccion.value.trim(),
+            direccion_completa: '', // Ya no se requiere dirección
             metodo_pago: metodoPago ? metodoPago.value : 'Pendiente'
         })
     })
