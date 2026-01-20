@@ -61,5 +61,9 @@ router.delete('/users/:id', checkRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]), userCon
 router.get('/repartidor', checkRole([ROLES.REPARTIDOR, ROLES.SUPER_ADMIN]), envioController.showRepartidorDashboard);
 router.post('/repartidor/ruta', checkRole([ROLES.REPARTIDOR, ROLES.SUPER_ADMIN]), envioController.addEnvioToRuta);
 
+// --- API RUTAS PARA CÓDIGOS DE CONFIRMACIÓN (BODEGUERO) ---
+router.post('/api/envios/:id/generar-codigo', checkRole([ROLES.BODEGUERO, ROLES.SUPER_ADMIN]), envioController.generarCodigoBodeguero);
+router.post('/api/envios/:id/cancelar-codigo', checkRole([ROLES.BODEGUERO, ROLES.SUPER_ADMIN]), envioController.cancelarCodigoBodeguero);
+
 
 module.exports = router;

@@ -200,10 +200,18 @@ exports.showEditForm = async (req, res) => {
         }
         const userRole = req.user ? req.user.id_rol_fk : null;
         const isBodeguero = userRole === ROLES.BODEGUERO;
+        
+        // Si es bodeguero, obtener código activo si existe
+        let codigoActivo = null;
+        if (isBodeguero) {
+            codigoActivo = await CodigoConfirmacion.obtenerCodigoActivo(req.params.id, 'BODEGUERO_CHOFER');
+        }
+        
         res.render('admin/form', {
             envio: envio,
             isEdit: true,
-            isBodeguero: isBodeguero || false
+            isBodeguero: isBodeguero || false,
+            codigoActivo: codigoActivo ? codigoActivo.codigo : null
         });
     } catch (error) {
         console.error('Error al mostrar formulario de edición:', error);
@@ -637,5 +645,99 @@ exports.addEnvioToRuta = async (req, res) => {
         console.error('Error al agregar envío a la ruta:', error);
         req.flash('error_msg', 'Error al agregar el envío a la ruta.');
         res.redirect('/admin/repartidor');
+    }
+};
+
+// 16. API: Generar código de confirmación para bodeguero
+exports.generarCodigoBodeguero = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const currentUserId = req.user.id_usuario;
+        const userRole = req.user.id_rol_fk;
+
+        // Verificar que sea bodeguero
+        if (userRole !== ROLES.BODEGUERO) {
+            return res.status(403).json({
+                success: false,
+                message: 'No tiene permisos para generar códigos'
+            });
+        }
+
+        // Verificar que el envío existe
+        const envio = await Envio.findById(id);
+        if (!envio) {
+            return res.status(404).json({
+                success: false,
+                message: 'Envío no encontrado'
+            });
+        }
+
+        // Generar código
+        const codigoData = await CodigoConfirmacion.generar(id, 'BODEGUERO_CHOFER', currentUserId);
+        
+        // Audit Log
+        await logger.logAction(currentUserId, 'GENERAR_CODIGO', `Código de confirmación ${codigoData.codigo} generado para envío ${id}`);
+
+        res.json({
+            success: true,
+            codigo: codigoData.codigo,
+            message: 'Código generado exitosamente'
+        });
+    } catch (error) {
+        console.error('Error al generar código:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al generar el código: ' + error.message
+        });
+    }
+};
+
+// 17. API: Cancelar código de confirmación para bodeguero
+exports.cancelarCodigoBodeguero = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const currentUserId = req.user.id_usuario;
+        const userRole = req.user.id_rol_fk;
+
+        // Verificar que sea bodeguero
+        if (userRole !== ROLES.BODEGUERO) {
+            return res.status(403).json({
+                success: false,
+                message: 'No tiene permisos para cancelar códigos'
+            });
+        }
+
+        // Verificar que el envío existe
+        const envio = await Envio.findById(id);
+        if (!envio) {
+            return res.status(404).json({
+                success: false,
+                message: 'Envío no encontrado'
+            });
+        }
+
+        // Cancelar código activo si existe
+        const resultado = await CodigoConfirmacion.cancelarCodigoActivo(id, 'BODEGUERO_CHOFER', currentUserId);
+        
+        if (!resultado.cancelado) {
+            return res.status(400).json({
+                success: false,
+                message: resultado.mensaje
+            });
+        }
+
+        // Audit Log
+        await logger.logAction(currentUserId, 'CANCELAR_CODIGO', `Código de confirmación ${resultado.codigo} cancelado para envío ${id}`);
+
+        res.json({
+            success: true,
+            message: 'Código cancelado exitosamente'
+        });
+    } catch (error) {
+        console.error('Error al cancelar código:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al cancelar el código: ' + error.message
+        });
     }
 };

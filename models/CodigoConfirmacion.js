@@ -97,6 +97,38 @@ class CodigoConfirmacion {
         const codigo = await this.obtenerCodigoActivo(idEnvio, tipo);
         return codigo !== null;
     }
+
+    // Cancelar código activo por ID de envío y tipo
+    static async cancelarCodigoActivo(idEnvio, tipo, canceladoPor) {
+        const [rows] = await queryWithRetry(
+            `SELECT id_codigo, codigo 
+             FROM codigos_confirmacion 
+             WHERE id_envio_fk = ? AND tipo = ? AND usado = FALSE 
+             ORDER BY fecha_generado DESC 
+             LIMIT 1`,
+            [idEnvio, tipo]
+        );
+
+        if (!rows || rows.length === 0) {
+            return { cancelado: false, mensaje: 'No hay código activo para cancelar' };
+        }
+
+        const codigoConf = rows[0];
+
+        // Marcar como usado (cancelado)
+        await queryWithRetry(
+            `UPDATE codigos_confirmacion 
+             SET usado = TRUE, usado_por = ?, fecha_usado = NOW() 
+             WHERE id_codigo = ?`,
+            [canceladoPor, codigoConf.id_codigo]
+        );
+
+        return {
+            cancelado: true,
+            codigo: codigoConf.codigo,
+            mensaje: 'Código cancelado correctamente'
+        };
+    }
 }
 
 module.exports = CodigoConfirmacion;
