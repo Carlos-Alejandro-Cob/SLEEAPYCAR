@@ -13,10 +13,10 @@ const ROLES = require('../config/roles');
 // [R]EAD: Listar todos los envíos (con filtros)
 router.get('/envios', checkRole([ROLES.ADMIN, ROLES.BODEGUERO, ROLES.SUPER_ADMIN]), envioController.listEnvíos);
 
-// [C]REATE: Mostrar formulario para nuevo envío (Bodeguero NO puede crear)
+// [C]REATE: Mostrar formulario para nuevo envío (Bodeguero NO puede crear, solo admin)
 router.get('/envios/nuevo', checkRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]), envioController.showCreateForm);
 
-// [C]REATE: Procesar el formulario y crear el nuevo envío (Bodeguero NO puede crear)
+// [C]REATE: Procesar el formulario y crear el nuevo envío (Bodeguero NO puede crear, solo admin)
 router.post('/envios', checkRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]), envioController.createEnvío);
 
 // [R]EAD: Mostrar formulario para editar un envío específico
