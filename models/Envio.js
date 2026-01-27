@@ -140,6 +140,8 @@ class Envio {
             const params = [];
             const updates = [];
 
+            // Actualizar codigo_envio solo si se proporciona explícitamente
+            // (no se debe actualizar en modo edición de admin)
             if (codigo_envio !== undefined) { updates.push('codigo_envio = ?'); params.push(codigo_envio); }
             if (nombre_destinatario !== undefined) { updates.push('nombre_destinatario = ?'); params.push(nombre_destinatario); }
             if (direccion_completa !== undefined) { updates.push('direccion_completa = ?'); params.push(direccion_completa); }

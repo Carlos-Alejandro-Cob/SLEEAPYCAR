@@ -7,21 +7,56 @@ const User = require('../models/User');
 
 // API: Login para Flutter
 exports.loginMobile = (req, res, next) => {
+    // Timeout para la petición completa (25 segundos)
+    const timeout = setTimeout(() => {
+        if (!res.headersSent) {
+            console.error('[TIMEOUT] El login móvil excedió 25 segundos sin respuesta');
+            return res.status(504).json({
+                success: false,
+                message: 'El servidor tardó demasiado en responder. Por favor, intenta nuevamente.'
+            });
+        }
+    }, 25000);
+
+    // Logs para debug
+    const startTime = Date.now();
+    console.log('=== LOGIN MÓVIL ===');
+    console.log('Body recibido:', req.body);
+    console.log('nombre_usuario:', req.body.nombre_usuario);
+    console.log('password:', req.body.password ? '***' : 'NO ENVIADO');
+    console.log('Content-Type:', req.headers['content-type']);
+    console.log('IP del cliente:', req.ip || req.connection.remoteAddress);
+    
+    // Wrapper para limpiar el timeout cuando termine
+    const cleanup = () => {
+        clearTimeout(timeout);
+        const duration = Date.now() - startTime;
+        console.log(`[LOGIN] Proceso completado en ${duration}ms`);
+    };
+    
     passport.authenticate('local', (err, user, info) => {
+        cleanup(); // Limpiar timeout
         if (err) {
+            console.error('Error en autenticación:', err);
+            console.error('Stack:', err.stack);
             return res.status(500).json({
                 success: false,
                 message: 'Error en el servidor'
             });
         }
         if (!user) {
+            console.log('Usuario no encontrado o credenciales incorrectas');
+            console.log('Info:', info);
             return res.status(401).json({
                 success: false,
                 message: info.message || 'Credenciales incorrectas'
             });
         }
+        console.log('Usuario encontrado:', user.nombre_usuario, 'Rol:', user.id_rol_fk);
         req.logIn(user, (err) => {
             if (err) {
+                console.error('Error al hacer login:', err);
+                console.error('Stack:', err.stack);
                 return res.status(500).json({
                     success: false,
                     message: 'Error al iniciar sesión'
@@ -29,6 +64,7 @@ exports.loginMobile = (req, res, next) => {
             }
             // Verificar que sea repartidor
             if (user.id_rol_fk !== ROLES.REPARTIDOR && user.id_rol_fk !== ROLES.SUPER_ADMIN) {
+                console.log('Usuario no es repartidor. Rol:', user.id_rol_fk);
                 req.logout();
                 return res.status(403).json({
                     success: false,
@@ -37,6 +73,7 @@ exports.loginMobile = (req, res, next) => {
             }
             // La cookie ya se envía automáticamente por express-session
             // No es necesario configurarla manualmente aquí
+            console.log('Login exitoso para:', user.nombre_usuario);
             
             return res.json({
                 success: true,

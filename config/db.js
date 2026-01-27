@@ -17,9 +17,25 @@ if (process.env.DATABASE_URL) {
     dbConfig = { host: 'localhost', user: 'root', password: '', database: 'apycar_db' };
 }
 
+// Configuración adicional del pool para evitar timeouts
+const poolConfig = {
+    ...dbConfig,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+    connectTimeout: 10000, // 10 segundos para conectar
+    acquireTimeout: 10000, // 10 segundos para adquirir conexión del pool
+    timeout: 30000, // 30 segundos para ejecutar queries
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0
+};
+
+// Si dbConfig tiene 'uri', usarlo directamente; si no, usar la configuración completa
+const finalConfig = dbConfig.uri || poolConfig;
+
 // Crea un "pool" de conexiones.
 // Un pool es más eficiente que crear una conexión por cada consulta.
-const pool = mysql.createPool(dbConfig);
+const pool = mysql.createPool(finalConfig);
 
 // Verificamos la conexión al crear el pool
 pool.getConnection()

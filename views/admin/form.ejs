@@ -51,38 +51,20 @@
                                 method="POST">
 
                                 <% if (typeof isBodeguero !=='undefined' && isBodeguero) { %>
-                                    <!-- Vista simplificada para bodeguero: Solo estado -->
+                                    <!-- Vista simplificada para bodeguero -->
                                     <div class="row g-3">
                                         <div class="col-md-6">
                                             <label for="ID_Envio" class="form-label">ID de Envío</label>
                                             <input type="text" class="form-control" id="ID_Envio" name="ID_Envio"
-                                                value="<%= envio ? envio.ID_Envio : '' %>" readonly>
+                                                value="<%= envio ? envio.ID_Envio : '' %>" readonly
+                                                style="background-color: #e9ecef; cursor: not-allowed;">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="Nombre_Destinatario" class="form-label">Destinatario</label>
                                             <input type="text" class="form-control" id="Nombre_Destinatario"
                                                 name="Nombre_Destinatario"
-                                                value="<%= envio ? envio.Nombre_Destinatario : '' %>" readonly>
-                                        </div>
-                                        <div class="col-12">
-                                            <label for="Direccion_Completa" class="form-label">Dirección</label>
-                                            <input type="text" class="form-control" id="Direccion_Completa"
-                                                name="Direccion_Completa"
-                                                value="<%= envio ? envio.Direccion_Completa : '' %>" readonly>
-                                        </div>
-                                        <div class="col-12">
-                                            <label for="Estado_Envio" class="form-label">Estado del Envío <span
-                                                    class="text-danger">*</span></label>
-                                            <select class="form-select" id="Estado_Envio" name="Estado_Envio" required>
-                                                <option value="Pendiente" <%=(envio && envio.Estado_Envio==='Pendiente'
-                                                    ) ? 'selected' : '' %>>Pendiente</option>
-                                                <option value="Preparado" <%=(envio && envio.Estado_Envio==='Preparado'
-                                                    ) ? 'selected' : '' %>>Preparado</option>
-                                                <option value="Despachado" <%=(envio &&
-                                                    envio.Estado_Envio==='Despachado' ) ? 'selected' : '' %>>Despachado
-                                                </option>
-                                            </select>
-                                            <div class="form-text">Selecciona el estado logístico del envío</div>
+                                                value="<%= envio ? envio.Nombre_Destinatario : '' %>" readonly
+                                                style="background-color: #e9ecef; cursor: not-allowed;">
                                         </div>
                                     </div>
                                     <% } else { %>
@@ -91,34 +73,38 @@
                                             <div class="col-md-6">
                                                 <label for="ID_Envio" class="form-label">ID de Envío</label>
                                                 <input type="text" class="form-control" id="ID_Envio" name="ID_Envio"
-                                                    value="<%= envio ? envio.ID_Envio : '' %>"
+                                                    value="<%= envio && envio.ID_Envio ? envio.ID_Envio : '' %>"
                                                     placeholder="E-2025/10/26-01"
-                                                    pattern="^E-\d{4}\/\d{2}\/\d{2}-\d{2}$"
-                                                    title="Formato requerido: E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)"
-                                                    required>
-                                                <div class="form-text">Formato: E-yyyy/mm/dd-NN (ejemplo:
-                                                    E-2025/10/26-01)</div>
+                                                    readonly
+                                                    style="background-color: #e9ecef; cursor: not-allowed;"
+                                                    <% if (!isEdit) { %>
+                                                        pattern="^E-\d{4}\/\d{2}\/\d{2}-\d{2}$"
+                                                        title="Formato requerido: E-yyyy/mm/dd-NN (ejemplo: E-2025/10/26-01)"
+                                                        required
+                                                    <% } %>>
+                                                <div class="form-text">
+                                                    <% if (isEdit) { %>
+                                                        <i class="fas fa-info-circle me-1"></i>
+                                                        El ID de envío no se puede modificar
+                                                    <% } else { %>
+                                                        <i class="fas fa-info-circle me-1"></i>
+                                                        El ID se genera automáticamente
+                                                    <% } %>
+                                                </div>
                                                 <div class="invalid-feedback" id="ID_Envio-error"></div>
                                             </div>
 
                                             <div class="col-md-6">
-                                                <label for="Estado_Envio" class="form-label">Estado</label>
-                                                <select class="form-select" id="Estado_Envio" name="Estado_Envio">
-                                                    <option value="Pendiente" <%=(envio &&
-                                                        envio.Estado_Envio==='Pendiente' ) ? 'selected' : '' %>
-                                                        >Pendiente</option>
-                                                    <option value="Preparado" <%=(envio &&
-                                                        envio.Estado_Envio==='Preparado' ) ? 'selected' : '' %>
-                                                        >Preparado</option>
-                                                    <option value="Despachado" <%=(envio &&
-                                                        envio.Estado_Envio==='Despachado' ) ? 'selected' : '' %>
-                                                        >Despachado</option>
-                                                    <option value="En Ruta" <%=(envio && envio.Estado_Envio==='En Ruta'
-                                                        ) ? 'selected' : '' %>>En Ruta</option>
-                                                    <option value="Entregado" <%=(envio &&
-                                                        envio.Estado_Envio==='Entregado' ) ? 'selected' : '' %>
-                                                        >Entregado</option>
+                                                <label for="Estado_Envio" class="form-label">Estado <span class="text-danger">*</span></label>
+                                                <select class="form-select" id="Estado_Envio" name="Estado_Envio" required>
+                                                    <option value="Aceptado" <%=(envio && (envio.Estado_Envio==='Aceptado' || envio.Estado_Envio==='Pendiente' || envio.Estado_Envio==='Preparado' || envio.Estado_Envio==='Despachado' || envio.Estado_Envio==='En envío' || envio.Estado_Envio==='En Ruta' || envio.Estado_Envio==='En reparto')) ? 'selected' : '' %>>
+                                                        Aceptado
+                                                    </option>
+                                                    <option value="Rechazado" <%=(envio && envio.Estado_Envio==='Rechazado') ? 'selected' : '' %>>
+                                                        Rechazado
+                                                    </option>
                                                 </select>
+                                                <small class="form-text text-muted">El administrador solo puede cambiar entre Aceptado o Rechazado. Los demás estados se actualizan automáticamente.</small>
                                             </div>
 
                                             <div class="col-md-6">
@@ -137,7 +123,9 @@
                                             <div class="col-md-6">
                                                 <label for="precio" class="form-label">Precio ($)</label>
                                                 <input type="number" step="0.01" class="form-control" id="precio"
-                                                    name="precio" value="<%= envio ? envio.precio : '0.00' %>" required>
+                                                    name="precio" value="<%= envio ? envio.precio : '0.00' %>" readonly
+                                                    style="background-color: #e9ecef; cursor: not-allowed;">
+                                                <small class="form-text text-muted">El precio no se puede modificar</small>
                                             </div>
 
                                             <div class="col-md-6">
@@ -152,19 +140,12 @@
                                             </div>
 
                                             <div class="col-12">
-                                                <label for="Nombre_Destinatario" class="form-label">Nombre del
-                                                    Destinatario</label>
+                                                <label for="Nombre_Destinatario" class="form-label">Cliente Destinatario</label>
                                                 <input type="text" class="form-control" id="Nombre_Destinatario"
                                                     name="Nombre_Destinatario"
-                                                    value="<%= envio ? envio.Nombre_Destinatario : '' %>" required>
-                                            </div>
-
-                                            <div class="col-12">
-                                                <label for="Direccion_Completa" class="form-label">Dirección
-                                                    Completa</label>
-                                                <input type="text" class="form-control" id="Direccion_Completa"
-                                                    name="Direccion_Completa"
-                                                    value="<%= envio ? envio.Direccion_Completa : '' %>" required>
+                                                    value="<%= envio ? envio.Nombre_Destinatario : '' %>" readonly
+                                                    style="background-color: #e9ecef; cursor: not-allowed;">
+                                                <small class="form-text text-muted">Este campo es solo informativo y no se puede editar</small>
                                             </div>
 
                                             <div class="col-12">
@@ -192,14 +173,18 @@
                                                                 <input type="text" class="form-control product-id"
                                                                     id="product-id-<%= index %>"
                                                                     name="products[<%= index %>][id_producto]"
-                                                                    value="<%= product.id_producto_fk %>">
+                                                                    value="<%= product.id_producto_fk %>"
+                                                                    <% if (typeof isBodeguero !=='undefined' && isBodeguero) { %>
+                                                                    readonly style="background-color: #e9ecef; cursor: not-allowed;"
+                                                                    <% } %>>
                                                             </div>
                                                             <div class="col-md-5">
                                                                 <label for="product-name-<%= index %>"
                                                                     class="form-label">Nombre Producto</label>
                                                                 <input type="text" class="form-control product-name"
                                                                     id="product-name-<%= index %>"
-                                                                    value="<%= product.descripcion %>" readonly>
+                                                                    value="<%= product.descripcion %>" readonly
+                                                                    style="background-color: #e9ecef; cursor: not-allowed;">
                                                             </div>
                                                             <div class="col-md-2">
                                                                 <label for="product-quantity-<%= index %>"
@@ -207,12 +192,17 @@
                                                                 <input type="number" class="form-control"
                                                                     id="product-quantity-<%= index %>"
                                                                     name="products[<%= index %>][cantidad]"
-                                                                    value="<%= product.cantidad %>">
+                                                                    value="<%= product.cantidad %>"
+                                                                    <% if (typeof isBodeguero !=='undefined' && isBodeguero) { %>
+                                                                    readonly style="background-color: #e9ecef; cursor: not-allowed;"
+                                                                    <% } %>>
                                                             </div>
+                                                            <% if (typeof isBodeguero ==='undefined' || !isBodeguero) { %>
                                                             <div class="col-md-12">
                                                                 <button type="button"
                                                                     class="btn btn-danger btn-sm remove-product">Eliminar</button>
                                                             </div>
+                                                            <% } %>
                                                         </div>
                                                         <% }); %>
                                                             <% } %>
@@ -223,13 +213,62 @@
                                                     Producto</button>
                                                 <% } %>
 
+                                            <% if (typeof isBodeguero !=='undefined' && isBodeguero && isEdit) { %>
+                                                <!-- Sección de Generación de Código para Bodeguero -->
+                                                <hr class="my-4">
+                                                <div class="card border-primary">
+                                                    <div class="card-header bg-primary text-white">
+                                                        <h5 class="mb-0">
+                                                            <i class="fas fa-key me-2"></i>Generación de Código de Confirmación
+                                                        </h5>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div id="codigo-section">
+                                                            <% if (typeof codigoActivo !== 'undefined' && codigoActivo) { %>
+                                                                <!-- Mostrar código activo -->
+                                                                <div class="alert alert-success">
+                                                                    <div class="d-flex justify-content-between align-items-center">
+                                                                        <div>
+                                                                            <strong><i class="fas fa-check-circle me-2"></i>Código Generado:</strong>
+                                                                            <h3 class="mb-0 mt-2 text-center" style="font-family: 'Courier New', monospace; letter-spacing: 0.5rem;">
+                                                                                <%= codigoActivo %>
+                                                                            </h3>
+                                                                            <small class="text-muted d-block mt-2 text-center">
+                                                                                Proporcione este código al chofer para confirmar la recepción
+                                                                            </small>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="text-center mt-3">
+                                                                    <button type="button" class="btn btn-danger" id="cancelar-codigo-btn">
+                                                                        <i class="fas fa-times me-2"></i>Cancelar Código
+                                                                    </button>
+                                                                </div>
+                                                            <% } else { %>
+                                                                <!-- Botón para generar código -->
+                                                                <div class="text-center">
+                                                                    <p class="text-muted mb-3">
+                                                                        Genere un código de 6 dígitos para que el chofer confirme la recepción de los productos.
+                                                                    </p>
+                                                                    <button type="button" class="btn btn-primary btn-lg" id="generar-codigo-btn">
+                                                                        <i class="fas fa-key me-2"></i>Generar Código
+                                                                    </button>
+                                                                </div>
+                                                            <% } %>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <% } %>
+
                                                     <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
                                                         <a href="/admin/envios"
                                                             class="btn btn-outline-secondary">Cancelar</a>
+                                                        <% if (typeof isBodeguero ==='undefined' || !isBodeguero) { %>
                                                         <button type="submit" class="btn btn-primary">
                                                             <i class="fas fa-save me-2"></i>
                                                             <%= isEdit ? 'Actualizar' : 'Guardar' %>
                                                         </button>
+                                                        <% } %>
                                                     </div>
                             </form>
                         </div>
@@ -389,6 +428,197 @@
                             }
                         });
                     }
+
+                    <% if (typeof isBodeguero !=='undefined' && isBodeguero && isEdit) { %>
+                    // Funcionalidad de generación y cancelación de códigos para bodeguero
+                    const generarCodigoBtn = document.getElementById('generar-codigo-btn');
+                    const cancelarCodigoBtn = document.getElementById('cancelar-codigo-btn');
+                    const codigoSection = document.getElementById('codigo-section');
+                    const envioId = '<%= envio._id %>';
+
+                    if (generarCodigoBtn) {
+                        generarCodigoBtn.addEventListener('click', async function() {
+                            if (!confirm('¿Desea generar un nuevo código de confirmación para el chofer?')) {
+                                return;
+                            }
+
+                            generarCodigoBtn.disabled = true;
+                            generarCodigoBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generando...';
+
+                            try {
+                                const response = await fetch(`/admin/api/envios/${envioId}/generar-codigo`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    }
+                                });
+
+                                const data = await response.json();
+
+                                if (response.ok && data.success) {
+                                    // Actualizar la sección con el código generado
+                                    codigoSection.innerHTML = `
+                                        <div class="alert alert-success">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong><i class="fas fa-check-circle me-2"></i>Código Generado:</strong>
+                                                    <h3 class="mb-0 mt-2 text-center" style="font-family: 'Courier New', monospace; letter-spacing: 0.5rem;">
+                                                        ${data.codigo}
+                                                    </h3>
+                                                    <small class="text-muted d-block mt-2 text-center">
+                                                        Proporcione este código al chofer para confirmar la recepción
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="text-center mt-3">
+                                            <button type="button" class="btn btn-danger" id="cancelar-codigo-btn">
+                                                <i class="fas fa-times me-2"></i>Cancelar Código
+                                            </button>
+                                        </div>
+                                    `;
+
+                                    // Re-agregar el event listener al nuevo botón de cancelar
+                                    const nuevoCancelarBtn = document.getElementById('cancelar-codigo-btn');
+                                    if (nuevoCancelarBtn) {
+                                        nuevoCancelarBtn.addEventListener('click', cancelarCodigoHandler);
+                                    }
+
+                                    // Mostrar mensaje de éxito
+                                    alert(`Código generado exitosamente: ${data.codigo}`);
+                                } else {
+                                    alert('Error al generar el código: ' + (data.message || 'Error desconocido'));
+                                }
+                            } catch (error) {
+                                console.error('Error:', error);
+                                alert('Error al generar el código. Por favor, intente nuevamente.');
+                            } finally {
+                                generarCodigoBtn.disabled = false;
+                                generarCodigoBtn.innerHTML = '<i class="fas fa-key me-2"></i>Generar Código';
+                            }
+                        });
+                    }
+
+                    const cancelarCodigoHandler = async function() {
+                        if (!confirm('¿Está seguro de que desea cancelar este código? El chofer no podrá usarlo para confirmar la recepción.')) {
+                            return;
+                        }
+
+                        if (cancelarCodigoBtn) {
+                            cancelarCodigoBtn.disabled = true;
+                            cancelarCodigoBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Cancelando...';
+                        }
+
+                        try {
+                            const response = await fetch(`/admin/api/envios/${envioId}/cancelar-codigo`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+
+                            const data = await response.json();
+
+                            if (response.ok && data.success) {
+                                // Restaurar la sección inicial
+                                codigoSection.innerHTML = `
+                                    <div class="text-center">
+                                        <p class="text-muted mb-3">
+                                            Genere un código de 6 dígitos para que el chofer confirme la recepción de los productos.
+                                        </p>
+                                        <button type="button" class="btn btn-primary btn-lg" id="generar-codigo-btn">
+                                            <i class="fas fa-key me-2"></i>Generar Código
+                                        </button>
+                                    </div>
+                                `;
+
+                                // Re-agregar el event listener al nuevo botón de generar
+                                const nuevoGenerarBtn = document.getElementById('generar-codigo-btn');
+                                if (nuevoGenerarBtn) {
+                                    nuevoGenerarBtn.addEventListener('click', async function() {
+                                        if (!confirm('¿Desea generar un nuevo código de confirmación para el chofer?')) {
+                                            return;
+                                        }
+
+                                        nuevoGenerarBtn.disabled = true;
+                                        nuevoGenerarBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generando...';
+
+                                        try {
+                                            const response = await fetch(`/api/envios/${envioId}/generar-codigo`, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json'
+                                                }
+                                            });
+
+                                            const data = await response.json();
+
+                                            if (response.ok && data.success) {
+                                                // Actualizar la sección con el código generado
+                                                codigoSection.innerHTML = `
+                                                    <div class="alert alert-success">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <div>
+                                                                <strong><i class="fas fa-check-circle me-2"></i>Código Generado:</strong>
+                                                                <h3 class="mb-0 mt-2 text-center" style="font-family: 'Courier New', monospace; letter-spacing: 0.5rem;">
+                                                                    ${data.codigo}
+                                                                </h3>
+                                                                <small class="text-muted d-block mt-2 text-center">
+                                                                    Proporcione este código al chofer para confirmar la recepción
+                                                                </small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-center mt-3">
+                                                        <button type="button" class="btn btn-danger" id="cancelar-codigo-btn">
+                                                            <i class="fas fa-times me-2"></i>Cancelar Código
+                                                        </button>
+                                                    </div>
+                                                `;
+
+                                                // Re-agregar el event listener al nuevo botón de cancelar
+                                                const nuevoCancelarBtn = document.getElementById('cancelar-codigo-btn');
+                                                if (nuevoCancelarBtn) {
+                                                    nuevoCancelarBtn.addEventListener('click', cancelarCodigoHandler);
+                                                }
+
+                                                // Mostrar mensaje de éxito
+                                                alert(`Código generado exitosamente: ${data.codigo}`);
+                                            } else {
+                                                alert('Error al generar el código: ' + (data.message || 'Error desconocido'));
+                                            }
+                                        } catch (error) {
+                                            console.error('Error:', error);
+                                            alert('Error al generar el código. Por favor, intente nuevamente.');
+                                        } finally {
+                                            nuevoGenerarBtn.disabled = false;
+                                            nuevoGenerarBtn.innerHTML = '<i class="fas fa-key me-2"></i>Generar Código';
+                                        }
+                                    });
+                                }
+
+                                alert('Código cancelado exitosamente');
+                            } else {
+                                alert('Error al cancelar el código: ' + (data.message || 'Error desconocido'));
+                                if (cancelarCodigoBtn) {
+                                    cancelarCodigoBtn.disabled = false;
+                                    cancelarCodigoBtn.innerHTML = '<i class="fas fa-times me-2"></i>Cancelar Código';
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            alert('Error al cancelar el código. Por favor, intente nuevamente.');
+                            if (cancelarCodigoBtn) {
+                                cancelarCodigoBtn.disabled = false;
+                                cancelarCodigoBtn.innerHTML = '<i class="fas fa-times me-2"></i>Cancelar Código';
+                            }
+                        }
+                    };
+
+                    if (cancelarCodigoBtn) {
+                        cancelarCodigoBtn.addEventListener('click', cancelarCodigoHandler);
+                    }
+                    <% } %>
                 });
             </script>
 

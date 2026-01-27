@@ -1,6 +1,7 @@
 // controllers/customerController.js
 const ROLES = require('../config/roles');
 const Envio = require('../models/Envio');
+const { mapearEstadoCliente } = require('../utils/estadoEnvio');
 
 // Mapeo de roles para mostrar el nombre del rol
 const roleNames = {
@@ -97,10 +98,13 @@ async function getCustomerOrders(userId, nombreCompleto) {
                         [pedido.id_envio]
                     );
                     pedido.productos = productos || [];
+                    // Mapear el estado interno al estado visible para el cliente
+                    pedido.estado_envio_cliente = mapearEstadoCliente(pedido.estado_envio);
                     return pedido;
                 } catch (error) {
                     console.error(`Error al obtener productos para envío ${pedido.id_envio}:`, error.message);
                     pedido.productos = [];
+                    pedido.estado_envio_cliente = mapearEstadoCliente(pedido.estado_envio);
                     return pedido;
                 }
             })
@@ -409,21 +413,27 @@ exports.realizarPedido = async (req, res) => {
             });
         }
         
-        // Obtener dirección del cuerpo de la petición
-        const { direccion_completa, metodo_pago = 'Pendiente' } = req.body;
+        // Obtener método de pago del cuerpo de la petición
+        const { metodo_pago = 'Pendiente' } = req.body;
         
-        if (!direccion_completa || direccion_completa.trim() === '') {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'La dirección de entrega es obligatoria.' 
-            });
+        // La dirección ya no es requerida en el proceso de compra del cliente
+        const direccion_completa = '';
+        
+        // Generar código de envío único usando el mismo formato que admin (E-yyyy/mm/dd-NN)
+        const { obtenerSiguienteSecuencial, generarCodigoEnvio } = require('../utils/validations');
+        let codigoEnvio;
+        try {
+            const siguienteSecuencial = await obtenerSiguienteSecuencial();
+            codigoEnvio = generarCodigoEnvio(siguienteSecuencial);
+        } catch (error) {
+            console.error('Error al generar código de envío:', error);
+            // Fallback en caso de error
+            const fecha = new Date();
+            const año = fecha.getFullYear();
+            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+            const dia = String(fecha.getDate()).padStart(2, '0');
+            codigoEnvio = `E-${año}/${mes}/${dia}-01`;
         }
-        
-        // Generar código de envío único
-        const fecha = new Date();
-        const fechaStr = fecha.toISOString().slice(0, 10).replace(/-/g, '');
-        const randomStr = Math.random().toString(36).substr(2, 6).toUpperCase();
-        const codigoEnvio = `SOL-${fechaStr}-${randomStr}`;
         
         // Calcular precio total
         const precioTotal = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);

@@ -41,43 +41,49 @@
 
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label for="nombre_completo" class="form-label">Nombre Completo</label>
+                                <label for="id_rol_fk" class="form-label">Rol <span class="text-danger">*</span></label>
+                                <select class="form-select" id="id_rol_fk" name="id_rol_fk" required>
+                                    <option value="1" <%=(user && user.id_rol_fk==1) ? 'selected' : '' %>>Administrador</option>
+                                    <option value="2" <%=(user && user.id_rol_fk==2) ? 'selected' : '' %>>Almacen (Bodeguero)</option>
+                                    <option value="3" <%=(user && user.id_rol_fk==3) ? 'selected' : '' %>>Repartidor</option>
+                                    <option value="4" <%=(user && user.id_rol_fk==4) ? 'selected' : '' %>>Sucursal</option>
+                                </select>
+                                <small class="form-text text-muted" id="rol-help-text"></small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="nombre_completo" class="form-label">Nombre Completo <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="nombre_completo" name="nombre_completo"
                                     value="<%= user ? user.nombre_completo : '' %>" required>
                             </div>
 
-                            <div class="col-md-6">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email" name="email"
-                                    value="<%= user ? user.email : '' %>" required>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="nombre_usuario" class="form-label">Nombre de Usuario</label>
+                            <div class="col-md-6" id="campo-nombre-usuario">
+                                <label for="nombre_usuario" class="form-label">Nombre de Usuario <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="nombre_usuario" name="nombre_usuario"
                                     value="<%= user ? user.nombre_usuario : '' %>" required>
                             </div>
 
+                            <div class="col-md-6" id="campo-email">
+                                <label for="email" class="form-label">Email <span id="email-required" class="text-danger"></span></label>
+                                <input type="email" class="form-control" id="email" name="email"
+                                    value="<%= user ? user.email : '' %>">
+                                <small class="form-text text-muted" id="email-help-text"></small>
+                            </div>
+
+                            <div class="col-md-6" id="campo-direccion">
+                                <label for="direccion" class="form-label">Dirección de la Sucursal <span id="direccion-required" class="text-danger"></span></label>
+                                <textarea class="form-control" id="direccion" name="direccion" rows="3"
+                                    placeholder="Ingresa la dirección completa de la sucursal..."><%= user && user.direccion ? user.direccion : '' %></textarea>
+                                <small class="form-text text-muted">Solo para usuarios con rol Sucursal</small>
+                            </div>
+
                             <div class="col-md-6">
-                                <label for="password" class="form-label">Contraseña</label>
+                                <label for="password" class="form-label">Contraseña <span class="text-danger" id="password-required">*</span></label>
                                 <input type="password" class="form-control" id="password" name="password"
                                     <%= isEdit ? '' : 'required' %>>
                                 <% if (isEdit) { %>
                                     <small class="form-text text-muted">Dejar en blanco para no cambiar la contraseña</small>
                                 <% } %>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="id_rol_fk" class="form-label">Rol</label>
-                                <select class="form-select" id="id_rol_fk" name="id_rol_fk">
-                                    <option value="1" <%=(user && user.id_rol_fk===1) ? 'selected' : '' %>>Administrador</option>
-                                    <option value="2" <%=(user && user.id_rol_fk===2) ? 'selected' : '' %>>Almacen</option>
-                                    <option value="3" <%=(user && user.id_rol_fk===3) ? 'selected' : '' %>>Repartidor</option>
-                                    <option value="4" <%=(user && user.id_rol_fk===4) ? 'selected' : '' %>>Sucursal</option>
-                                    <option value="5" <%=(user && user.id_rol_fk===5) ? 'selected' : '' %>>Contabilidad</option>
-                                    <option value="6" <%=(user && user.id_rol_fk===6) ? 'selected' : '' %>>SuperUsuario</option>
-                                    <option value="7" <%=(user && user.id_rol_fk===7) ? 'selected' : '' %>>Cliente</option>
-                                </select>
                             </div>
 
                         </div>
@@ -94,5 +100,74 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // Función para mostrar/ocultar campos según el rol seleccionado
+        function actualizarCamposSegunRol() {
+            const rolSelect = document.getElementById('id_rol_fk');
+            const rolValue = parseInt(rolSelect.value);
+            
+            const campoNombreUsuario = document.getElementById('campo-nombre-usuario');
+            const campoEmail = document.getElementById('campo-email');
+            const campoDireccion = document.getElementById('campo-direccion');
+            const emailInput = document.getElementById('email');
+            const direccionInput = document.getElementById('direccion');
+            const emailRequired = document.getElementById('email-required');
+            const direccionRequired = document.getElementById('direccion-required');
+            const emailHelpText = document.getElementById('email-help-text');
+            const rolHelpText = document.getElementById('rol-help-text');
+            
+            // Resetear todos los campos
+            campoNombreUsuario.style.display = 'block';
+            campoEmail.style.display = 'block';
+            campoDireccion.style.display = 'none';
+            emailInput.required = false;
+            direccionInput.required = false;
+            emailRequired.textContent = '';
+            direccionRequired.textContent = '';
+            emailHelpText.textContent = '';
+            rolHelpText.textContent = '';
+            
+            if (rolValue === 4) {
+                // Sucursal: requiere nombre usuario, contraseña, correo y dirección
+                campoNombreUsuario.style.display = 'block';
+                campoEmail.style.display = 'block';
+                campoDireccion.style.display = 'block';
+                emailInput.required = true;
+                direccionInput.required = true;
+                emailRequired.textContent = '*';
+                direccionRequired.textContent = '*';
+                emailHelpText.textContent = 'Correo obligatorio para sucursales';
+                rolHelpText.textContent = 'Sucursal: requiere nombre, usuario, contraseña, correo y dirección';
+            } else if (rolValue === 2 || rolValue === 3) {
+                // Bodeguero (2) o Repartidor (3): solo nombre y contraseña
+                campoNombreUsuario.style.display = 'block';
+                campoEmail.style.display = 'block';
+                campoDireccion.style.display = 'none';
+                emailInput.required = false;
+                direccionInput.required = false;
+                emailHelpText.textContent = 'Opcional para ' + (rolValue === 2 ? 'Bodeguero' : 'Repartidor');
+                rolHelpText.textContent = (rolValue === 2 ? 'Bodeguero' : 'Repartidor') + ': requiere solo nombre y contraseña';
+            } else {
+                // Otros roles: mostrar todos los campos estándar
+                campoNombreUsuario.style.display = 'block';
+                campoEmail.style.display = 'block';
+                campoDireccion.style.display = 'none';
+                emailInput.required = false;
+                direccionInput.required = false;
+            }
+        }
+        
+        // Ejecutar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            actualizarCamposSegunRol();
+            
+            // Ejecutar cuando cambie el rol
+            const rolSelect = document.getElementById('id_rol_fk');
+            if (rolSelect) {
+                rolSelect.addEventListener('change', actualizarCamposSegunRol);
+            }
+        });
+    </script>
 
     <%- include('../layouts/footer') %>

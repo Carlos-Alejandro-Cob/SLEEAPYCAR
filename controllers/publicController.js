@@ -1,4 +1,6 @@
 const Envio = require('../models/Envio');
+const CodigoConfirmacion = require('../models/CodigoConfirmacion');
+const { mapearEstadoCliente } = require('../utils/estadoEnvio');
 
 exports.showSearch = (req, res) => {
     res.render('public/search', {
@@ -68,9 +70,17 @@ exports.showDetails = async (req, res) => {
             // Optional: Flash message could be added here
         }
 
+        // Verificar si ya existe un código activo para este envío
+        const codigoActivo = await CodigoConfirmacion.obtenerCodigoActivo(id, 'CLIENTE_CHOFER');
+
+        // Mapear el estado interno al estado visible para el cliente
+        const estadoCliente = mapearEstadoCliente(envio.Estado_Envio);
+        envio.Estado_Envio_Cliente = estadoCliente;
+
         res.render('public/details', {
             title: `Envío ${envio.ID_Envio}`,
             envio,
+            codigoActivo: codigoActivo ? codigoActivo.codigo : null,
             layout: 'public/layout',
             paypalClientId: process.env.PAYPAL_CLIENT_ID || 'sb', // Fallback to sandbox
             mpPublicKey: process.env.MP_PUBLIC_KEY || 'TEST-PUBLIC-KEY'
@@ -78,5 +88,41 @@ exports.showDetails = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.redirect('/rastreo');
+    }
+};
+
+// Generar código de confirmación para cliente
+exports.generarCodigoConfirmacion = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const envio = await Envio.findById(id);
+        if (!envio) {
+            return res.status(404).json({ success: false, message: 'Envío no encontrado' });
+        }
+
+        // Verificar que el envío esté en estado "En reparto" o "En envío" (visible como "En reparto" para el cliente)
+        const estadosValidos = ['En reparto', 'En envío', 'En Ruta'];
+        if (!estadosValidos.includes(envio.Estado_Envio)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Solo se puede generar código cuando el envío está "En reparto"' 
+            });
+        }
+
+        // Generar código
+        const codigoData = await CodigoConfirmacion.generar(id, 'CLIENTE_CHOFER', null);
+
+        res.json({
+            success: true,
+            codigo: codigoData.codigo,
+            message: 'Código generado exitosamente'
+        });
+    } catch (error) {
+        console.error('Error al generar código:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al generar el código de confirmación'
+        });
     }
 };

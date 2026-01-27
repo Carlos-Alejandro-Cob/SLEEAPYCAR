@@ -203,13 +203,15 @@ if (typeof paypalClientId !== 'undefined') { %>
                                         </td>
                                         <td>
                                             <% 
+                                                const estadoCliente = pedido.estado_envio_cliente || 'Aceptado';
                                                 let estadoClass = 'bg-secondary';
-                                                if (pedido.estado_envio === 'Entregado') estadoClass = 'bg-success';
-                                                else if (pedido.estado_envio === 'En Ruta') estadoClass = 'bg-warning';
-                                                else if (pedido.estado_envio === 'Pendiente') estadoClass = 'bg-info';
+                                                if (estadoCliente === 'Entregado') estadoClass = 'bg-success';
+                                                else if (estadoCliente === 'En reparto') estadoClass = 'bg-warning';
+                                                else if (estadoCliente === 'Aceptado') estadoClass = 'bg-info';
+                                                else if (estadoCliente === 'Rechazado') estadoClass = 'bg-danger';
                                             %>
                                             <span class="badge <%= estadoClass %>">
-                                                <%= pedido.estado_envio || 'Pendiente' %>
+                                                <%= estadoCliente %>
                                             </span>
                                         </td>
                                         <td>
@@ -563,15 +565,6 @@ if (typeof paypalClientId !== 'undefined') { %>
                     </div>
                     <div class="card-body">
                         <form id="form-realizar-pedido">
-                            <div class="mb-3">
-                                <label for="direccion-entrega" class="form-label">
-                                    <i class="fas fa-map-marker-alt me-2"></i>
-                                    Dirección de Entrega <span class="text-danger">*</span>
-                                </label>
-                                <textarea class="form-control" id="direccion-entrega" rows="3" required 
-                                          placeholder="Ingresa la dirección completa de entrega..."></textarea>
-                                <small class="form-text text-muted">Incluye calle, número, colonia, ciudad y código postal</small>
-                            </div>
                             <div class="mb-3">
                                 <label for="metodo-pago" class="form-label">
                                     <i class="fas fa-credit-card me-2"></i>

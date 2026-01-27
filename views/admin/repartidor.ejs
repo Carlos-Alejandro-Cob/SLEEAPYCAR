@@ -65,11 +65,13 @@
                                             <% 
                                             let estadoBadgeClass = 'bg-secondary';
                                             if (envio.Estado_Envio === 'Entregado') estadoBadgeClass = 'bg-success';
+                                            else if (envio.Estado_Envio === 'En envío') estadoBadgeClass = 'bg-info';
                                             else if (envio.Estado_Envio === 'En Ruta') estadoBadgeClass = 'bg-warning';
-                                            else if (envio.Estado_Envio === 'Pendiente') estadoBadgeClass = 'bg-info';
+                                            else if (envio.Estado_Envio === 'Pendiente') estadoBadgeClass = 'bg-secondary';
                                             else if (envio.Estado_Envio === 'Intento de entrega') estadoBadgeClass = 'bg-warning';
                                             else if (envio.Estado_Envio === 'Devuelto a bodega') estadoBadgeClass = 'bg-secondary';
                                             else if (envio.Estado_Envio === 'Cancelado en ruta') estadoBadgeClass = 'bg-danger';
+                                            else if (envio.Estado_Envio === 'Despachado') estadoBadgeClass = 'bg-primary';
                                             %>
                                             <span class="badge <%= estadoBadgeClass %>"><%= envio.Estado_Envio %></span>
                                         </td>
@@ -79,7 +81,8 @@
                                                     data-envio-id="<%= envio._id %>"
                                                     data-envio-codigo="<%= envio.ID_Envio %>"
                                                     data-destinatario="<%= envio.Nombre_Destinatario %>"
-                                                    data-direccion="<%= envio.Direccion_Completa %>">
+                                                    data-direccion="<%= envio.Direccion_Completa %>"
+                                                    data-estado="<%= envio.Estado_Envio %>">
                                                 <i class="fas fa-cog me-1"></i>Acciones
                                             </button>
                                         </td>
@@ -123,12 +126,21 @@
                 </div>
                 
                 <div class="d-grid gap-2">
+                    <!-- Botón para cambiar a "En envío" (requiere código del bodeguero) -->
+                    <button type="button" 
+                            class="btn btn-info w-100 text-start" 
+                            id="btn-en-envio"
+                            onclick="abrirModalCodigoBodeguero()">
+                        <i class="fas fa-truck me-2"></i><span class="fw-semibold">En envío</span>
+                        <small class="d-block ms-4 mt-1" style="font-size: 0.75rem;">Confirmar recepción con código del bodeguero</small>
+                    </button>
+                    
                     <form id="form-entregado" method="POST" class="d-inline">
                         <input type="hidden" name="_method" value="PUT">
                         <input type="hidden" name="estado_envio" value="Entregado">
-                        <button type="submit" class="btn btn-success w-100 text-start">
+                        <button type="button" onclick="abrirModalCodigoCliente()" class="btn btn-success w-100 text-start">
                             <i class="fas fa-check me-2"></i><span class="fw-semibold">Entregado</span>
-                            <small class="d-block ms-4 mt-1" style="font-size: 0.75rem;">Marcar como entregado exitosamente</small>
+                            <small class="d-block ms-4 mt-1" style="font-size: 0.75rem;">Confirmar entrega con código del cliente</small>
                         </button>
                     </form>
                     
@@ -163,6 +175,92 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" onclick="cerrarModalAcciones()">Cerrar</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Código Bodeguero (En envío) -->
+<div class="modal fade" id="codigoBodegueroModal" tabindex="-1" aria-labelledby="codigoBodegueroLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="codigoBodegueroLabel">
+                    <i class="fas fa-key me-2"></i>Confirmar Recepción de Bodeguero
+                </h5>
+                <button type="button" class="btn-close" onclick="cerrarModalCodigoBodeguero()" aria-label="Close"></button>
+            </div>
+            <form id="form-en-envio" method="POST">
+                <input type="hidden" name="_method" value="PUT">
+                <input type="hidden" name="estado_envio" value="En envío">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Ingrese el código de confirmación proporcionado por el bodeguero al momento de entregar los productos.
+                    </div>
+                    <div class="mb-3">
+                        <label for="codigo_bodeguero" class="form-label">Código de Confirmación <span class="text-danger">*</span></label>
+                        <input type="text" 
+                               class="form-control form-control-lg text-center" 
+                               id="codigo_bodeguero" 
+                               name="codigo_confirmacion" 
+                               placeholder="000000"
+                               maxlength="6"
+                               pattern="[0-9]{6}"
+                               required
+                               autofocus>
+                        <small class="text-muted">Código de 6 dígitos proporcionado por el bodeguero</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" onclick="cerrarModalCodigoBodeguero()">Cancelar</button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="fas fa-check me-2"></i>Confirmar Recepción
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Código Cliente (Entregado) -->
+<div class="modal fade" id="codigoClienteModal" tabindex="-1" aria-labelledby="codigoClienteLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="codigoClienteLabel">
+                    <i class="fas fa-key me-2"></i>Confirmar Entrega al Cliente
+                </h5>
+                <button type="button" class="btn-close" onclick="cerrarModalCodigoCliente()" aria-label="Close"></button>
+            </div>
+            <form id="form-entregado-codigo" method="POST">
+                <input type="hidden" name="_method" value="PUT">
+                <input type="hidden" name="estado_envio" value="Entregado">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Ingrese el código de confirmación proporcionado por el cliente al momento de recibir los productos.
+                    </div>
+                    <div class="mb-3">
+                        <label for="codigo_cliente" class="form-label">Código de Confirmación <span class="text-danger">*</span></label>
+                        <input type="text" 
+                               class="form-control form-control-lg text-center" 
+                               id="codigo_cliente" 
+                               name="codigo_confirmacion" 
+                               placeholder="000000"
+                               maxlength="6"
+                               pattern="[0-9]{6}"
+                               required
+                               autofocus>
+                        <small class="text-muted">Código de 6 dígitos proporcionado por el cliente</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" onclick="cerrarModalCodigoCliente()">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-2"></i>Confirmar Entrega
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -470,23 +568,83 @@
         padding-top: 2rem !important;
         padding-bottom: 2rem !important;
     }
+
+    /* Optimizaciones móviles */
+    @media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+        
+        .table th,
+        .table td {
+            padding: 0.5rem 0.25rem;
+            font-size: 0.75rem;
+        }
+        
+        .btn-sm {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .modal-dialog {
+            margin: 0.5rem;
+            max-width: calc(100% - 1rem);
+        }
+        
+        .modal-body {
+            padding: 0.75rem;
+        }
+        
+        .input-group-text {
+            font-size: 0.875rem;
+        }
+        
+        .form-control {
+            font-size: 0.875rem;
+        }
+        
+        h1.h4 {
+            font-size: 1.125rem;
+        }
+    }
 </style>
 
 <script>
     let envioActualId = null;
+    let envioActualEstado = null;
     
     // Función para abrir el modal de acciones
-    function abrirModalAcciones(envioId, codigoEnvio, destinatario, direccion) {
+    function abrirModalAcciones(envioId, codigoEnvio, destinatario, direccion, estado) {
         envioActualId = envioId;
+        envioActualEstado = estado;
         
         // Actualizar contenido del modal
         document.getElementById('modal-codigo-envio').textContent = codigoEnvio;
         document.getElementById('modal-destinatario').textContent = destinatario;
         document.getElementById('modal-direccion').textContent = direccion;
         
+        // Mostrar/ocultar botones según el estado
+        const btnEnEnvio = document.getElementById('btn-en-envio');
+        const btnEntregado = document.getElementById('form-entregado').parentElement.querySelector('button');
+        
+        // Mostrar botón "En envío" solo si el estado es "Despachado"
+        if (estado === 'Despachado') {
+            btnEnEnvio.style.display = 'block';
+        } else {
+            btnEnEnvio.style.display = 'none';
+        }
+        
+        // Mostrar botón "Entregado" solo si el estado es "En envío"
+        if (estado === 'En envío') {
+            btnEntregado.style.display = 'block';
+        } else {
+            btnEntregado.style.display = 'none';
+        }
+        
         // Actualizar acciones de los formularios con método override en query string
         const baseUrl = '/admin/envios/' + envioId + '?_method=PUT';
-        document.getElementById('form-entregado').action = baseUrl;
+        document.getElementById('form-en-envio').action = baseUrl;
+        document.getElementById('form-entregado-codigo').action = baseUrl;
         document.getElementById('form-intento').action = baseUrl;
         document.getElementById('form-devuelto').action = baseUrl;
         
@@ -561,8 +719,86 @@
             backdrop.remove();
         }
     }
+
+    // Función para abrir modal de código bodeguero
+    function abrirModalCodigoBodeguero() {
+        cerrarModalAcciones();
+        
+        const baseUrl = '/admin/envios/' + envioActualId + '?_method=PUT';
+        document.getElementById('form-en-envio').action = baseUrl;
+        document.getElementById('codigo_bodeguero').value = '';
+        
+        const modal = document.getElementById('codigoBodegueroModal');
+        modal.style.display = 'block';
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        
+        if (!document.querySelector('.modal-backdrop')) {
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade show';
+            backdrop.style.zIndex = '1050';
+            backdrop.onclick = cerrarModalCodigoBodeguero;
+            document.body.appendChild(backdrop);
+        }
+        
+        setTimeout(() => document.getElementById('codigo_bodeguero').focus(), 100);
+    }
+
+    // Función para cerrar modal de código bodeguero
+    function cerrarModalCodigoBodeguero() {
+        const modal = document.getElementById('codigoBodegueroModal');
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+    }
+
+    // Función para abrir modal de código cliente
+    function abrirModalCodigoCliente() {
+        cerrarModalAcciones();
+        
+        const baseUrl = '/admin/envios/' + envioActualId + '?_method=PUT';
+        document.getElementById('form-entregado-codigo').action = baseUrl;
+        document.getElementById('codigo_cliente').value = '';
+        
+        const modal = document.getElementById('codigoClienteModal');
+        modal.style.display = 'block';
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        
+        if (!document.querySelector('.modal-backdrop')) {
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade show';
+            backdrop.style.zIndex = '1050';
+            backdrop.onclick = cerrarModalCodigoCliente;
+            document.body.appendChild(backdrop);
+        }
+        
+        setTimeout(() => document.getElementById('codigo_cliente').focus(), 100);
+    }
+
+    // Función para cerrar modal de código cliente
+    function cerrarModalCodigoCliente() {
+        const modal = document.getElementById('codigoClienteModal');
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+    }
     
-    // Inicializar botones de acciones
+        // Inicializar botones de acciones
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.btn-acciones').forEach(function(btn) {
             btn.addEventListener('click', function() {
@@ -570,8 +806,9 @@
                 const codigoEnvio = this.getAttribute('data-envio-codigo');
                 const destinatario = this.getAttribute('data-destinatario');
                 const direccion = this.getAttribute('data-direccion');
+                const estado = this.getAttribute('data-estado');
                 
-                abrirModalAcciones(envioId, codigoEnvio, destinatario, direccion);
+                abrirModalAcciones(envioId, codigoEnvio, destinatario, direccion, estado);
             });
         });
         
@@ -580,7 +817,16 @@
             if (e.key === 'Escape') {
                 cerrarModalAcciones();
                 cerrarModalCancelar();
+                cerrarModalCodigoBodeguero();
+                cerrarModalCodigoCliente();
             }
+        });
+
+        // Solo permitir números en los campos de código
+        document.querySelectorAll('input[name="codigo_confirmacion"]').forEach(input => {
+            input.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
         });
     });
 </script>

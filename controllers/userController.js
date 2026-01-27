@@ -8,8 +8,41 @@ const logger = require('../utils/logger');
 // Listar todos los usuarios
 exports.listUsers = async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT U.id_usuario, U.nombre_completo, U.nombre_usuario, U.email, R.nombre_rol FROM usuarios U JOIN roles R ON U.id_rol_fk = R.id_rol');
-        res.render('admin/userList', { users: rows, title: 'Gestión de Usuarios' });
+        const { rol_filtro } = req.query;
+        
+        // Obtener solo los roles permitidos (1=Admin, 2=Bodeguero, 3=Repartidor, 4=Sucursal)
+        const rolesPermitidos = [1, 2, 3, 4];
+        // Consultar directamente solo los roles permitidos desde la base de datos
+        const [roles] = await pool.query(
+            'SELECT id_rol, nombre_rol FROM roles WHERE id_rol IN (?, ?, ?, ?) ORDER BY nombre_rol',
+            rolesPermitidos
+        );
+        
+        // Construir la consulta con filtro opcional
+        let query = 'SELECT U.id_usuario, U.nombre_completo, U.nombre_usuario, U.email, U.id_rol_fk, R.nombre_rol FROM usuarios U JOIN roles R ON U.id_rol_fk = R.id_rol';
+        const params = [];
+        
+        // Solo mostrar usuarios con roles permitidos
+        query += ' WHERE U.id_rol_fk IN (1, 2, 3, 4)';
+        
+        if (rol_filtro && rol_filtro !== 'todos') {
+            const rolFiltroInt = parseInt(rol_filtro);
+            if (rolesPermitidos.includes(rolFiltroInt)) {
+                query += ' AND U.id_rol_fk = ?';
+                params.push(rolFiltroInt);
+            }
+        }
+        
+        query += ' ORDER BY U.id_usuario ASC';
+        
+        const [rows] = await pool.query(query, params);
+        
+        res.render('admin/userList', { 
+            users: rows, 
+            roles: roles,
+            rolFiltro: rol_filtro || 'todos',
+            title: 'Gestión de Usuarios' 
+        });
     } catch (error) {
         console.error(error);
         res.status(500).send('Error al obtener los usuarios');
@@ -27,11 +60,44 @@ exports.showCreateUserForm = (req, res) => {
 
 // Crear un nuevo usuario
 exports.createUser = async (req, res) => {
-    const { nombre_completo, email, nombre_usuario, password, id_rol_fk } = req.body;
+    const { nombre_completo, email, nombre_usuario, password, id_rol_fk, direccion } = req.body;
+    
+    // Validar campos según el rol
+    const ROLES = require('../config/roles');
+    const idRol = parseInt(id_rol_fk);
+    
+    // Validar que el rol esté permitido (solo 1=Admin, 2=Bodeguero, 3=Repartidor, 4=Sucursal)
+    const rolesPermitidos = [1, 2, 3, 4];
+    if (!rolesPermitidos.includes(idRol)) {
+        req.flash('error_msg', 'El rol seleccionado no está permitido.');
+        return res.redirect('/admin/users/nuevo');
+    }
+    
+    // Rol 4 = Sucursal: requiere email y dirección
+    // Rol 2 = Bodeguero, Rol 3 = Repartidor: solo nombre y contraseña (email opcional)
+    
+    if (idRol === 4) { // Sucursal
+        if (!email || !email.trim()) {
+            req.flash('error_msg', 'El correo es obligatorio para sucursales.');
+            return res.redirect('/admin/users/nuevo');
+        }
+        if (!direccion || !direccion.trim()) {
+            req.flash('error_msg', 'La dirección es obligatoria para sucursales.');
+            return res.redirect('/admin/users/nuevo');
+        }
+    }
+    
     try {
         const salt = await bcrypt.genSalt(10);
         const password_hash = await bcrypt.hash(password, salt);
-        await User.create({ nombre_completo, email, nombre_usuario, password_hash, id_rol_fk });
+        await User.create({ 
+            nombre_completo, 
+            email: email && email.trim() ? email.trim() : null, 
+            nombre_usuario, 
+            password_hash, 
+            id_rol_fk,
+            direccion: direccion && direccion.trim() ? direccion.trim() : null
+        });
         req.flash('success_msg', 'Usuario creado con éxito');
         res.redirect('/admin/users');
     } catch (error) {
@@ -59,21 +125,44 @@ exports.showEditUserForm = async (req, res) => {
 
 // Actualizar un usuario
 exports.updateUser = async (req, res) => {
-    const { nombre_completo, email, nombre_usuario, password, id_rol_fk } = req.body;
+    const { nombre_completo, email, nombre_usuario, password, id_rol_fk, direccion } = req.body;
     const { id } = req.params;
+    
+    // Validar campos según el rol
+    const idRol = parseInt(id_rol_fk);
+    
+    // Validar que el rol esté permitido (solo 1=Admin, 2=Bodeguero, 3=Repartidor, 4=Sucursal)
+    const rolesPermitidos = [1, 2, 3, 4];
+    if (!rolesPermitidos.includes(idRol)) {
+        req.flash('error_msg', 'El rol seleccionado no está permitido.');
+        return res.redirect(`/admin/users/${id}/editar`);
+    }
+    
+    if (idRol === 4) { // Sucursal
+        if (!email || !email.trim()) {
+            req.flash('error_msg', 'El correo es obligatorio para sucursales.');
+            return res.redirect(`/admin/users/${id}/editar`);
+        }
+        if (!direccion || !direccion.trim()) {
+            req.flash('error_msg', 'La dirección es obligatoria para sucursales.');
+            return res.redirect(`/admin/users/${id}/editar`);
+        }
+    }
+    
     try {
         let password_hash = null;
-        if (password) {
+        if (password && password.trim()) {
             const salt = await bcrypt.genSalt(10);
             password_hash = await bcrypt.hash(password, salt);
         }
 
         await User.update(id, {
             nombre_completo,
-            email,
+            email: email && email.trim() ? email.trim() : null,
             nombre_usuario,
             id_rol_fk,
-            password_hash // Si es null, el modelo lo ignora
+            password_hash, // Si es null, el modelo lo ignora
+            direccion: direccion && direccion.trim() ? direccion.trim() : null
         });
         req.flash('success_msg', 'Usuario actualizado con éxito');
         res.redirect('/admin/users');
