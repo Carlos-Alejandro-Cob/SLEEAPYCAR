@@ -213,7 +213,7 @@ exports.showEditForm = async (req, res) => {
         }
         const userRole = req.user ? req.user.id_rol_fk : null;
         const isBodeguero = userRole === ROLES.BODEGUERO;
-        
+
         res.render('admin/form', {
             envio: envio,
             isEdit: true,
@@ -246,10 +246,12 @@ exports.updateEnvío = async (req, res) => {
 
             let estadoFinal = estado_envio;
 
-            // Si el chofer marca "En envío", requiere código del bodeguero y cambia automáticamente a "En reparto"
+            // Restricción: "En reparto" y "Entregado" exigen código de seguridad validado.
+            // Si la validación falla, se rechaza la operación y NUNCA se actualiza el estado.
+
             if (estado_envio === 'En envío') {
                 if (!codigo_confirmacion || codigo_confirmacion.trim() === '') {
-                    req.flash('error_msg', 'Debe ingresar el código de confirmación proporcionado por el bodeguero.');
+                    req.flash('error_msg', 'Debe ingresar el código de confirmación de asignación proporcionado por el bodeguero.');
                     return res.redirect('/admin/repartidor');
                 }
 
@@ -270,7 +272,7 @@ exports.updateEnvío = async (req, res) => {
                 }
 
                 if (validacion.tipo !== 'BODEGUERO_CHOFER') {
-                    req.flash('error_msg', 'El código ingresado no es válido para este proceso.');
+                    req.flash('error_msg', 'El código de confirmación de asignación no es válido para este proceso.');
                     return res.redirect('/admin/repartidor');
                 }
                 
@@ -658,9 +660,8 @@ exports.addEnvioToRuta = async (req, res) => {
     const id_usuario = req.user.id_usuario;
 
     try {
-        // Validar que se proporcione el código de confirmación
         if (!codigo_confirmacion || codigo_confirmacion.trim() === '') {
-            req.flash('error_msg', 'Debe ingresar el código de confirmación proporcionado por el bodeguero.');
+            req.flash('error_msg', 'Debe ingresar el código de confirmación de asignación que le dio el bodeguero.');
             return res.redirect('/admin/repartidor');
         }
 
@@ -693,11 +694,10 @@ exports.addEnvioToRuta = async (req, res) => {
 
         // Verificar que el código sea del tipo correcto (BODEGUERO_CHOFER)
         if (validacion.tipo !== 'BODEGUERO_CHOFER') {
-            req.flash('error_msg', 'El código ingresado no es válido para asignar este envío.');
+            req.flash('error_msg', 'El código de confirmación de asignación no es válido para este envío.');
             return res.redirect('/admin/repartidor');
         }
 
-        // Asignar en BD permanentemente y cambiar estado a "En Ruta"
         await Envio.update(envio._id, { 
             id_repartidor: id_usuario,
             estado_envio: 'En Ruta'
@@ -706,7 +706,7 @@ exports.addEnvioToRuta = async (req, res) => {
         // Audit Log
         await logger.logAction(id_usuario, 'ASIGNAR_RUTA', `Envío ${envio.ID_Envio} asignado a repartidor ${req.user.nombre_usuario} y estado cambiado a "En Ruta"`);
 
-        req.flash('success_msg', `Envío ${envio.ID_Envio} asignado a tu ruta. Estado actualizado a "En Ruta".`);
+        req.flash('success_msg', `Envío ${envio.ID_Envio} asignado a tu ruta. Código de asignación validado. Estado: "En Ruta".`);
         res.redirect('/admin/repartidor');
     } catch (error) {
         console.error('Error al agregar envío a la ruta:', error);
@@ -719,10 +719,16 @@ exports.addEnvioToRuta = async (req, res) => {
 exports.generarCodigoBodeguero = async (req, res) => {
     try {
         const { id } = req.params;
+        const idEnvio = parseInt(id, 10);
+        if (isNaN(idEnvio)) {
+            return res.status(400).json({
+                success: false,
+                message: 'ID de envío inválido'
+            });
+        }
         const currentUserId = req.user.id_usuario;
         const userRole = req.user.id_rol_fk;
 
-        // Verificar que sea bodeguero
         if (userRole !== ROLES.BODEGUERO) {
             return res.status(403).json({
                 success: false,
@@ -730,8 +736,7 @@ exports.generarCodigoBodeguero = async (req, res) => {
             });
         }
 
-        // Verificar que el envío existe
-        const envio = await Envio.findById(id);
+        const envio = await Envio.findById(idEnvio);
         if (!envio) {
             return res.status(404).json({
                 success: false,
@@ -739,23 +744,41 @@ exports.generarCodigoBodeguero = async (req, res) => {
             });
         }
 
-        // Generar código
-        // Generar código usando la tabla codigos_confirmacion
-        const codigoData = await CodigoConfirmacion.generar(id, 'BODEGUERO_CHOFER', currentUserId);
-        
-        // Audit Log
-        await logger.logAction(currentUserId, 'GENERAR_CODIGO', `Código de confirmación ${codigoData.codigo} generado para envío ${id}`);
+        const codigoData = await CodigoConfirmacion.generar(idEnvio, 'BODEGUERO_CHOFER', currentUserId);
+        const codigo = typeof codigoData.codigo === 'string' ? codigoData.codigo : String(codigoData.codigo || '');
 
-        res.json({
+        logger.logAction(currentUserId, 'GENERAR_CODIGO', `Código de confirmación de asignación ${codigo} generado para envío ${idEnvio}`)
+            .catch(function (logErr) { console.warn('Log auditoría:', logErr.message); });
+
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-store');
+        res.status(200);
+        res.end(JSON.stringify({
             success: true,
-            codigo: codigoData.codigo,
-            message: 'Código generado exitosamente'
-        });
+            codigo: codigo,
+            message: 'Código de confirmación de asignación generado. Entregue este código al repartidor para que confirme que el envío está asignado a él.'
+        }));
+        return;
     } catch (error) {
-        console.error('Error al generar código:', error);
-        res.status(500).json({
+        console.error('Error al generar código:', error.message);
+        console.error('Código:', error.code, '| SQL:', error.sql);
+
+        if (error.code === 'ER_NO_SUCH_TABLE') {
+            return res.status(503).json({
+                success: false,
+                message: 'La tabla de códigos no existe. Ejecute: scripts/create_codigos_confirmacion.sql'
+            });
+        }
+        if (error.code === 'ER_NO_REFERENCED_ROW_2' || error.code === 'ER_NO_REFERENCED_ROW') {
+            return res.status(400).json({
+                success: false,
+                message: 'El envío no existe o no es válido'
+            });
+        }
+
+        return res.status(500).json({
             success: false,
-            message: 'Error al generar el código: ' + error.message
+            message: 'Error al generar el código. ' + (error.message || 'Intente de nuevo.')
         });
     }
 };
@@ -807,6 +830,68 @@ exports.cancelarCodigoBodeguero = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error al cancelar el código: ' + error.message
+        });
+    }
+};
+
+/**
+ * API: Validar código de seguridad sin usarlo. No cambia estado del pedido.
+ * Útil para verificación previa antes de confirmar entrega.
+ * Reglas: código 6 dígitos numéricos, existe, corresponde al pedido, no usado.
+ */
+exports.validarCodigoSeguridad = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { codigo, tipo } = req.body || {};
+
+        if (!codigo || typeof codigo !== 'string') {
+            return res.status(400).json({
+                valido: false,
+                mensaje: 'Debe proporcionar el código de seguridad.'
+            });
+        }
+
+        const envio = await Envio.findById(id);
+        if (!envio) {
+            return res.status(404).json({
+                valido: false,
+                mensaje: 'Pedido no encontrado.'
+            });
+        }
+
+        const validacion = await CodigoConfirmacion.validarSinUsar(codigo.trim(), id);
+
+        if (!validacion.valido) {
+            return res.status(200).json({
+                valido: false,
+                mensaje: validacion.mensaje
+            });
+        }
+
+        if (tipo && validacion.tipo !== tipo) {
+            return res.status(200).json({
+                valido: false,
+                mensaje: tipo === 'CLIENTE_CHOFER'
+                    ? 'El código no es válido para confirmar entrega al cliente.'
+                    : 'El código no es válido para este proceso.'
+            });
+        }
+
+        return res.status(200).json({
+            valido: true,
+            mensaje: 'Código válido.'
+        });
+    } catch (error) {
+        if (error.code === 'ER_NO_SUCH_TABLE') {
+            return res.status(503).json({
+                valido: false,
+                mensaje: 'El sistema de códigos no está configurado.'
+            });
+        }
+        console.error('Error al validar código de seguridad:', error);
+        return res.status(500).json({
+            valido: false,
+            mensaje: 'Error al validar el código.'
         });
     }
 };

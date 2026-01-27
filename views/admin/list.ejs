@@ -153,7 +153,7 @@
                                                     <% 
                                                     let badgeClass = 'bg-secondary';
                                                     if (envio.Estado_Envio === 'Entregado') badgeClass = 'bg-success';
-                                                    else if (envio.Estado_Envio === 'En Ruta' || envio.Estado_Envio === 'Despachado') badgeClass = 'bg-warning';
+                                                    else if (envio.Estado_Envio === 'En Ruta' || envio.Estado_Envio === 'Despachado' || envio.Estado_Envio === 'En reparto') badgeClass = 'bg-warning';
                                                     else if (envio.Estado_Envio === 'Solicitud') badgeClass = 'bg-primary';
                                                     else if (envio.Estado_Envio === 'Pendiente' || envio.Estado_Envio === 'Preparado') badgeClass = 'bg-info';
                                                     %>
@@ -207,7 +207,15 @@
                                                     </td>
                                                 <% } %>
                                                 <td>
-                                                    <div class="d-flex gap-1">
+                                                    <div class="d-flex gap-1 flex-wrap">
+                                                        <% if (typeof isBodeguero !== 'undefined' && isBodeguero) { %>
+                                                            <button type="button" class="btn btn-sm btn-outline-success btn-generar-codigo"
+                                                                title="Generar código de confirmación de asignación para este envío"
+                                                                data-envio-id="<%= envio._id %>"
+                                                                data-envio-codigo="<%= typeof envio.ID_Envio !== 'undefined' ? envio.ID_Envio : '' %>">
+                                                                <i class="fas fa-key"></i>
+                                                            </button>
+                                                        <% } %>
                                                         <a href="/admin/envios/<%= envio._id %>/editar"
                                                             class="btn btn-sm btn-outline-primary" title="<%= isBodeguero ? 'Cambiar Estado' : 'Editar' %>">
                                                             <i class="fas fa-edit"></i>
@@ -234,5 +242,188 @@
             </div>
         </div>
     </div>
+
+    <% if (typeof isBodeguero !== 'undefined' && isBodeguero) { %>
+    <!-- Modal: Generar código de confirmación para repartidor (vanilla JS, no depende de Bootstrap) -->
+    <div id="modalGenerarCodigoBackdrop" class="modal-backdrop fade" style="display: none; position: fixed; inset: 0; z-index: 1040; background: rgba(0,0,0,.5);"></div>
+    <div class="modal fade" id="modalGenerarCodigo" tabindex="-1" role="dialog" style="display: none; position: fixed; inset: 0; z-index: 1050; overflow-x: hidden; overflow-y: auto;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalGenerarCodigoLabel">
+                        <i class="fas fa-key me-2"></i>Código de confirmación de asignación
+                    </h5>
+                    <button type="button" class="btn-close" id="modalGenerarCodigoCerrar" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body" id="modalGenerarCodigoBody">
+                    <p class="text-muted mb-2" id="modalGenerarCodigoEnvio"></p>
+                    <div class="alert alert-info small mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Este código confirma que el envío está asignado al repartidor. Entregue el código al repartidor para que lo use al agregar el envío a su ruta.
+                    </div>
+                    <div id="modalGenerarCodigoLoading" class="text-center py-4 d-none">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2 mb-0">Generando código...</p>
+                    </div>
+                    <div id="modalGenerarCodigoResult" class="d-none">
+                        <div class="alert alert-success d-flex align-items-center">
+                            <i class="fas fa-check-circle fa-2x me-3"></i>
+                            <div class="flex-grow-1">
+                                <strong>Código de confirmación de asignación:</strong>
+                                <div class="mt-2">
+                                    <span class="fs-3 font-monospace fw-bold" id="modalGenerarCodigoValor"></span>
+                                    <button type="button" class="btn btn-sm btn-outline-dark ms-2" id="btnCopiarModalCodigo" title="Copiar">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted d-block mt-2">Entregue este código al repartidor. Lo usará al agregar el envío a su ruta para confirmar que el pedido está asignado a él.</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="modalGenerarCodigoError" class="alert alert-danger d-none">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <span id="modalGenerarCodigoErrorMsg"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="modalGenerarCodigoCerrarFooter">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            var _debug = function (msg) { if (window.DEBUG_MODAL_CODIGO) { console.log('[Modal código]', msg); } };
+
+            function initModalGenerarCodigo() {
+                var modalEl = document.getElementById('modalGenerarCodigo');
+                var backdrop = document.getElementById('modalGenerarCodigoBackdrop');
+                var loading = document.getElementById('modalGenerarCodigoLoading');
+                var result = document.getElementById('modalGenerarCodigoResult');
+                var error = document.getElementById('modalGenerarCodigoError');
+                var errorMsg = document.getElementById('modalGenerarCodigoErrorMsg');
+                var valorEl = document.getElementById('modalGenerarCodigoValor');
+                var envioEl = document.getElementById('modalGenerarCodigoEnvio');
+
+                if (!modalEl || !backdrop) return;
+
+                function mostrarModal() {
+                    modalEl.style.display = 'flex';
+                    modalEl.style.alignItems = 'center';
+                    modalEl.style.justifyContent = 'center';
+                    backdrop.style.display = 'block';
+                    document.body.classList.add('modal-open');
+                    document.body.style.overflow = 'hidden';
+                }
+                function ocultarModal() {
+                    modalEl.style.display = 'none';
+                    backdrop.style.display = 'none';
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                }
+
+                var btnCerrar = document.getElementById('modalGenerarCodigoCerrar');
+                var btnCerrarFooter = document.getElementById('modalGenerarCodigoCerrarFooter');
+                if (btnCerrar) btnCerrar.addEventListener('click', ocultarModal);
+                if (btnCerrarFooter) btnCerrarFooter.addEventListener('click', ocultarModal);
+                backdrop.addEventListener('click', ocultarModal);
+
+                function restablecerBoton(btn) {
+                    if (!btn) return;
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-key"></i>';
+                }
+
+                function abrirYGenerar(idEnvio, idEnvioStr, btn) {
+                    if (!idEnvio) return;
+                    if (btn && btn.disabled) { _debug('Ignorado: botón ya deshabilitado'); return; }
+
+                    if (envioEl) envioEl.textContent = 'Envío: ' + (idEnvioStr || idEnvio);
+                    if (loading) loading.classList.add('d-none');
+                    if (result) result.classList.add('d-none');
+                    if (error) error.classList.add('d-none');
+                    if (errorMsg) errorMsg.textContent = '';
+
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+                    }
+                    _debug('Fetch iniciado');
+
+                    var controller = new AbortController();
+                    var timeoutId = setTimeout(function () { controller.abort(); }, 15000);
+
+                    fetch('/admin/api/envios/' + idEnvio + '/generar-codigo', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({}),
+                        signal: controller.signal
+                    })
+                        .then(function (r) {
+                            clearTimeout(timeoutId);
+                            _debug('Respuesta: ' + r.status + ' ' + r.statusText);
+                            var ct = (r.headers.get('Content-Type') || '').toLowerCase();
+                            if (r.status >= 300 && r.status < 400) {
+                                throw new Error('Redirección inesperada. ¿Sesión expirada? Vuelva a iniciar sesión.');
+                            }
+                            if (!r.ok) {
+                                if (r.status === 403) throw new Error('No tienes permisos para generar códigos.');
+                                if (r.status === 401) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+                                if (r.status === 404) throw new Error('Envío no encontrado.');
+                                throw new Error('Error del servidor: ' + r.status);
+                            }
+                            if (!ct.includes('application/json')) throw new Error('La respuesta no es JSON.');
+                            return r.json();
+                        })
+                        .then(function (data) {
+                            _debug('JSON recibido');
+                            if (!data || !data.success || !data.codigo) {
+                                throw new Error((data && data.message) || 'No se pudo generar el código.');
+                            }
+                            if (valorEl) valorEl.textContent = data.codigo;
+                            if (result) result.classList.remove('d-none');
+                            var btnCopy = document.getElementById('btnCopiarModalCodigo');
+                            if (btnCopy) {
+                                btnCopy.onclick = function () {
+                                    navigator.clipboard.writeText(data.codigo).then(function () {
+                                        var icon = btnCopy.querySelector('i');
+                                        if (icon) {
+                                            icon.classList.remove('fa-copy'); icon.classList.add('fa-check');
+                                            setTimeout(function () { icon.classList.remove('fa-check'); icon.classList.add('fa-copy'); }, 1500);
+                                        }
+                                    });
+                                };
+                            }
+                            mostrarModal();
+                            _debug('Modal abierto con código');
+                        })
+                        .catch(function (err) {
+                            clearTimeout(timeoutId);
+                            _debug('Error: ' + (err.message || err));
+                            var msg = err.name === 'AbortError' ? 'Tiempo agotado. Intente de nuevo.' : (err.message || 'Error de conexión. Intente de nuevo.');
+                            restablecerBoton(btn);
+                            alert(msg);
+                        });
+                }
+
+                document.addEventListener('click', function (e) {
+                    var btn = e.target && (e.target.closest ? e.target.closest('.btn-generar-codigo') : null);
+                    if (!btn) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var id = btn.getAttribute('data-envio-id');
+                    var codigo = btn.getAttribute('data-envio-codigo') || '';
+                    abrirYGenerar(id, codigo, btn);
+                });
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initModalGenerarCodigo);
+            } else {
+                initModalGenerarCodigo();
+            }
+        })();
+    </script>
+    <% } %>
 
     <%- include('../layouts/footer') %>

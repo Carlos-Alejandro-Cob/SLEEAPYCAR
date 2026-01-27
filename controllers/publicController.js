@@ -101,28 +101,33 @@ exports.generarCodigoConfirmacion = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Envío no encontrado' });
         }
 
-        // Verificar que el envío esté en estado "En reparto" o "En envío" (visible como "En reparto" para el cliente)
-        const estadosValidos = ['En reparto', 'En envío', 'En Ruta'];
-        if (!estadosValidos.includes(envio.Estado_Envio)) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Solo se puede generar código cuando el envío está "En reparto"' 
+        // Solo cuando el pedido está en proceso de entrega
+        const estadosProcesoEntrega = ['En reparto', 'En envío', 'En Ruta'];
+        if (!estadosProcesoEntrega.includes(envio.Estado_Envio)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Solo se puede generar el código cuando el pedido está en proceso de entrega (En Ruta, En reparto o En envío).'
             });
         }
 
-        // Generar código
         const codigoData = await CodigoConfirmacion.generar(id, 'CLIENTE_CHOFER', null);
 
         res.json({
             success: true,
             codigo: codigoData.codigo,
-            message: 'Código generado exitosamente'
+            message: 'Código generado exitosamente. Proporciónelo al repartidor al recibir su pedido.'
         });
     } catch (error) {
+        if (error.code === 'ER_NO_SUCH_TABLE') {
+            return res.status(503).json({
+                success: false,
+                message: 'El sistema de códigos no está configurado. Contacte al administrador.'
+            });
+        }
         console.error('Error al generar código:', error);
         res.status(500).json({
             success: false,
-            message: 'Error al generar el código de confirmación'
+            message: 'Error al generar el código. Intente de nuevo.'
         });
     }
 };

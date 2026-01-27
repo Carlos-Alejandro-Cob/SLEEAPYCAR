@@ -65,5 +65,8 @@ router.post('/repartidor/ruta', checkRole([ROLES.REPARTIDOR, ROLES.SUPER_ADMIN])
 router.post('/api/envios/:id/generar-codigo', checkRole([ROLES.BODEGUERO, ROLES.SUPER_ADMIN]), envioController.generarCodigoBodeguero);
 router.post('/api/envios/:id/cancelar-codigo', checkRole([ROLES.BODEGUERO, ROLES.SUPER_ADMIN]), envioController.cancelarCodigoBodeguero);
 
+// --- API VALIDACIÓN CÓDIGO DE SEGURIDAD (REPARTIDOR / ADMIN) ---
+router.post('/api/envios/:id/validar-codigo-seguridad', checkRole([ROLES.REPARTIDOR, ROLES.ADMIN, ROLES.SUPER_ADMIN]), envioController.validarCodigoSeguridad);
+
 
 module.exports = router;
