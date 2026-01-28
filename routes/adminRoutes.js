@@ -11,7 +11,7 @@ const ROLES = require('../config/roles');
 // --- RUTAS CRUD PARA ENVÍOS ---
 
 // [R]EAD: Listar todos los envíos (con filtros)
-router.get('/envios', checkRole([ROLES.ADMIN, ROLES.BODEGUERO, ROLES.SUCURSAL, ROLES.SUPER_ADMIN]), envioController.listEnvíos);
+router.get('/envios', checkRole([ROLES.ADMIN, ROLES.BODEGUERO, ROLES.SUCURSAL, ROLES.SUPER_ADMIN, ROLES.CLIENTE]), envioController.listEnvíos);
 
 // [C]REATE: Mostrar formulario para nuevo envío (Bodeguero NO puede crear, solo admin)
 router.get('/envios/nuevo', checkRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]), envioController.showCreateForm);

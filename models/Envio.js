@@ -5,7 +5,7 @@ const { queryWithRetry } = require('../utils/dbQuery');
 class Envio {
 
     // 1. Listar y Filtrar (CRUD Read)
-    static async findAll({ q, estado, id_repartidor }) {
+    static async findAll({ q, estado, id_repartidor, nombre_destinatario }) {
         let query = 'SELECT id_envio as _id, codigo_envio as ID_Envio, nombre_destinatario as Nombre_Destinatario, direccion_completa as Direccion_Completa, estado_envio as Estado_Envio, metodo_pago, fecha_entrega, fecha_salida, precio, estado_pago, id_repartidor, NULL as URL_Foto_Entrega FROM envios WHERE 1=1';
         const params = [];
 
@@ -25,6 +25,10 @@ class Envio {
         if (id_repartidor) {
             query += ' AND id_repartidor = ?';
             params.push(id_repartidor);
+        }
+        if (nombre_destinatario) {
+            query += ' AND nombre_destinatario = ?';
+            params.push(nombre_destinatario);
         }
 
         query += ' ORDER BY fecha_salida DESC';
