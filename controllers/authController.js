@@ -76,6 +76,7 @@ exports.login = (req, res, next) => {
                 case ROLES.ADMIN:
                 case ROLES.BODEGUERO:
                 case ROLES.SUPER_ADMIN:
+                case ROLES.SUCURSAL: // Sucursal también va a gestión de envíos (su dashboard)
                     return res.redirect('/admin/envios');
                 default:
                     // Clientes van al catálogo
@@ -100,12 +101,12 @@ exports.showProfile = (req, res) => {
     const fromCuenta = req.query.from === 'cuenta';
     const referer = req.get('Referer') || '';
     const comesFromCuenta = fromCuenta || referer.includes('/cuenta');
-    
+
     if (!comesFromCuenta) {
         req.flash('error_msg', 'Debes acceder a la configuración avanzada desde el panel "Mi Cuenta".');
         return res.redirect('/cuenta');
     }
-    
+
     res.render('auth/profile', {
         title: 'Mi Perfil',
         user: req.user

@@ -1,862 +1,929 @@
 <%- include('../layouts/header', { ...locals, title: 'Panel de Repartidor - APYCAR' }); %>
 
-<div class="container-fluid px-3 px-md-4">
-    <div class="row">
-        <div class="col-12">
-            <!-- Header Section -->
-            <div class="mb-3">
-                <h1 class="h4 mb-1 fw-bold">Panel de Repartidor</h1>
-                <p class="text-muted mb-0 small">Gestiona tu ruta de entrega</p>
-            </div>
-
-            <!-- Crear Ruta de Entrega Section -->
-            <div class="card mb-3 shadow-sm border-0">
-                <div class="card-body py-3">
-                    <form action="/admin/repartidor/ruta" method="POST">
-                        <div class="row g-2">
-                            <div class="col-md-5">
-                                <label for="codigo_envio" class="form-label small fw-semibold mb-1">
-                                    <i class="fas fa-qrcode me-1"></i>Código de Envío
-                                </label>
-                                <input type="text" 
-                                       class="form-control" 
-                                       placeholder="Escanear o ingresar código de envío" 
-                                       name="codigo_envio"
-                                       id="codigo_envio"
-                                       required>
-                            </div>
-                            <div class="col-md-5">
-                                <label for="codigo_confirmacion" class="form-label small fw-semibold mb-1">
-                                    <i class="fas fa-key me-1"></i>Código de confirmación de asignación <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" 
-                                       class="form-control font-monospace" 
-                                       placeholder="6 dígitos del bodeguero" 
-                                       name="codigo_confirmacion"
-                                       id="codigo_confirmacion"
-                                       maxlength="6"
-                                       pattern="[0-9]{6}"
-                                       inputmode="numeric"
-                                       autocomplete="one-time-code"
-                                       title="El código debe tener exactamente 6 dígitos numéricos."
-                                       required>
-                                <small class="text-muted">Código de 6 dígitos que entrega el bodeguero al asignar el envío. Confirma que el pedido está asignado a usted. No reutilizable.</small>
-                            </div>
-                            <div class="col-md-2 d-flex align-items-end">
-                                <button class="btn btn-primary w-100" type="submit">
-                                    <i class="fas fa-plus me-1"></i>Agregar
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Ruta de Entrega Section -->
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-0">
-                    <div class="card-header bg-white border-bottom px-4 py-3">
-                        <h5 class="mb-0 fw-semibold">Ruta de Entrega</h5>
-                    </div>
-                    <div class="p-4">
-                        <% if (ruta && ruta.length > 0) { %>
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0 align-middle">
-                            <thead>
-                                <tr>
-                                    <th class="fw-semibold" style="font-size: 0.75rem;">ID ENVÍO</th>
-                                    <th class="fw-semibold" style="font-size: 0.75rem;">DESTINATARIO</th>
-                                    <th class="fw-semibold" style="font-size: 0.75rem;">DIRECCIÓN</th>
-                                    <th class="fw-semibold" style="font-size: 0.75rem;">ESTADO</th>
-                                    <th class="fw-semibold text-end" style="font-size: 0.75rem; width: 120px;">ACCIONES</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <% ruta.forEach(function(envio) { %>
-                                    <tr>
-                                        <td>
-                                            <span class="badge bg-secondary"><%= envio.ID_Envio %></span>
-                                        </td>
-                                        <td>
-                                            <span class="fw-semibold"><%= envio.Nombre_Destinatario %></span>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted"><%= envio.Direccion_Completa %></small>
-                                        </td>
-                                        <td>
-                                            <% 
-                                            let estadoBadgeClass = 'bg-secondary';
-                                            if (envio.Estado_Envio === 'Entregado') estadoBadgeClass = 'bg-success';
-                                            else if (envio.Estado_Envio === 'En envío') estadoBadgeClass = 'bg-info';
-                                            else if (envio.Estado_Envio === 'En Ruta') estadoBadgeClass = 'bg-warning';
-                                            else if (envio.Estado_Envio === 'Pendiente') estadoBadgeClass = 'bg-secondary';
-                                            else if (envio.Estado_Envio === 'Intento de entrega') estadoBadgeClass = 'bg-warning';
-                                            else if (envio.Estado_Envio === 'Devuelto a bodega') estadoBadgeClass = 'bg-secondary';
-                                            else if (envio.Estado_Envio === 'Cancelado en ruta') estadoBadgeClass = 'bg-danger';
-                                            else if (envio.Estado_Envio === 'Despachado') estadoBadgeClass = 'bg-primary';
-                                            %>
-                                            <span class="badge <%= estadoBadgeClass %>"><%= envio.Estado_Envio %></span>
-                                        </td>
-                                        <td class="text-end">
-                                            <button type="button" 
-                                                    class="btn btn-sm btn-outline-primary btn-acciones" 
-                                                    data-envio-id="<%= envio._id %>"
-                                                    data-envio-codigo="<%= envio.ID_Envio %>"
-                                                    data-destinatario="<%= envio.Nombre_Destinatario %>"
-                                                    data-direccion="<%= envio.Direccion_Completa %>"
-                                                    data-estado="<%= envio.Estado_Envio %>">
-                                                <i class="fas fa-cog me-1"></i>Acciones
-                                            </button>
-                                        </td>
-                                    </tr>
-                                <% }); %>
-                                </tbody>
-                            </table>
-                        </div>
-                    <% } else { %>
-                        <div class="text-center py-4">
-                            <div class="mb-3">
-                                <i class="fas fa-route fa-3x text-muted" style="opacity: 0.3;"></i>
-                            </div>
-                            <h6 class="text-muted mb-2 fw-semibold">No hay envíos en la ruta de entrega</h6>
-                            <p class="text-muted mb-0 small">Agregue envíos usando el campo de arriba para comenzar</p>
-                        </div>
-                    <% } %>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para Acciones - Template único reutilizable -->
-<div class="modal fade" id="accionesModalTemplate" tabindex="-1" aria-labelledby="accionesModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="accionesModalLabel">
-                    <i class="fas fa-cog me-2"></i>Acciones - <span id="modal-codigo-envio"></span>
-                </h5>
-                <button type="button" class="btn-close" onclick="cerrarModalAcciones()" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
+    <div class="container-fluid px-3 px-md-4">
+        <div class="row">
+            <div class="col-12">
+                <!-- Header Section -->
                 <div class="mb-3">
-                    <p class="text-muted mb-3">
-                        <strong>Destinatario:</strong> <span id="modal-destinatario"></span><br>
-                        <strong>Dirección:</strong> <span id="modal-direccion"></span>
-                    </p>
+                    <h1 class="h4 mb-1 fw-bold">Panel de Repartidor</h1>
+                    <p class="text-muted mb-0 small">Gestiona tu ruta de entrega</p>
                 </div>
-                
-                <div class="d-grid gap-2">
-                    <!-- Botón para cambiar a "En envío" (requiere código del bodeguero) -->
-                    <button type="button" 
-                            class="btn btn-info w-100 text-start" 
-                            id="btn-en-envio"
+
+                <!-- Crear Ruta de Entrega Section -->
+                <div class="card mb-3 shadow-sm border-0">
+                    <div class="card-body py-3">
+                        <form action="/admin/repartidor/ruta" method="POST">
+                            <div class="row g-2">
+                                <div class="col-md-5">
+                                    <label for="codigo_envio" class="form-label small fw-semibold mb-1">
+                                        <i class="fas fa-qrcode me-1"></i>Código de Envío
+                                    </label>
+                                    <input type="text" class="form-control"
+                                        placeholder="Escanear o ingresar código de envío" name="codigo_envio"
+                                        id="codigo_envio" required>
+                                </div>
+                                <div class="col-md-5">
+                                    <label for="codigo_confirmacion" class="form-label small fw-semibold mb-1">
+                                        <i class="fas fa-key me-1"></i>Código de confirmación de asignación <span
+                                            class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control font-monospace"
+                                        placeholder="6 dígitos del bodeguero" name="codigo_confirmacion"
+                                        id="codigo_confirmacion" maxlength="6" pattern="[0-9]{6}" inputmode="numeric"
+                                        autocomplete="one-time-code"
+                                        title="El código debe tener exactamente 6 dígitos numéricos." required>
+                                    <small class="text-muted">Código de 6 dígitos que entrega el bodeguero al asignar el
+                                        envío. Confirma que el pedido está asignado a usted. No reutilizable.</small>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button class="btn btn-primary w-100" type="submit">
+                                        <i class="fas fa-plus me-1"></i>Agregar
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Ruta de Entrega Section -->
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0">
+                        <div class="card-header bg-white border-bottom px-4 py-3">
+                            <h5 class="mb-0 fw-semibold">Ruta de Entrega</h5>
+                        </div>
+                        <div class="p-4">
+                            <% if (ruta && ruta.length> 0) { %>
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0 align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th class="fw-semibold" style="font-size: 0.75rem;">ID ENVÍO</th>
+                                                <th class="fw-semibold" style="font-size: 0.75rem;">DESTINATARIO</th>
+                                                <th class="fw-semibold" style="font-size: 0.75rem;">DIRECCIÓN</th>
+                                                <th class="fw-semibold" style="font-size: 0.75rem;">ESTADO</th>
+                                                <th class="fw-semibold text-end"
+                                                    style="font-size: 0.75rem; width: 120px;">ACCIONES</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% ruta.forEach(function(envio) { %>
+                                                <tr>
+                                                    <td>
+                                                        <span class="badge bg-secondary">
+                                                            <%= envio.ID_Envio %>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="fw-semibold">
+                                                            <%= envio.Nombre_Destinatario %>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <small class="text-muted">
+                                                            <%= envio.Direccion_Completa %>
+                                                        </small>
+                                                    </td>
+                                                    <td>
+                                                        <% let estadoBadgeClass='bg-secondary' ; if
+                                                            (envio.Estado_Envio==='Entregado' )
+                                                            estadoBadgeClass='bg-success' ; else if
+                                                            (envio.Estado_Envio==='En envío' )
+                                                            estadoBadgeClass='bg-info' ; else if
+                                                            (envio.Estado_Envio==='En Ruta' )
+                                                            estadoBadgeClass='bg-warning' ; else if
+                                                            (envio.Estado_Envio==='Pendiente' )
+                                                            estadoBadgeClass='bg-secondary' ; else if
+                                                            (envio.Estado_Envio==='Intento de entrega' )
+                                                            estadoBadgeClass='bg-warning' ; else if
+                                                            (envio.Estado_Envio==='Devuelto a bodega' )
+                                                            estadoBadgeClass='bg-secondary' ; else if
+                                                            (envio.Estado_Envio==='Cancelado en ruta' )
+                                                            estadoBadgeClass='bg-danger' ; else if
+                                                            (envio.Estado_Envio==='Despachado' )
+                                                            estadoBadgeClass='bg-primary' ; %>
+                                                            <span class="badge <%= estadoBadgeClass %>">
+                                                                <%= envio.Estado_Envio %>
+                                                            </span>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-outline-primary btn-acciones"
+                                                            data-envio-id="<%= envio._id %>"
+                                                            data-envio-codigo="<%= envio.ID_Envio %>"
+                                                            data-destinatario="<%= envio.Nombre_Destinatario %>"
+                                                            data-direccion="<%= envio.Direccion_Completa %>"
+                                                            data-estado="<%= envio.Estado_Envio %>">
+                                                            <i class="fas fa-cog me-1"></i>Acciones
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <% }); %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <% } else { %>
+                                    <div class="text-center py-4">
+                                        <div class="mb-3">
+                                            <i class="fas fa-route fa-3x text-muted" style="opacity: 0.3;"></i>
+                                        </div>
+                                        <h6 class="text-muted mb-2 fw-semibold">No hay envíos en la ruta de entrega</h6>
+                                        <p class="text-muted mb-0 small">Agregue envíos usando el campo de arriba para
+                                            comenzar</p>
+                                    </div>
+                                    <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Acciones - Template único reutilizable -->
+    <div class="modal fade" id="accionesModalTemplate" tabindex="-1" aria-labelledby="accionesModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="accionesModalLabel">
+                        <i class="fas fa-cog me-2"></i>Acciones - <span id="modal-codigo-envio"></span>
+                    </h5>
+                    <button type="button" class="btn-close" onclick="cerrarModalAcciones()" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <p class="text-muted mb-3">
+                            <strong>Destinatario:</strong> <span id="modal-destinatario"></span><br>
+                            <strong>Dirección:</strong> <span id="modal-direccion"></span>
+                        </p>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <!-- Botón para cambiar a "En envío" (requiere código del bodeguero) -->
+                        <button type="button" class="btn btn-info w-100 text-start" id="btn-en-envio"
                             onclick="abrirModalCodigoBodeguero()">
-                        <i class="fas fa-truck me-2"></i><span class="fw-semibold">En envío</span>
-                        <small class="d-block ms-4 mt-1" style="font-size: 0.75rem;">Confirmar recepción con código del bodeguero</small>
-                    </button>
-                    
-                    <form id="form-entregado" method="POST" class="d-inline">
-                        <input type="hidden" name="_method" value="PUT">
-                        <input type="hidden" name="estado_envio" value="Entregado">
-                        <button type="button" onclick="abrirModalCodigoCliente()" class="btn btn-success w-100 text-start">
-                            <i class="fas fa-check me-2"></i><span class="fw-semibold">Entregado</span>
-                            <small class="d-block ms-4 mt-1" style="font-size: 0.75rem;">Confirmar entrega con código del cliente</small>
+                            <i class="fas fa-truck me-2"></i><span class="fw-semibold">En envío</span>
+                            <small class="d-block ms-4 mt-1" style="font-size: 0.75rem;">Confirmar recepción con código
+                                del bodeguero</small>
                         </button>
-                    </form>
-                    
-                    <form id="form-intento" method="POST" class="d-inline">
-                        <input type="hidden" name="_method" value="PUT">
-                        <input type="hidden" name="estado_envio" value="Intento de entrega">
-                        <button type="submit" class="btn btn-warning w-100 text-start">
-                            <i class="fas fa-exclamation-triangle me-2"></i><span class="fw-semibold">Intento de entrega</span>
-                            <small class="d-block ms-4 mt-1" style="font-size: 0.75rem;">Fue al destino pero no pudo entregar</small>
-                        </button>
-                    </form>
-                    
-                    <form id="form-devuelto" method="POST" class="d-inline">
-                        <input type="hidden" name="_method" value="PUT">
-                        <input type="hidden" name="estado_envio" value="Devuelto a bodega">
-                        <button type="submit" class="btn btn-secondary w-100 text-start">
-                            <i class="fas fa-undo me-2"></i><span class="fw-semibold">Devuelto a bodega</span>
-                            <small class="d-block ms-4 mt-1" style="font-size: 0.75rem;">No se logró entregar</small>
-                        </button>
-                    </form>
-                    
-                    <hr class="my-2">
-                    
-                    <button type="button" 
-                            class="btn btn-danger w-100 text-start" 
-                            onclick="abrirModalCancelar()">
-                        <i class="fas fa-times-circle me-2"></i><span class="fw-semibold">Cancelado en ruta</span>
-                        <small class="d-block ms-4 mt-1" style="font-size: 0.75rem;">Opcional, con motivo</small>
-                    </button>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" onclick="cerrarModalAcciones()">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Modal para Código Bodeguero (En envío) -->
-<div class="modal fade" id="codigoBodegueroModal" tabindex="-1" aria-labelledby="codigoBodegueroLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="codigoBodegueroLabel">
-                    <i class="fas fa-key me-2"></i>Confirmar Recepción de Bodeguero
-                </h5>
-                <button type="button" class="btn-close" onclick="cerrarModalCodigoBodeguero()" aria-label="Close"></button>
-            </div>
-            <form id="form-en-envio" method="POST">
-                <input type="hidden" name="_method" value="PUT">
-                <input type="hidden" name="estado_envio" value="En envío">
-                <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Ingrese el código de confirmación de asignación que le proporcionó el bodeguero (el mismo que usa para agregar envíos a su ruta).
-                    </div>
-                    <div class="mb-3">
-                        <label for="codigo_bodeguero" class="form-label">Código de confirmación de asignación <span class="text-danger">*</span></label>
-                        <input type="text" 
-                               class="form-control form-control-lg text-center font-monospace" 
-                               id="codigo_bodeguero" 
-                               name="codigo_confirmacion" 
-                               placeholder="000000"
-                               maxlength="6"
-                               pattern="[0-9]{6}"
-                               inputmode="numeric"
-                               autocomplete="one-time-code"
-                               title="El código debe tener exactamente 6 dígitos numéricos."
-                               required
-                               autofocus>
-                        <small class="text-muted">Código de 6 dígitos que confirma la asignación del envío. No reutilizable.</small>
+                        <form id="form-entregado" method="POST" class="d-inline">
+                            <input type="hidden" name="_method" value="PUT">
+                            <input type="hidden" name="estado_envio" value="Entregado">
+                            <button type="button" onclick="abrirModalCodigoCliente()"
+                                class="btn btn-success w-100 text-start">
+                                <i class="fas fa-check me-2"></i><span class="fw-semibold">Entregado</span>
+                                <small class="d-block ms-4 mt-1" style="font-size: 0.75rem;">Confirmar entrega con
+                                    código del cliente</small>
+                            </button>
+                        </form>
+
+                        <form id="form-intento" method="POST" class="d-inline">
+                            <input type="hidden" name="_method" value="PUT">
+                            <input type="hidden" name="estado_envio" value="Intento de entrega">
+                            <button type="submit" class="btn btn-warning w-100 text-start">
+                                <i class="fas fa-exclamation-triangle me-2"></i><span class="fw-semibold">Intento de
+                                    entrega</span>
+                                <small class="d-block ms-4 mt-1" style="font-size: 0.75rem;">Fue al destino pero no pudo
+                                    entregar</small>
+                            </button>
+                        </form>
+
+                        <form id="form-devuelto" method="POST" class="d-inline">
+                            <input type="hidden" name="_method" value="PUT">
+                            <input type="hidden" name="estado_envio" value="Devuelto a bodega">
+                            <button type="submit" class="btn btn-secondary w-100 text-start">
+                                <i class="fas fa-undo me-2"></i><span class="fw-semibold">Devuelto a bodega</span>
+                                <small class="d-block ms-4 mt-1" style="font-size: 0.75rem;">No se logró
+                                    entregar</small>
+                            </button>
+                        </form>
+
+                        <hr class="my-2">
+
+                        <button type="button" class="btn btn-danger w-100 text-start" onclick="abrirModalCancelar()">
+                            <i class="fas fa-times-circle me-2"></i><span class="fw-semibold">Cancelado en ruta</span>
+                            <small class="d-block ms-4 mt-1" style="font-size: 0.75rem;">Opcional, con motivo</small>
+                        </button>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" onclick="cerrarModalCodigoBodeguero()">Cancelar</button>
-                    <button type="submit" class="btn btn-info">
-                        <i class="fas fa-check me-2"></i>Confirmar Recepción
-                    </button>
+                    <button type="button" class="btn btn-outline-secondary"
+                        onclick="cerrarModalAcciones()">Cerrar</button>
                 </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para Código Cliente (Entregado) -->
-<div class="modal fade" id="codigoClienteModal" tabindex="-1" aria-labelledby="codigoClienteLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="codigoClienteLabel">
-                    <i class="fas fa-key me-2"></i>Confirmar Entrega al Cliente
-                </h5>
-                <button type="button" class="btn-close" onclick="cerrarModalCodigoCliente()" aria-label="Close"></button>
             </div>
-            <form id="form-entregado-codigo" method="POST">
-                <input type="hidden" name="_method" value="PUT">
-                <input type="hidden" name="estado_envio" value="Entregado">
-                <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Ingrese el código de confirmación proporcionado por el cliente al momento de recibir los productos.
-                    </div>
-                    <div class="mb-3">
-                        <label for="codigo_cliente" class="form-label">Código de seguridad <span class="text-danger">*</span></label>
-                        <input type="text" 
-                               class="form-control form-control-lg text-center font-monospace" 
-                               id="codigo_cliente" 
-                               name="codigo_confirmacion" 
-                               placeholder="000000"
-                               maxlength="6"
-                               pattern="[0-9]{6}"
-                               inputmode="numeric"
-                               autocomplete="one-time-code"
-                               title="El código debe tener exactamente 6 dígitos numéricos."
-                               required
-                               autofocus>
-                        <small class="text-muted">Código de 6 dígitos proporcionado por el cliente al recibir el pedido. No reutilizable.</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" onclick="cerrarModalCodigoCliente()">Cancelar</button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-check me-2"></i>Confirmar Entrega
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
-</div>
 
-<!-- Modal para Cancelar en ruta - Template único -->
-<div class="modal fade" id="cancelarModalTemplate" tabindex="-1" aria-labelledby="cancelarModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="cancelarModalLabel">Cancelar Envío en Ruta</h5>
-                <button type="button" class="btn-close" onclick="cerrarModalCancelar()" aria-label="Close"></button>
+    <!-- Modal para Código Bodeguero (En envío) -->
+    <div class="modal fade" id="codigoBodegueroModal" tabindex="-1" aria-labelledby="codigoBodegueroLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="codigoBodegueroLabel">
+                        <i class="fas fa-key me-2"></i>Confirmar Recepción de Bodeguero
+                    </h5>
+                    <button type="button" class="btn-close" onclick="cerrarModalCodigoBodeguero()"
+                        aria-label="Close"></button>
+                </div>
+                <form id="form-en-envio" method="POST">
+                    <input type="hidden" name="_method" value="PUT">
+                    <input type="hidden" name="estado_envio" value="En envío">
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Ingrese el código de confirmación de asignación que le proporcionó el bodeguero (el mismo
+                            que usa para agregar envíos a su ruta).
+                        </div>
+                        <div class="mb-3">
+                            <label for="codigo_bodeguero" class="form-label">Código de confirmación de asignación <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-lg text-center font-monospace"
+                                id="codigo_bodeguero" name="codigo_confirmacion" placeholder="000000" maxlength="6"
+                                pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code"
+                                title="El código debe tener exactamente 6 dígitos numéricos." required autofocus>
+                            <small class="text-muted">Código de 6 dígitos que confirma la asignación del envío. No
+                                reutilizable.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary"
+                            onclick="cerrarModalCodigoBodeguero()">Cancelar</button>
+                        <button type="submit" class="btn btn-info">
+                            <i class="fas fa-check me-2"></i>Confirmar Recepción
+                        </button>
+                    </div>
+                </form>
             </div>
-            <form id="form-cancelar" method="POST">
-                <input type="hidden" name="_method" value="PUT">
-                <input type="hidden" name="estado_envio" value="Cancelado en ruta">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="motivo_cancelacion" class="form-label">Motivo de cancelación <span class="text-danger">*</span></label>
-                        <textarea class="form-control" 
-                                  id="motivo_cancelacion" 
-                                  name="motivo_cancelacion" 
-                                  rows="3" 
-                                  placeholder="Ingrese el motivo de la cancelación..."
-                                  required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" onclick="cerrarModalCancelar()">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-times-circle me-2"></i>Confirmar Cancelación
-                    </button>
-                </div>
-            </form>
         </div>
     </div>
-</div>
 
-<style>
-    /* Ocultar footer en el panel del repartidor */
-    .apycar-footer {
-        display: none !important;
-    }
+    <!-- Modal para Código Cliente (Entregado) -->
+    <div class="modal fade" id="codigoClienteModal" tabindex="-1" aria-labelledby="codigoClienteLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="codigoClienteLabel">
+                        <i class="fas fa-key me-2"></i>Confirmar Entrega al Cliente
+                    </h5>
+                    <button type="button" class="btn-close" onclick="cerrarModalCodigoCliente()"
+                        aria-label="Close"></button>
+                </div>
+                <form id="form-entregado-codigo" method="POST">
+                    <input type="hidden" name="_method" value="PUT">
+                    <input type="hidden" name="estado_envio" value="Entregado">
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Ingrese el código de confirmación proporcionado por el cliente al momento de recibir los
+                            productos.
+                        </div>
+                        <div class="mb-3">
+                            <label for="codigo_cliente" class="form-label">Código de seguridad <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-lg text-center font-monospace"
+                                id="codigo_cliente" name="codigo_confirmacion" placeholder="000000" maxlength="6"
+                                pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code"
+                                title="El código debe tener exactamente 6 dígitos numéricos." required autofocus>
+                            <small class="text-muted">Código de 6 dígitos proporcionado por el cliente al recibir el
+                                pedido. No reutilizable.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary"
+                            onclick="cerrarModalCodigoCliente()">Cancelar</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check me-2"></i>Confirmar Entrega
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
-    /* Ajustes de layout - Altura dinámica según contenido */
-    body {
-        padding-bottom: 0 !important;
-    }
+    <!-- Modal para Cancelar en ruta - Template único -->
+    <div class="modal fade" id="cancelarModalTemplate" tabindex="-1" aria-labelledby="cancelarModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelarModalLabel">Cancelar Envío en Ruta</h5>
+                    <button type="button" class="btn-close" onclick="cerrarModalCancelar()" aria-label="Close"></button>
+                </div>
+                <form id="form-cancelar" method="POST">
+                    <input type="hidden" name="_method" value="PUT">
+                    <input type="hidden" name="estado_envio" value="Cancelado en ruta">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="motivo_cancelacion" class="form-label">Motivo de cancelación <span
+                                    class="text-danger">*</span></label>
+                            <textarea class="form-control" id="motivo_cancelacion" name="motivo_cancelacion" rows="3"
+                                placeholder="Ingrese el motivo de la cancelación..." required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary"
+                            onclick="cerrarModalCancelar()">Cancelar</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-times-circle me-2"></i>Confirmar Cancelación
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
-    main {
-        height: auto;
-        min-height: auto;
-    }
-
-    .container-fluid {
-        height: auto;
-        min-height: auto;
-        padding-bottom: 1rem;
-    }
-
-    .row {
-        height: auto;
-        min-height: auto;
-    }
-
-    .col-12 {
-        height: auto;
-        min-height: auto;
-    }
-
-    .input-group-text {
-        border-radius: 8px 0 0 8px;
-    }
-    
-    .input-group .form-control {
-        border-radius: 0;
-    }
-    
-    .input-group .btn {
-        border-radius: 0 8px 8px 0;
-    }
-    
-    /* Tabla optimizada */
-    .table thead th {
-        background-color: #f8f9fa;
-        border-bottom: 2px solid #dee2e6;
-        font-weight: 600;
-        color: #495057;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        padding: 0.75rem 1rem;
-        border-top: none;
-    }
-    
-    .table tbody td {
-        padding: 0.875rem 1rem;
-        vertical-align: middle;
-        border-bottom: 1px solid #e9ecef;
-        font-size: 0.875rem;
-    }
-    
-    .table tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-
-    .table tbody tr:last-child td {
-        border-bottom: none;
-    }
-
-    /* Estilos para tabla responsive */
-    .table-responsive {
-        overflow-x: auto;
-    }
-    
-    /* Estilos para modales de acciones */
-    .modal {
-        z-index: 1055 !important;
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        overflow-x: hidden !important;
-        overflow-y: auto !important;
-    }
-    
-    .modal.show {
-        display: block !important;
-        opacity: 1 !important;
-    }
-    
-    .modal.fade {
-        transition: opacity 0.15s linear;
-    }
-    
-    .modal.fade:not(.show) {
-        opacity: 0;
-    }
-    
-    .modal-backdrop {
-        z-index: 1050 !important;
-        background-color: rgba(0, 0, 0, 0.5) !important;
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-    }
-    
-    .modal-backdrop.show {
-        opacity: 0.5 !important;
-    }
-    
-    .modal-dialog {
-        z-index: 1056 !important;
-        margin: 1.75rem auto;
-        position: relative;
-        width: auto;
-        max-width: 500px;
-    }
-    
-    .modal-dialog-centered {
-        display: flex !important;
-        align-items: center !important;
-        min-height: calc(100% - 3.5rem);
-    }
-    
-    .modal-content {
-        border-radius: 0.5rem;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-        position: relative;
-        z-index: 1057 !important;
-        background-color: #fff !important;
-        border: 1px solid rgba(0, 0, 0, 0.2);
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        pointer-events: auto;
-    }
-    
-    .modal-body {
-        max-height: 70vh;
-        overflow-y: auto;
-        position: relative;
-        flex: 1 1 auto;
-        padding: 1rem;
-    }
-    
-    .modal-body .btn {
-        padding: 0.75rem 1rem;
-        margin-bottom: 0.5rem;
-        transition: all 0.2s ease;
-        border-radius: 8px;
-        font-weight: 500;
-    }
-    
-    .modal-body .btn:last-child {
-        margin-bottom: 0;
-    }
-    
-    .modal-body .btn:hover {
-        transform: translateX(3px);
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-    }
-    
-    .modal-body .btn small {
-        display: block;
-        margin-top: 0.25rem;
-        font-weight: 400;
-        opacity: 0.9;
-    }
-
-    /* Ajustes de color de texto para mejor legibilidad en botones del modal */
-    .modal-body .btn-success {
-        background-color: var(--medium-green);
-        border-color: var(--medium-green);
-        color: var(--white);
-    }
-
-    .modal-body .btn-success:hover {
-        background-color: var(--primary-green);
-        border-color: var(--primary-green);
-        color: var(--white);
-    }
-
-    .modal-body .btn-success small {
-        color: var(--white);
-        opacity: 0.85;
-    }
-
-    .modal-body .btn-warning {
-        background-color: #f59e0b;
-        border-color: #f59e0b;
-        color: var(--white);
-    }
-
-    .modal-body .btn-warning:hover {
-        background-color: #d97706;
-        border-color: #d97706;
-        color: var(--white);
-    }
-
-    .modal-body .btn-warning small {
-        color: var(--white);
-        opacity: 0.85;
-    }
-
-    .modal-body .btn-secondary {
-        background-color: var(--text-light);
-        border-color: var(--text-light);
-        color: var(--white);
-    }
-
-    .modal-body .btn-secondary:hover {
-        background-color: var(--text-medium);
-        border-color: var(--text-medium);
-        color: var(--white);
-    }
-
-    .modal-body .btn-secondary small {
-        color: var(--white);
-        opacity: 0.85;
-    }
-
-    .modal-body .btn-danger {
-        background-color: #ef4444;
-        border-color: #ef4444;
-        color: var(--white);
-    }
-
-    .modal-body .btn-danger:hover {
-        background-color: #dc2626;
-        border-color: #dc2626;
-        color: var(--white);
-    }
-
-    .modal-body .btn-danger small {
-        color: var(--white);
-        opacity: 0.85;
-    }
-
-    /* Cards optimizados */
-    .card {
-        border-radius: 0.5rem;
-    }
-
-    .card-header {
-        border-radius: 0.5rem 0.5rem 0 0 !important;
-    }
-
-    /* Botón de acciones más compacto */
-    .btn-sm {
-        font-size: 0.8125rem;
-        padding: 0.35rem 0.65rem;
-    }
-
-    /* Badge de estado */
-    .badge {
-        font-size: 0.75rem;
-        font-weight: 500;
-        padding: 0.35em 0.65em;
-    }
-
-    /* Espaciado reducido en sección vacía */
-    .text-center.py-4 {
-        padding-top: 2rem !important;
-        padding-bottom: 2rem !important;
-    }
-
-    /* Optimizaciones móviles */
-    @media (max-width: 768px) {
-        .table-responsive {
-            font-size: 0.875rem;
+    <style>
+        /* Ocultar footer en el panel del repartidor */
+        .apycar-footer {
+            display: none !important;
         }
-        
-        .table th,
-        .table td {
-            padding: 0.5rem 0.25rem;
-            font-size: 0.75rem;
+
+        /* Ajustes de layout - Altura dinámica según contenido */
+        body {
+            padding-bottom: 0 !important;
         }
-        
-        .btn-sm {
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
+
+        main {
+            height: auto;
+            min-height: auto;
         }
-        
-        .modal-dialog {
-            margin: 0.5rem;
-            max-width: calc(100% - 1rem);
+
+        .container-fluid {
+            height: auto;
+            min-height: auto;
+            padding-bottom: 1rem;
         }
-        
-        .modal-body {
-            padding: 0.75rem;
+
+        .row {
+            height: auto;
+            min-height: auto;
         }
-        
+
+        .col-12 {
+            height: auto;
+            min-height: auto;
+        }
+
         .input-group-text {
+            border-radius: 8px 0 0 8px;
+        }
+
+        .input-group .form-control {
+            border-radius: 0;
+        }
+
+        .input-group .btn {
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Tabla optimizada */
+        .table thead th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.75rem 1rem;
+            border-top: none;
+        }
+
+        .table tbody td {
+            padding: 0.875rem 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #e9ecef;
             font-size: 0.875rem;
         }
-        
-        .form-control {
-            font-size: 0.875rem;
-        }
-        
-        h1.h4 {
-            font-size: 1.125rem;
-        }
-    }
-</style>
 
-<script>
-    let envioActualId = null;
-    let envioActualEstado = null;
-    
-    // Función para abrir el modal de acciones
-    function abrirModalAcciones(envioId, codigoEnvio, destinatario, direccion, estado) {
-        envioActualId = envioId;
-        envioActualEstado = estado;
-        
-        // Actualizar contenido del modal
-        document.getElementById('modal-codigo-envio').textContent = codigoEnvio;
-        document.getElementById('modal-destinatario').textContent = destinatario;
-        document.getElementById('modal-direccion').textContent = direccion;
-        
-        // Mostrar/ocultar botones según el estado
-        const btnEnEnvio = document.getElementById('btn-en-envio');
-        const btnEntregado = document.getElementById('form-entregado').parentElement.querySelector('button');
-        
-        // Mostrar botón "En envío" solo si el estado es "Despachado"
-        if (estado === 'Despachado') {
-            btnEnEnvio.style.display = 'block';
-        } else {
-            btnEnEnvio.style.display = 'none';
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
         }
-        
-        // Mostrar botón "Entregado" solo si el estado es "En envío"
-        if (estado === 'En envío') {
-            btnEntregado.style.display = 'block';
-        } else {
-            btnEntregado.style.display = 'none';
-        }
-        
-        // Actualizar acciones de los formularios con método override en query string
-        const baseUrl = '/admin/envios/' + envioId + '?_method=PUT';
-        document.getElementById('form-en-envio').action = baseUrl;
-        document.getElementById('form-entregado-codigo').action = baseUrl;
-        document.getElementById('form-intento').action = baseUrl;
-        document.getElementById('form-devuelto').action = baseUrl;
-        
-        // Mostrar modal
-        const modal = document.getElementById('accionesModalTemplate');
-        modal.style.display = 'block';
-        modal.classList.add('show');
-        modal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('modal-open');
-        
-        // Crear backdrop
-        if (!document.querySelector('.modal-backdrop')) {
-            const backdrop = document.createElement('div');
-            backdrop.className = 'modal-backdrop fade show';
-            backdrop.style.zIndex = '1050';
-            backdrop.onclick = cerrarModalAcciones;
-            document.body.appendChild(backdrop);
-        }
-    }
-    
-    // Función para cerrar el modal de acciones
-    function cerrarModalAcciones() {
-        const modal = document.getElementById('accionesModalTemplate');
-        modal.style.display = 'none';
-        modal.classList.remove('show');
-        modal.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('modal-open');
-        
-        // Remover backdrop
-        const backdrop = document.querySelector('.modal-backdrop');
-        if (backdrop) {
-            backdrop.remove();
-        }
-    }
-    
-    // Función para abrir modal de cancelar
-    function abrirModalCancelar() {
-        cerrarModalAcciones();
-        
-        // Actualizar acción del formulario con método override en query string
-        document.getElementById('form-cancelar').action = '/admin/envios/' + envioActualId + '?_method=PUT';
-        document.getElementById('motivo_cancelacion').value = '';
-        
-        // Mostrar modal
-        const modal = document.getElementById('cancelarModalTemplate');
-        modal.style.display = 'block';
-        modal.classList.add('show');
-        modal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('modal-open');
-        
-        // Crear backdrop
-        if (!document.querySelector('.modal-backdrop')) {
-            const backdrop = document.createElement('div');
-            backdrop.className = 'modal-backdrop fade show';
-            backdrop.style.zIndex = '1050';
-            backdrop.onclick = cerrarModalCancelar;
-            document.body.appendChild(backdrop);
-        }
-    }
-    
-    // Función para cerrar modal de cancelar
-    function cerrarModalCancelar() {
-        const modal = document.getElementById('cancelarModalTemplate');
-        modal.style.display = 'none';
-        modal.classList.remove('show');
-        modal.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('modal-open');
-        
-        // Remover backdrop
-        const backdrop = document.querySelector('.modal-backdrop');
-        if (backdrop) {
-            backdrop.remove();
-        }
-    }
 
-    // Función para abrir modal de código bodeguero
-    function abrirModalCodigoBodeguero() {
-        cerrarModalAcciones();
-        
-        const baseUrl = '/admin/envios/' + envioActualId + '?_method=PUT';
-        document.getElementById('form-en-envio').action = baseUrl;
-        document.getElementById('codigo_bodeguero').value = '';
-        
-        const modal = document.getElementById('codigoBodegueroModal');
-        modal.style.display = 'block';
-        modal.classList.add('show');
-        modal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('modal-open');
-        
-        if (!document.querySelector('.modal-backdrop')) {
-            const backdrop = document.createElement('div');
-            backdrop.className = 'modal-backdrop fade show';
-            backdrop.style.zIndex = '1050';
-            backdrop.onclick = cerrarModalCodigoBodeguero;
-            document.body.appendChild(backdrop);
+        .table tbody tr:last-child td {
+            border-bottom: none;
         }
-        
-        setTimeout(() => document.getElementById('codigo_bodeguero').focus(), 100);
-    }
 
-    // Función para cerrar modal de código bodeguero
-    function cerrarModalCodigoBodeguero() {
-        const modal = document.getElementById('codigoBodegueroModal');
-        modal.style.display = 'none';
-        modal.classList.remove('show');
-        modal.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('modal-open');
-        
-        const backdrop = document.querySelector('.modal-backdrop');
-        if (backdrop) {
-            backdrop.remove();
+        /* Estilos para tabla responsive */
+        .table-responsive {
+            overflow-x: auto;
         }
-    }
 
-    // Función para abrir modal de código cliente
-    function abrirModalCodigoCliente() {
-        cerrarModalAcciones();
-        
-        const baseUrl = '/admin/envios/' + envioActualId + '?_method=PUT';
-        document.getElementById('form-entregado-codigo').action = baseUrl;
-        document.getElementById('codigo_cliente').value = '';
-        
-        const modal = document.getElementById('codigoClienteModal');
-        modal.style.display = 'block';
-        modal.classList.add('show');
-        modal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('modal-open');
-        
-        if (!document.querySelector('.modal-backdrop')) {
-            const backdrop = document.createElement('div');
-            backdrop.className = 'modal-backdrop fade show';
-            backdrop.style.zIndex = '1050';
-            backdrop.onclick = cerrarModalCodigoCliente;
-            document.body.appendChild(backdrop);
+        /* Estilos para modales de acciones */
+        .modal {
+            z-index: 1055 !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
         }
-        
-        setTimeout(() => document.getElementById('codigo_cliente').focus(), 100);
-    }
 
-    // Función para cerrar modal de código cliente
-    function cerrarModalCodigoCliente() {
-        const modal = document.getElementById('codigoClienteModal');
-        modal.style.display = 'none';
-        modal.classList.remove('show');
-        modal.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('modal-open');
-        
-        const backdrop = document.querySelector('.modal-backdrop');
-        if (backdrop) {
-            backdrop.remove();
+        .modal.show {
+            display: block !important;
+            opacity: 1 !important;
         }
-    }
-    
-        // Inicializar botones de acciones
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.btn-acciones').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                const envioId = this.getAttribute('data-envio-id');
-                const codigoEnvio = this.getAttribute('data-envio-codigo');
-                const destinatario = this.getAttribute('data-destinatario');
-                const direccion = this.getAttribute('data-direccion');
-                const estado = this.getAttribute('data-estado');
-                
-                abrirModalAcciones(envioId, codigoEnvio, destinatario, direccion, estado);
-            });
-        });
-        
-        // Cerrar modales con ESC
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                cerrarModalAcciones();
-                cerrarModalCancelar();
-                cerrarModalCodigoBodeguero();
-                cerrarModalCodigoCliente();
+
+        .modal.fade {
+            transition: opacity 0.15s linear;
+        }
+
+        .modal.fade:not(.show) {
+            opacity: 0;
+        }
+
+        .modal-backdrop {
+            z-index: 1050 !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+        }
+
+        .modal-backdrop.show {
+            opacity: 0.5 !important;
+        }
+
+        .modal-dialog {
+            z-index: 1056 !important;
+            margin: 1.75rem auto;
+            position: relative;
+            width: auto;
+            max-width: 500px;
+        }
+
+        .modal-dialog-centered {
+            display: flex !important;
+            align-items: center !important;
+            min-height: calc(100% - 3.5rem);
+        }
+
+        .modal-content {
+            border-radius: 0.5rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            position: relative;
+            z-index: 1057 !important;
+            background-color: #fff !important;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            pointer-events: auto;
+        }
+
+        .modal-body {
+            max-height: 70vh;
+            overflow-y: auto;
+            position: relative;
+            flex: 1 1 auto;
+            padding: 1rem;
+        }
+
+        .modal-body .btn {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .modal-body .btn:last-child {
+            margin-bottom: 0;
+        }
+
+        .modal-body .btn:hover {
+            transform: translateX(3px);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        .modal-body .btn small {
+            display: block;
+            margin-top: 0.25rem;
+            font-weight: 400;
+            opacity: 0.9;
+        }
+
+        /* Ajustes de color de texto para mejor legibilidad en botones del modal */
+        .modal-body .btn-success {
+            background-color: var(--medium-green);
+            border-color: var(--medium-green);
+            color: var(--white);
+        }
+
+        .modal-body .btn-success:hover {
+            background-color: var(--primary-green);
+            border-color: var(--primary-green);
+            color: var(--white);
+        }
+
+        .modal-body .btn-success small {
+            color: var(--white);
+            opacity: 0.85;
+        }
+
+        .modal-body .btn-warning {
+            background-color: #f59e0b;
+            border-color: #f59e0b;
+            color: var(--white);
+        }
+
+        .modal-body .btn-warning:hover {
+            background-color: #d97706;
+            border-color: #d97706;
+            color: var(--white);
+        }
+
+        .modal-body .btn-warning small {
+            color: var(--white);
+            opacity: 0.85;
+        }
+
+        .modal-body .btn-secondary {
+            background-color: var(--text-light);
+            border-color: var(--text-light);
+            color: var(--white);
+        }
+
+        .modal-body .btn-secondary:hover {
+            background-color: var(--text-medium);
+            border-color: var(--text-medium);
+            color: var(--white);
+        }
+
+        .modal-body .btn-secondary small {
+            color: var(--white);
+            opacity: 0.85;
+        }
+
+        .modal-body .btn-danger {
+            background-color: #ef4444;
+            border-color: #ef4444;
+            color: var(--white);
+        }
+
+        .modal-body .btn-danger:hover {
+            background-color: #dc2626;
+            border-color: #dc2626;
+            color: var(--white);
+        }
+
+        .modal-body .btn-danger small {
+            color: var(--white);
+            opacity: 0.85;
+        }
+
+        /* Cards optimizados */
+        .card {
+            border-radius: 0.5rem;
+        }
+
+        .card-header {
+            border-radius: 0.5rem 0.5rem 0 0 !important;
+        }
+
+        /* Botón de acciones más compacto */
+        .btn-sm {
+            font-size: 0.8125rem;
+            padding: 0.35rem 0.65rem;
+        }
+
+        /* Badge de estado */
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.35em 0.65em;
+        }
+
+        /* Espaciado reducido en sección vacía */
+        .text-center.py-4 {
+            padding-top: 2rem !important;
+            padding-bottom: 2rem !important;
+        }
+
+        /* Optimizaciones móviles */
+        @media (max-width: 768px) {
+            .table-responsive {
+                font-size: 0.875rem;
             }
-        });
 
-        // Solo permitir números en los campos de código
-        document.querySelectorAll('input[name="codigo_confirmacion"]').forEach(input => {
-            input.addEventListener('input', function(e) {
-                this.value = this.value.replace(/[^0-9]/g, '');
+            .table th,
+            .table td {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.75rem;
+            }
+
+            .btn-sm {
+                font-size: 0.75rem;
+                padding: 0.25rem 0.5rem;
+            }
+
+            .modal-dialog {
+                margin: 0.5rem;
+                max-width: calc(100% - 1rem);
+            }
+
+            .modal-body {
+                padding: 0.75rem;
+            }
+
+            .input-group-text {
+                font-size: 0.875rem;
+            }
+
+            .form-control {
+                font-size: 0.875rem;
+            }
+
+            h1.h4 {
+                font-size: 1.125rem;
+            }
+        }
+    </style>
+
+    <script>
+        let envioActualId = null;
+        let envioActualEstado = null;
+
+        // Función para abrir el modal de acciones
+        function abrirModalAcciones(envioId, codigoEnvio, destinatario, direccion, estado) {
+            envioActualId = envioId;
+            envioActualEstado = estado;
+
+            // Actualizar contenido del modal
+            document.getElementById('modal-codigo-envio').textContent = codigoEnvio;
+            document.getElementById('modal-destinatario').textContent = destinatario;
+            document.getElementById('modal-direccion').textContent = direccion;
+
+            // Mostrar/ocultar botones según el estado
+            const btnEnEnvio = document.getElementById('btn-en-envio');
+            const btnEntregado = document.getElementById('form-entregado').parentElement.querySelector('button');
+
+            // Mostrar botón "En envío" solo si el estado es "Despachado"
+            if (estado === 'Despachado') {
+                btnEnEnvio.style.display = 'block';
+            } else {
+                btnEnEnvio.style.display = 'none';
+            }
+
+            // Mostrar botón "Entregado" solo si el estado es "En envío"
+            if (estado === 'En envío') {
+                btnEntregado.style.display = 'block';
+            } else {
+                btnEntregado.style.display = 'none';
+            }
+
+            // Actualizar acciones de los formularios con método override en query string
+            const baseUrl = '/admin/envios/' + envioId + '?_method=PUT';
+            document.getElementById('form-en-envio').action = baseUrl;
+            document.getElementById('form-entregado-codigo').action = baseUrl;
+            document.getElementById('form-intento').action = baseUrl;
+            document.getElementById('form-devuelto').action = baseUrl;
+
+            // Mostrar modal
+            const modal = document.getElementById('accionesModalTemplate');
+            modal.style.display = 'block';
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+
+            // Crear backdrop
+            if (!document.querySelector('.modal-backdrop')) {
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                backdrop.style.zIndex = '1050';
+                backdrop.onclick = cerrarModalAcciones;
+                document.body.appendChild(backdrop);
+            }
+        }
+
+        // Función para cerrar el modal de acciones
+        function cerrarModalAcciones() {
+            const modal = document.getElementById('accionesModalTemplate');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+
+            // Remover backdrop
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+        }
+
+        // Función para abrir modal de cancelar
+        function abrirModalCancelar() {
+            cerrarModalAcciones();
+
+            // Actualizar acción del formulario con método override en query string
+            document.getElementById('form-cancelar').action = '/admin/envios/' + envioActualId + '?_method=PUT';
+            document.getElementById('motivo_cancelacion').value = '';
+
+            // Mostrar modal
+            const modal = document.getElementById('cancelarModalTemplate');
+            modal.style.display = 'block';
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+
+            // Crear backdrop
+            if (!document.querySelector('.modal-backdrop')) {
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                backdrop.style.zIndex = '1050';
+                backdrop.onclick = cerrarModalCancelar;
+                document.body.appendChild(backdrop);
+            }
+        }
+
+        // Función para cerrar modal de cancelar
+        function cerrarModalCancelar() {
+            const modal = document.getElementById('cancelarModalTemplate');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+
+            // Remover backdrop
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+        }
+
+        // Función para abrir modal de código bodeguero
+        function abrirModalCodigoBodeguero() {
+            cerrarModalAcciones();
+
+            const baseUrl = '/admin/envios/' + envioActualId + '?_method=PUT';
+            document.getElementById('form-en-envio').action = baseUrl;
+            document.getElementById('codigo_bodeguero').value = '';
+
+            const modal = document.getElementById('codigoBodegueroModal');
+            modal.style.display = 'block';
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+
+            if (!document.querySelector('.modal-backdrop')) {
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                backdrop.style.zIndex = '1050';
+                backdrop.onclick = cerrarModalCodigoBodeguero;
+                document.body.appendChild(backdrop);
+            }
+
+            setTimeout(() => document.getElementById('codigo_bodeguero').focus(), 100);
+        }
+
+        // Función para cerrar modal de código bodeguero
+        function cerrarModalCodigoBodeguero() {
+            const modal = document.getElementById('codigoBodegueroModal');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+        }
+
+        let timerCodigoCliente = null;
+
+        // Función para abrir modal de código cliente
+        function abrirModalCodigoCliente() {
+            cerrarModalAcciones();
+
+            // Configurar formulario para AJAX (no action standard)
+            document.getElementById('form-entregado-codigo').onsubmit = handleConfirmarEntrega;
+            document.getElementById('codigo_cliente').value = '';
+
+            const modal = document.getElementById('codigoClienteModal');
+            modal.style.display = 'block';
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+
+            // Backdrop
+            if (!document.querySelector('.modal-backdrop')) {
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                backdrop.style.zIndex = '1050';
+                backdrop.onclick = cerrarModalCodigoCliente;
+                document.body.appendChild(backdrop);
+            }
+
+            // TIMER: Cerrar automáticamente después de 5 minutos (300,000 ms)
+            if (timerCodigoCliente) clearTimeout(timerCodigoCliente);
+            timerCodigoCliente = setTimeout(() => {
+                alert('El tiempo para ingresar el código ha expirado.');
+                cerrarModalCodigoCliente();
+            }, 300000); // 5 minutos
+
+            // Focus
+            setTimeout(() => document.getElementById('codigo_cliente').focus(), 100);
+        }
+
+        // Manejar envío del formulario de entrega
+        async function handleConfirmarEntrega(e) {
+            e.preventDefault();
+            const codigo = document.getElementById('codigo_cliente').value;
+            const btnSubmit = e.target.querySelector('button[type="submit"]');
+
+            // Deshabilitar botón
+            const originalText = btnSubmit.innerHTML;
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Validando...';
+
+            try {
+                const response = await fetch(`/admin/api/envios/${envioActualId}/confirmar-entrega`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ codigo: codigo })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Éxito
+                    if (timerCodigoCliente) clearTimeout(timerCodigoCliente);
+                    alert('¡Entrega confirmada correctamente!');
+                    window.location.reload();
+                } else {
+                    // Error
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = originalText;
+                    alert('Error: ' + (data.message || 'Código inválido'));
+                    document.getElementById('codigo_cliente').value = '';
+                    document.getElementById('codigo_cliente').focus();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = originalText;
+                alert('Error de conexión. Intente nuevamente.');
+            }
+        }
+
+        function cerrarModalCodigoCliente() {
+            if (timerCodigoCliente) {
+                clearTimeout(timerCodigoCliente);
+                timerCodigoCliente = null;
+            }
+
+            const modal = document.getElementById('codigoClienteModal');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+        }
+
+
+        // Inicializar botones de acciones
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.btn-acciones').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const envioId = this.getAttribute('data-envio-id');
+                    const codigoEnvio = this.getAttribute('data-envio-codigo');
+                    const destinatario = this.getAttribute('data-destinatario');
+                    const direccion = this.getAttribute('data-direccion');
+                    const estado = this.getAttribute('data-estado');
+
+                    abrirModalAcciones(envioId, codigoEnvio, destinatario, direccion, estado);
+                });
+            });
+
+            // Cerrar modales con ESC
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    cerrarModalAcciones();
+                    cerrarModalCancelar();
+                    cerrarModalCodigoBodeguero();
+                    cerrarModalCodigoCliente();
+                }
+            });
+
+            // Solo permitir números en los campos de código
+            document.querySelectorAll('input[name="codigo_confirmacion"]').forEach(input => {
+                input.addEventListener('input', function (e) {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                });
             });
         });
-    });
-</script>
+    </script>
 
-<%- include('../layouts/footer') %>
+    <%- include('../layouts/footer') %>

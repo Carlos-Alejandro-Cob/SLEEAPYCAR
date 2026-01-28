@@ -6,6 +6,7 @@ const { validateCodigoEnvio, generarCodigoEnvio, obtenerSiguienteSecuencial } = 
 
 const ROLES = require('../config/roles');
 const logger = require('../utils/logger');
+const { queryWithRetry } = require('../utils/dbQuery');
 
 
 // 1. Listar y Filtrar (CRUD Read)
@@ -754,14 +755,34 @@ exports.generarCodigoBodeguero = async (req, res) => {
             });
         }
 
-        console.log('[DEBUG_FREEZE] Envío encontrado. Generando código...');
-        const codigoData = await CodigoConfirmacion.generar(idEnvio, 'BODEGUERO_CHOFER', currentUserId);
-        console.log('[DEBUG_FREEZE] Código generado data:', codigoData);
+        console.log('[DEBUG_FREEZE] Envío encontrado. Estado:', envio.Estado_Envio);
 
-        const codigo = typeof codigoData.codigo === 'string' ? codigoData.codigo : String(codigoData.codigo || '');
+        // RESTRICCIÓN: No generar código si el envío ya está en ruta o entregado
+        if (envio.Estado_Envio === 'En Ruta' || envio.Estado_Envio === 'Entregado') {
+            return res.status(400).json({
+                success: false,
+                message: 'No se puede generar código: El envío ya se encuentra ' + envio.Estado_Envio + '.'
+            });
+        }
 
-        logger.logAction(currentUserId, 'GENERAR_CODIGO', `Código de confirmación de asignación ${codigo} generado para envío ${idEnvio}`)
-            .catch(function (logErr) { console.warn('Log auditoría:', logErr.message); });
+        console.log('[DEBUG_FREEZE] Verificando código existente...');
+        // PERSISTENCIA: Verificar si ya existe un código activo
+        const codigoExistente = await CodigoConfirmacion.obtenerCodigoActivo(idEnvio, 'BODEGUERO_CHOFER');
+        let codigo;
+
+        if (codigoExistente) {
+            console.log('[DEBUG_FREEZE] Código existente encontrado:', codigoExistente.codigo);
+            codigo = codigoExistente.codigo;
+            // No logueamos nueva acción para evitar spam, o logueamos "Visualización"
+        } else {
+            console.log('[DEBUG_FREEZE] Generando NUEVO código...');
+            const codigoData = await CodigoConfirmacion.generar(idEnvio, 'BODEGUERO_CHOFER', currentUserId);
+            console.log('[DEBUG_FREEZE] Código generado data:', codigoData);
+            codigo = typeof codigoData.codigo === 'string' ? codigoData.codigo : String(codigoData.codigo || '');
+
+            logger.logAction(currentUserId, 'GENERAR_CODIGO', `Código de confirmación de asignación ${codigo} generado para envío ${idEnvio}`)
+                .catch(function (logErr) { console.warn('Log auditoría:', logErr.message); });
+        }
 
         console.log('[DEBUG_FREEZE] Enviando respuesta JSON...');
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -770,7 +791,7 @@ exports.generarCodigoBodeguero = async (req, res) => {
         res.end(JSON.stringify({
             success: true,
             codigo: codigo,
-            message: 'Código de confirmación de asignación generado. Entregue este código al repartidor para que confirme que el envío está asignado a él.'
+            message: 'Código de confirmación de asignación activo. Entregue este código al repartidor.'
         }));
         console.log('[DEBUG_FREEZE] Respuesta enviada.');
         return;
@@ -880,17 +901,28 @@ exports.generarCodigoSucursal = async (req, res) => {
 
         // Validar que el envío esté "En Ruta" para poder generar el código de recepción
         if (envio.Estado_Envio !== 'En Ruta') {
+            const msg = envio.Estado_Envio === 'Entregado'
+                ? 'El envío ya fue entregado.'
+                : 'Solo se puede generar código de recepción cuando el envío está En Ruta.';
             return res.status(400).json({
                 success: false,
-                message: 'Solo se puede generar código de recepción cuando el envío está En Ruta.'
+                message: msg
             });
         }
 
-        const codigoData = await CodigoConfirmacion.generar(idEnvio, 'CLIENTE_CHOFER', currentUserId);
-        const codigo = typeof codigoData.codigo === 'string' ? codigoData.codigo : String(codigoData.codigo || '');
+        // PERSISTENCIA: Verificar si ya existe un código activo
+        const codigoExistente = await CodigoConfirmacion.obtenerCodigoActivo(idEnvio, 'CLIENTE_CHOFER');
+        let codigo;
 
-        logger.logAction(currentUserId, 'GENERAR_CODIGO_SUCURSAL', `Código de recepción ${codigo} generado para envío ${idEnvio}`)
-            .catch(function (logErr) { console.warn('Log auditoría:', logErr.message); });
+        if (codigoExistente) {
+            codigo = codigoExistente.codigo;
+        } else {
+            const codigoData = await CodigoConfirmacion.generar(idEnvio, 'CLIENTE_CHOFER', currentUserId);
+            codigo = typeof codigoData.codigo === 'string' ? codigoData.codigo : String(codigoData.codigo || '');
+
+            logger.logAction(currentUserId, 'GENERAR_CODIGO_SUCURSAL', `Código de recepción ${codigo} generado para envío ${idEnvio}`)
+                .catch(function (logErr) { console.warn('Log auditoría:', logErr.message); });
+        }
 
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.setHeader('Cache-Control', 'no-store');
@@ -976,6 +1008,58 @@ exports.validarCodigoSeguridad = async (req, res) => {
         return res.status(500).json({
             valido: false,
             mensaje: 'Error al validar el código.'
+        });
+    }
+};
+
+// 20. API: Confirmar entrega con código (Repartidor)
+exports.confirmarEntrega = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { codigo } = req.body;
+        const currentUserId = req.user.id_usuario;
+
+        if (!codigo) {
+            return res.status(400).json({ success: false, message: 'Código requerido' });
+        }
+
+        // 1. Validar y marcar como usado el código
+        // El tipo esperado es 'CLIENTE_CHOFER' (generado por Sucursal)
+        const resultado = await CodigoConfirmacion.validarYUsar(codigo, id, currentUserId);
+
+        if (!resultado.valido) {
+            return res.status(400).json({
+                success: false,
+                message: resultado.mensaje
+            });
+        }
+
+        if (resultado.tipo !== 'CLIENTE_CHOFER') {
+            return res.status(400).json({
+                success: false,
+                message: 'El código proporcionado no es válido para confirmar una entrega final.'
+            });
+        }
+
+        // 2. Actualizar estado del envío
+        await queryWithRetry(
+            'UPDATE envios SET estado_envio = ?, fecha_entrega = NOW() WHERE id_envio = ?',
+            ['Entregado', id]
+        );
+
+        // 3. Log
+        await logger.logAction(currentUserId, 'CONFIRMAR_ENTREGA', `Entrega confirmada para envío ${id} con código de seguridad.`);
+
+        res.json({
+            success: true,
+            message: 'Entrega confirmada exitosamente.'
+        });
+
+    } catch (error) {
+        console.error('Error al confirmar entrega:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al confirmar la entrega: ' + error.message
         });
     }
 };

@@ -1,15 +1,15 @@
 // SLEE APYCAR - Custom JavaScript
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Manejo centralizado para los modales de eliminación
     const deleteModal = document.getElementById('modalEliminar');
     if (deleteModal) {
-        document.body.addEventListener('click', function(event) {
+        document.body.addEventListener('click', function (event) {
             if (event.target.closest('.js-delete-btn')) {
                 const button = event.target.closest('.js-delete-btn');
                 const envioId = button.dataset.envioId;
                 const envioCodigo = button.dataset.envioCodigo;
-                
+
                 // Llama a la función global para configurar y mostrar el modal
                 window.confirmarEliminacion(envioId, envioCodigo);
             }
@@ -29,9 +29,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Auto-hide alerts después de 5 segundos
-    setTimeout(function() {
-        var alerts = document.querySelectorAll('.alert');
-        alerts.forEach(function(alert) {
+    // Auto-hide alerts después de 5 segundos (EXCLUYENDO alertas dentro de modales)
+    setTimeout(function () {
+        // Seleccionar solo alertas que NO estén dentro de un modal
+        var alerts = document.querySelectorAll('.alert:not(.modal .alert)');
+        alerts.forEach(function (alert) {
             if (alert.classList.contains('alert-success') || alert.classList.contains('alert-info')) {
                 var bsAlert = new bootstrap.Alert(alert);
                 bsAlert.close();
@@ -41,8 +43,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Confirmación antes de eliminar
     var deleteButtons = document.querySelectorAll('[data-confirm-delete]');
-    deleteButtons.forEach(function(button) {
-        button.addEventListener('click', function(e) {
+    deleteButtons.forEach(function (button) {
+        button.addEventListener('click', function (e) {
             if (!confirm('¿Estás seguro de que deseas eliminar este elemento?')) {
                 e.preventDefault();
             }
@@ -51,8 +53,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Validación de formularios
     var forms = document.querySelectorAll('.needs-validation');
-    forms.forEach(function(form) {
-        form.addEventListener('submit', function(event) {
+    forms.forEach(function (form) {
+        form.addEventListener('submit', function (event) {
             if (!form.checkValidity()) {
                 event.preventDefault();
                 event.stopPropagation();
@@ -64,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto-generar ID de envío
     var idEnvioInput = document.getElementById('ID_Envio');
     if (idEnvioInput && !idEnvioInput.value) {
-        idEnvioInput.addEventListener('blur', function() {
+        idEnvioInput.addEventListener('blur', function () {
             if (!this.value.trim()) {
                 var timestamp = Date.now().toString().slice(-6);
                 this.value = 'ENV' + timestamp;
@@ -75,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Validación de URL de imagen
     var urlFotoInput = document.getElementById('URL_Foto_Entrega');
     if (urlFotoInput) {
-        urlFotoInput.addEventListener('blur', function() {
+        urlFotoInput.addEventListener('blur', function () {
             if (this.value && !isValidUrl(this.value)) {
                 this.classList.add('is-invalid');
                 showFieldError(this, 'Por favor, ingresa una URL válida');
@@ -90,9 +92,9 @@ document.addEventListener('DOMContentLoaded', function() {
     var searchInput = document.getElementById('q');
     if (searchInput) {
         var searchTimeout;
-        searchInput.addEventListener('input', function() {
+        searchInput.addEventListener('input', function () {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(function() {
+            searchTimeout = setTimeout(function () {
                 // Aquí podrías implementar búsqueda en tiempo real
                 console.log('Búsqueda:', searchInput.value);
             }, 300);
@@ -100,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Exportar funcionalidad
-    window.exportarExcel = function() {
+    window.exportarExcel = function () {
         // Implementar exportación a Excel
         var table = document.querySelector('table');
         if (table) {
@@ -113,11 +115,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function tableToCSV(table) {
         var rows = table.querySelectorAll('tr');
         var csv = [];
-        
+
         for (var i = 0; i < rows.length; i++) {
             var row = [];
             var cols = rows[i].querySelectorAll('td, th');
-            
+
             for (var j = 0; j < cols.length; j++) {
                 var text = cols[j].textContent.trim();
                 // Limpiar texto de botones y badges
@@ -126,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             csv.push(row.join(','));
         }
-        
+
         return csv.join('\n');
     }
 
@@ -171,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Confirmación de eliminación con modal
-    window.confirmarEliminacion = function(id, envioId) {
+    window.confirmarEliminacion = function (id, envioId) {
         document.getElementById('envioId').textContent = envioId;
         const form = document.getElementById('formEliminar');
         form.action = `/admin/envios/${id}`; // Correct RESTful URL
@@ -181,10 +183,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Animaciones de entrada
     var cards = document.querySelectorAll('.card');
-    cards.forEach(function(card, index) {
+    cards.forEach(function (card, index) {
         card.style.opacity = '0';
         card.style.transform = 'translateY(20px)';
-        setTimeout(function() {
+        setTimeout(function () {
             card.style.transition = 'all 0.3s ease';
             card.style.opacity = '1';
             card.style.transform = 'translateY(0)';
@@ -193,14 +195,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Contador de caracteres para textarea
     var textareas = document.querySelectorAll('textarea');
-    textareas.forEach(function(textarea) {
+    textareas.forEach(function (textarea) {
         var maxLength = textarea.getAttribute('maxlength');
         if (maxLength) {
             var counter = document.createElement('small');
             counter.className = 'text-muted';
             counter.textContent = '0/' + maxLength + ' caracteres';
-            
-            textarea.addEventListener('input', function() {
+
+            textarea.addEventListener('input', function () {
                 counter.textContent = this.value.length + '/' + maxLength + ' caracteres';
                 if (this.value.length > maxLength * 0.9) {
                     counter.classList.add('text-warning');
@@ -208,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     counter.classList.remove('text-warning');
                 }
             });
-            
+
             textarea.parentNode.appendChild(counter);
         }
     });
@@ -217,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Funciones globales
 window.SLEE_APYCAR = {
     // Función para mostrar notificaciones
-    showNotification: function(message, type = 'info') {
+    showNotification: function (message, type = 'info') {
         var alertClass = 'alert-' + type;
         var alertHtml = `
             <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
@@ -225,13 +227,13 @@ window.SLEE_APYCAR = {
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         `;
-        
+
         var container = document.querySelector('main .container-fluid');
         if (container) {
             container.insertAdjacentHTML('afterbegin', alertHtml);
-            
+
             // Auto-hide después de 5 segundos
-            setTimeout(function() {
+            setTimeout(function () {
                 var alert = container.querySelector('.alert');
                 if (alert) {
                     var bsAlert = new bootstrap.Alert(alert);
@@ -242,14 +244,14 @@ window.SLEE_APYCAR = {
     },
 
     // Función para confirmar acciones
-    confirmAction: function(message, callback) {
+    confirmAction: function (message, callback) {
         if (confirm(message)) {
             callback();
         }
     },
 
     // Función para formatear fechas
-    formatDate: function(date) {
+    formatDate: function (date) {
         return new Date(date).toLocaleDateString('es-ES', {
             year: 'numeric',
             month: 'long',
