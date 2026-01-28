@@ -13,10 +13,10 @@ const ROLES = require('../config/roles');
 // [R]EAD: Listar todos los envíos (con filtros)
 router.get('/envios', checkRole([ROLES.ADMIN, ROLES.BODEGUERO, ROLES.SUPER_ADMIN]), envioController.listEnvíos);
 
-// [C]REATE: Mostrar formulario para nuevo envío (Bodeguero NO puede crear)
+// [C]REATE: Mostrar formulario para nuevo envío (Bodeguero NO puede crear, solo admin)
 router.get('/envios/nuevo', checkRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]), envioController.showCreateForm);
 
-// [C]REATE: Procesar el formulario y crear el nuevo envío (Bodeguero NO puede crear)
+// [C]REATE: Procesar el formulario y crear el nuevo envío (Bodeguero NO puede crear, solo admin)
 router.post('/envios', checkRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]), envioController.createEnvío);
 
 // [R]EAD: Mostrar formulario para editar un envío específico
@@ -64,6 +64,9 @@ router.post('/repartidor/ruta', checkRole([ROLES.REPARTIDOR, ROLES.SUPER_ADMIN])
 // --- API RUTAS PARA CÓDIGOS DE CONFIRMACIÓN (BODEGUERO) ---
 router.post('/api/envios/:id/generar-codigo', checkRole([ROLES.BODEGUERO, ROLES.SUPER_ADMIN]), envioController.generarCodigoBodeguero);
 router.post('/api/envios/:id/cancelar-codigo', checkRole([ROLES.BODEGUERO, ROLES.SUPER_ADMIN]), envioController.cancelarCodigoBodeguero);
+
+// --- API VALIDACIÓN CÓDIGO DE SEGURIDAD (REPARTIDOR / ADMIN) ---
+router.post('/api/envios/:id/validar-codigo-seguridad', checkRole([ROLES.REPARTIDOR, ROLES.ADMIN, ROLES.SUPER_ADMIN]), envioController.validarCodigoSeguridad);
 
 
 module.exports = router;

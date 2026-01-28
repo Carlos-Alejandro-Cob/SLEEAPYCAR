@@ -72,7 +72,9 @@
                     </div>
 
                     <!-- Código de Confirmación para Cliente -->
-                    <% if (envio.Estado_Envio_Cliente === 'En reparto' || envio.Estado_Envio === 'En envío' || envio.Estado_Envio === 'En reparto' || envio.Estado_Envio === 'En Ruta') { %>
+                    <% const estadosEntrega = ['En Ruta', 'En reparto', 'En envío']; %>
+                    <% const mostrarSeccionCodigo = estadosEntrega.indexOf(envio.Estado_Envio) !== -1; %>
+                    <% if (mostrarSeccionCodigo) { %>
                         <div class="mt-4 p-3 bg-light rounded border">
                             <h6 class="fw-bold mb-3">
                                 <i class="fas fa-key me-2"></i>Código de Confirmación
@@ -88,7 +90,7 @@
                                             <i class="fas fa-info-circle me-1"></i>
                                             Proporcione este código al repartidor al momento de recibir su pedido.
                                         </p>
-                                        <button class="btn btn-sm btn-outline-primary" onclick="copiarCodigo()">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="copiarCodigo()">
                                             <i class="fas fa-copy me-1"></i>Copiar Código
                                         </button>
                                     </div>
@@ -96,11 +98,39 @@
                             <% } else { %>
                                 <div class="text-center">
                                     <p class="mb-3">Genere su código de confirmación para recibir su pedido.</p>
-                                    <button class="btn btn-primary" id="btn-generar-codigo" onclick="generarCodigo()">
+                                    <button type="button" class="btn btn-primary" id="btn-generar-codigo" onclick="generarCodigo()">
                                         <i class="fas fa-key me-2"></i>Generar Código de Confirmación
                                     </button>
                                 </div>
                                 <div id="codigo-result" class="mt-3" style="display: none;"></div>
+                                <!-- Ventana emergente (modal) para mostrar el código -->
+                                <div id="modalCodigoClienteBackdrop" class="modal-backdrop" style="display: none; position: fixed; inset: 0; z-index: 1040; background: rgba(0,0,0,.5);"></div>
+                                <div id="modalCodigoCliente" role="dialog" style="display: none; position: fixed; inset: 0; z-index: 1050; overflow-x: hidden; overflow-y: auto; align-items: center; justify-content: center;">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content shadow">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title"><i class="fas fa-key me-2"></i>Código de confirmación</h5>
+                                                <button type="button" class="btn-close" id="modalCodigoClienteCerrar" aria-label="Cerrar"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div id="modalCodigoClienteLoading" class="text-center py-4 d-none">
+                                                    <div class="spinner-border text-primary" role="status"></div>
+                                                    <p class="mt-2 mb-0">Generando código...</p>
+                                                </div>
+                                                <div id="modalCodigoClienteResult" class="d-none text-center">
+                                                    <p class="mb-2"><strong>Su código de confirmación es:</strong></p>
+                                                    <h2 class="display-4 fw-bold text-primary mb-2" id="modal-codigo-display"></h2>
+                                                    <p class="text-muted small mb-3"><i class="fas fa-info-circle me-1"></i>Proporcione este código al repartidor al recibir su pedido.</p>
+                                                    <button type="button" class="btn btn-outline-primary" id="btn-copiar-modal-codigo"><i class="fas fa-copy me-1"></i>Copiar código</button>
+                                                </div>
+                                                <div id="modalCodigoClienteError" class="alert alert-danger d-none"><i class="fas fa-exclamation-circle me-2"></i><span id="modalCodigoClienteErrorMsg"></span></div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" id="modalCodigoClienteCerrarFooter">Cerrar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             <% } %>
                         </div>
                     <% } %>
@@ -203,67 +233,107 @@
         </script>
         <% } %>
 
-        <!-- Script para generar código de confirmación -->
-        <% if (envio.Estado_Envio === 'En envío' && !codigoActivo) { %>
+        <!-- Script para generar código (misma condición que el botón: en proceso de entrega y sin código activo) -->
+        <% if (mostrarSeccionCodigo && !codigoActivo) { %>
         <script>
-            function generarCodigo() {
-                const btn = document.getElementById('btn-generar-codigo');
-                const resultDiv = document.getElementById('codigo-result');
-                
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generando...';
-                
-                fetch('/rastreo/<%= envio._id %>/generar-codigo', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        resultDiv.innerHTML = `
-                            <div class="alert alert-success">
-                                <div class="text-center">
-                                    <p class="mb-2"><strong>Su código de confirmación es:</strong></p>
-                                    <h2 class="display-4 fw-bold text-primary mb-2" id="codigo-display">
-                                        ${data.codigo}
-                                    </h2>
-                                    <p class="text-muted small mb-2">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        Proporcione este código al repartidor al momento de recibir su pedido.
-                                    </p>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="copiarCodigo()">
-                                        <i class="fas fa-copy me-1"></i>Copiar Código
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                        resultDiv.style.display = 'block';
+            (function() {
+                var envioId = '<%= envio._id %>';
+                var baseUrl = '/rastreo/' + envioId + '/generar-codigo';
+                var modal = document.getElementById('modalCodigoCliente');
+                var backdrop = document.getElementById('modalCodigoClienteBackdrop');
+                var result = document.getElementById('modalCodigoClienteResult');
+                var codigoDisplay = document.getElementById('modal-codigo-display');
+                var btnCopy = document.getElementById('btn-copiar-modal-codigo');
+                var _debug = function(m) { if (window.DEBUG_MODAL_CODIGO) console.log('[Cliente código]', m); };
+
+                function mostrarModal() {
+                    if (!modal || !backdrop) return;
+                    modal.style.display = 'flex';
+                    backdrop.style.display = 'block';
+                    document.body.style.overflow = 'hidden';
+                }
+                function ocultarModal() {
+                    if (!modal || !backdrop) return;
+                    modal.style.display = 'none';
+                    backdrop.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
+
+                if (document.getElementById('modalCodigoClienteCerrar')) document.getElementById('modalCodigoClienteCerrar').addEventListener('click', ocultarModal);
+                if (document.getElementById('modalCodigoClienteCerrarFooter')) document.getElementById('modalCodigoClienteCerrarFooter').addEventListener('click', ocultarModal);
+                if (backdrop) backdrop.addEventListener('click', ocultarModal);
+
+                window.generarCodigo = function() {
+                    var btn = document.getElementById('btn-generar-codigo');
+                    var resultDiv = document.getElementById('codigo-result');
+                    if (!btn) return;
+                    if (btn.disabled) { _debug('Ignorado: ya en curso'); return; }
+
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generando...';
+                    _debug('Fetch iniciado');
+
+                    var ctrl = new AbortController();
+                    var tid = setTimeout(function() { ctrl.abort(); }, 15000);
+                    fetch(baseUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({}),
+                        signal: ctrl.signal
+                    })
+                    .then(function(r) {
+                        clearTimeout(tid);
+                        _debug('Respuesta: ' + r.status);
+                        if (!r.ok) throw new Error('Error del servidor: ' + r.status);
+                        var ct = (r.headers.get('Content-Type') || '').toLowerCase();
+                        if (!ct.includes('application/json')) throw new Error('La respuesta no es JSON.');
+                        return r.json();
+                    })
+                    .then(function(data) {
+                        _debug('JSON recibido');
+                        if (!data || !data.success || !data.codigo) {
+                            throw new Error((data && data.message) || 'No se pudo generar el código.');
+                        }
+                        if (codigoDisplay) codigoDisplay.textContent = data.codigo;
+                        if (result) result.classList.remove('d-none');
+                        if (btnCopy) {
+                            btnCopy.onclick = function() {
+                                navigator.clipboard.writeText(data.codigo).then(function() {
+                                    var icon = btnCopy.querySelector('i');
+                                    if (icon) { icon.classList.remove('fa-copy'); icon.classList.add('fa-check'); setTimeout(function() { icon.classList.remove('fa-check'); icon.classList.add('fa-copy'); }, 1500); }
+                                });
+                            };
+                        }
+                        if (resultDiv) {
+                            resultDiv.innerHTML = '<div class="alert alert-success text-center"><p class="mb-2"><strong>Su código de confirmación es:</strong></p><h2 class="display-4 fw-bold text-primary mb-2" id="codigo-display">' + data.codigo + '</h2><p class="text-muted small mb-2"><i class="fas fa-info-circle me-1"></i>Proporcione este código al repartidor al recibir su pedido.</p><button type="button" class="btn btn-sm btn-outline-primary" onclick="copiarCodigo()"><i class="fas fa-copy me-1"></i>Copiar Código</button></div>';
+                            resultDiv.style.display = 'block';
+                        }
                         btn.style.display = 'none';
-                    } else {
-                        alert('Error: ' + (data.message || 'No se pudo generar el código'));
+                        mostrarModal();
+                        _debug('Modal abierto con código');
+                    })
+                    .catch(function(err) {
+                        clearTimeout(tid);
+                        console.error('Generar código:', err);
+                        _debug('Error: ' + (err.message || err));
                         btn.disabled = false;
                         btn.innerHTML = '<i class="fas fa-key me-2"></i>Generar Código de Confirmación';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error al generar el código. Por favor, intente nuevamente.');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-key me-2"></i>Generar Código de Confirmación';
-                });
-            }
+                        var msg = (err.name === 'AbortError') ? 'Tiempo agotado. Intente de nuevo.' : (err.message || 'Error al generar el código. Compruebe la conexión e intente de nuevo.');
+                        alert(msg);
+                    });
+                };
 
-            function copiarCodigo() {
-                const codigo = document.getElementById('codigo-display').textContent.trim();
-                navigator.clipboard.writeText(codigo).then(() => {
-                    alert('Código copiado al portapapeles: ' + codigo);
-                }).catch(err => {
-                    console.error('Error al copiar:', err);
-                    alert('No se pudo copiar el código. Por favor, anótelo manualmente: ' + codigo);
-                });
-            }
+                window.copiarCodigo = function() {
+                    var el = document.getElementById('codigo-display');
+                    if (!el) return;
+                    var codigo = el.textContent.trim();
+                    navigator.clipboard.writeText(codigo).then(function() {
+                        alert('Código copiado: ' + codigo);
+                    }).catch(function() {
+                        alert('Anote el código manualmente: ' + codigo);
+                    });
+                };
+            })();
         </script>
         <% } else if (codigoActivo) { %>
         <script>

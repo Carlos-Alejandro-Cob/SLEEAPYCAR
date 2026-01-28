@@ -2,8 +2,23 @@
 const pool = require('../config/db');
 const { queryWithRetry } = require('../utils/dbQuery');
 
+/** Código de seguridad: 6 dígitos numéricos, aleatorio, no reutilizable, asociado al pedido. */
+
+const FORMATO_CODIGO = /^[0-9]{6}$/;
+const MENSAJE_FORMATO_INVALIDO = 'El código debe tener exactamente 6 dígitos numéricos.';
+
 class CodigoConfirmacion {
-    // Generar código aleatorio de 6 dígitos
+    /**
+     * Valida que el código cumpla formato: exactamente 6 dígitos numéricos.
+     * @param {string} codigo
+     * @returns {boolean}
+     */
+    static validarFormato(codigo) {
+        if (typeof codigo !== 'string') return false;
+        return FORMATO_CODIGO.test(codigo.trim());
+    }
+
+    // Generar código aleatorio de 6 dígitos (numérico)
     static generarCodigo() {
         return Math.floor(100000 + Math.random() * 900000).toString();
     }
@@ -43,27 +58,60 @@ class CodigoConfirmacion {
         };
     }
 
-    // Validar y usar un código
-    static async validarYUsar(codigo, idEnvio, usadoPor) {
+    /**
+     * Valida un código sin marcarlo como usado. Útil para verificación previa.
+     * @param {string} codigo - Código de 6 dígitos
+     * @param {number|string} idEnvio - ID del envío
+     * @returns {{ valido: boolean, mensaje: string }}
+     */
+    static async validarSinUsar(codigo, idEnvio) {
+        const c = (typeof codigo === 'string' ? codigo : '').trim();
+        if (!this.validarFormato(c)) {
+            return { valido: false, mensaje: MENSAJE_FORMATO_INVALIDO };
+        }
         const [rows] = await queryWithRetry(
             `SELECT id_codigo, id_envio_fk, tipo, usado 
              FROM codigos_confirmacion 
              WHERE codigo = ? AND usado = FALSE`,
-            [codigo]
+            [c]
+        );
+        if (!rows || rows.length === 0) {
+            return { valido: false, mensaje: 'Código no válido o ya utilizado.' };
+        }
+        const codigoConf = rows[0];
+        if (codigoConf.id_envio_fk !== parseInt(idEnvio, 10)) {
+            return { valido: false, mensaje: 'El código no corresponde a este pedido.' };
+        }
+        return { valido: true, tipo: codigoConf.tipo, mensaje: 'Código válido.' };
+    }
+
+    /**
+     * Validar y usar un código. Verifica formato, existencia, envío y que no esté usado.
+     * Si es válido, lo marca como usado. Si no, el estado del pedido NO debe cambiar.
+     */
+    static async validarYUsar(codigo, idEnvio, usadoPor) {
+        const c = (typeof codigo === 'string' ? codigo : '').trim();
+        if (!this.validarFormato(c)) {
+            return { valido: false, mensaje: MENSAJE_FORMATO_INVALIDO };
+        }
+
+        const [rows] = await queryWithRetry(
+            `SELECT id_codigo, id_envio_fk, tipo, usado 
+             FROM codigos_confirmacion 
+             WHERE codigo = ? AND usado = FALSE`,
+            [c]
         );
 
         if (!rows || rows.length === 0) {
-            return { valido: false, mensaje: 'Código no válido o ya utilizado' };
+            return { valido: false, mensaje: 'Código no válido o ya utilizado.' };
         }
 
         const codigoConf = rows[0];
 
-        // Verificar que el código corresponda al envío
-        if (codigoConf.id_envio_fk !== parseInt(idEnvio)) {
-            return { valido: false, mensaje: 'El código no corresponde a este envío' };
+        if (codigoConf.id_envio_fk !== parseInt(idEnvio, 10)) {
+            return { valido: false, mensaje: 'El código no corresponde a este pedido.' };
         }
 
-        // Marcar como usado
         await queryWithRetry(
             `UPDATE codigos_confirmacion 
              SET usado = TRUE, usado_por = ?, fecha_usado = NOW() 
@@ -74,7 +122,7 @@ class CodigoConfirmacion {
         return {
             valido: true,
             tipo: codigoConf.tipo,
-            mensaje: 'Código validado correctamente'
+            mensaje: 'Código validado correctamente.'
         };
     }
 

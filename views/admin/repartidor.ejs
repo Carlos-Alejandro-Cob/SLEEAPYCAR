@@ -11,20 +11,42 @@
 
             <!-- Crear Ruta de Entrega Section -->
             <div class="card mb-3 shadow-sm border-0">
-                <div class="card-body py-2">
+                <div class="card-body py-3">
                     <form action="/admin/repartidor/ruta" method="POST">
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-end-0">
-                                <i class="fas fa-qrcode text-muted"></i>
-                            </span>
-                            <input type="text" 
-                                   class="form-control border-start-0" 
-                                   placeholder="Escanear o ingresar código de envío" 
-                                   name="codigo_envio"
-                                   required>
-                            <button class="btn btn-primary" type="submit">
-                                <i class="fas fa-plus me-2"></i>Agregar a la Ruta
-                            </button>
+                        <div class="row g-2">
+                            <div class="col-md-5">
+                                <label for="codigo_envio" class="form-label small fw-semibold mb-1">
+                                    <i class="fas fa-qrcode me-1"></i>Código de Envío
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       placeholder="Escanear o ingresar código de envío" 
+                                       name="codigo_envio"
+                                       id="codigo_envio"
+                                       required>
+                            </div>
+                            <div class="col-md-5">
+                                <label for="codigo_confirmacion" class="form-label small fw-semibold mb-1">
+                                    <i class="fas fa-key me-1"></i>Código de confirmación de asignación <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" 
+                                       class="form-control font-monospace" 
+                                       placeholder="6 dígitos del bodeguero" 
+                                       name="codigo_confirmacion"
+                                       id="codigo_confirmacion"
+                                       maxlength="6"
+                                       pattern="[0-9]{6}"
+                                       inputmode="numeric"
+                                       autocomplete="one-time-code"
+                                       title="El código debe tener exactamente 6 dígitos numéricos."
+                                       required>
+                                <small class="text-muted">Código de 6 dígitos que entrega el bodeguero al asignar el envío. Confirma que el pedido está asignado a usted. No reutilizable.</small>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button class="btn btn-primary w-100" type="submit">
+                                    <i class="fas fa-plus me-1"></i>Agregar
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -195,20 +217,23 @@
                 <div class="modal-body">
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>
-                        Ingrese el código de confirmación proporcionado por el bodeguero al momento de entregar los productos.
+                        Ingrese el código de confirmación de asignación que le proporcionó el bodeguero (el mismo que usa para agregar envíos a su ruta).
                     </div>
                     <div class="mb-3">
-                        <label for="codigo_bodeguero" class="form-label">Código de Confirmación <span class="text-danger">*</span></label>
+                        <label for="codigo_bodeguero" class="form-label">Código de confirmación de asignación <span class="text-danger">*</span></label>
                         <input type="text" 
-                               class="form-control form-control-lg text-center" 
+                               class="form-control form-control-lg text-center font-monospace" 
                                id="codigo_bodeguero" 
                                name="codigo_confirmacion" 
                                placeholder="000000"
                                maxlength="6"
                                pattern="[0-9]{6}"
+                               inputmode="numeric"
+                               autocomplete="one-time-code"
+                               title="El código debe tener exactamente 6 dígitos numéricos."
                                required
                                autofocus>
-                        <small class="text-muted">Código de 6 dígitos proporcionado por el bodeguero</small>
+                        <small class="text-muted">Código de 6 dígitos que confirma la asignación del envío. No reutilizable.</small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -241,17 +266,20 @@
                         Ingrese el código de confirmación proporcionado por el cliente al momento de recibir los productos.
                     </div>
                     <div class="mb-3">
-                        <label for="codigo_cliente" class="form-label">Código de Confirmación <span class="text-danger">*</span></label>
+                        <label for="codigo_cliente" class="form-label">Código de seguridad <span class="text-danger">*</span></label>
                         <input type="text" 
-                               class="form-control form-control-lg text-center" 
+                               class="form-control form-control-lg text-center font-monospace" 
                                id="codigo_cliente" 
                                name="codigo_confirmacion" 
                                placeholder="000000"
                                maxlength="6"
                                pattern="[0-9]{6}"
+                               inputmode="numeric"
+                               autocomplete="one-time-code"
+                               title="El código debe tener exactamente 6 dígitos numéricos."
                                required
                                autofocus>
-                        <small class="text-muted">Código de 6 dígitos proporcionado por el cliente</small>
+                        <small class="text-muted">Código de 6 dígitos proporcionado por el cliente al recibir el pedido. No reutilizable.</small>
                     </div>
                 </div>
                 <div class="modal-footer">
