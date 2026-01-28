@@ -76,7 +76,6 @@ exports.login = (req, res, next) => {
                 case ROLES.ADMIN:
                 case ROLES.BODEGUERO:
                 case ROLES.SUPER_ADMIN:
-                case ROLES.SUCURSAL: // Sucursal también va a gestión de envíos (su dashboard)
                     return res.redirect('/admin/envios');
                 default:
                     // Clientes van al catálogo

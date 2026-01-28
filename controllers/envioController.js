@@ -15,17 +15,8 @@ exports.listEnvíos = async (req, res) => {
         const { q, estado } = req.query;
         const userRole = req.user ? req.user.id_rol_fk : null;
 
-        // Verificar Roles
-        const isCliente = userRole === ROLES.CLIENTE;
-        const isSucursal = userRole === ROLES.SUCURSAL;
-
         // Filtros para la consulta
         const filterOptions = { q, estado };
-
-        // Si es cliente o sucursal, filtrar por su nombre completo
-        if (isCliente || isSucursal) {
-            filterOptions.nombre_destinatario = req.user.nombre_completo;
-        }
 
         // TODO: Implementar filtrado por bodega_id cuando se agregue el campo
         const envios = await Envio.findAll(filterOptions);
@@ -38,8 +29,7 @@ exports.listEnvíos = async (req, res) => {
             query: q || '',
             estadoFiltro: estado || '',
             isBodeguero: isBodeguero || false,
-            isSucursal: isSucursal || false,
-            isCliente: isCliente || false
+            isSucursal: userRole === ROLES.SUCURSAL || false // Dejarlo como antes o simplemente false si no se usaba para esto
         });
     } catch (error) {
         console.error('Error al listar envíos:', error);

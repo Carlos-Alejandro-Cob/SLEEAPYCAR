@@ -1,0 +1,30 @@
+Error de compilaci├│n capturado:
+Missing catch or finally after try in C:\web\APICAR\views\public\dashboard.ejs while compiling ejs
+
+If the above error is not helpful, you may want to try EJS-Lint:
+https://github.com/RyanZim/EJS-Lint
+Or, if you meant to create an async function, pass `async: true` as an option.
+
+--- Intento de mostrar contexto ---
+
+--- Source Generado (Primeros 1000 caracteres) ---
+    ; __append( include('../layouts/header', { ...locals, title: 'Mi Cuenta - SLEE APYCAR' }) )
+    ; __append("\r\n    ")
+    ; __line = 2
+    ;  // Variable global para PayPal Client ID if (typeof paypalClientId !=='undefined' ) { 
+
+    ; __append("\r\n        <script>\r\n            window.paypalClientId = '")
+    ; __line = 4
+    ; __append(escapeFn( paypalClientId || "sb" ))
+    ; __append("';\r\n        </script>\r\n        ")
+    ; __line = 6
+    ;  } 
+    ; __append("\r\n\r\n            <!-- Panel de Navegaci├│n Superior - Solo mostrar si no es la secci├│n de cuenta -->\r\n            ")
+    ; __line = 9
+    ;  if (typeof activeSection==='undefined' || activeSection !=='cuenta' ) { 
+    ; __append("\r\n                <div class=\"customer-nav-panel\">\r\n                    <div class=\"container\">\r\n                        <nav class=\"customer-nav\">\r\n                            <a href=\"/cuenta\"\r\n                                class=\"nav-item ")
+    ; __line = 14
+  
+
+... (Buscando 'try' en el source generado) ...
+No se encontr├│ 'try' en el c├│digo generado.
