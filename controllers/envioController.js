@@ -20,12 +20,14 @@ exports.listEnvíos = async (req, res) => {
 
         // Determinar si es bodeguero para ajustar la vista
         const isBodeguero = userRole === ROLES.BODEGUERO;
+        const isSucursal = userRole === ROLES.SUCURSAL;
 
         res.render('admin/list', {
             envios: envios,
             query: q || '',
             estadoFiltro: estado || '',
-            isBodeguero: isBodeguero || false
+            isBodeguero: isBodeguero || false,
+            isSucursal: isSucursal || false
         });
     } catch (error) {
         console.error('Error al listar envíos:', error);
@@ -38,13 +40,13 @@ exports.listEnvíos = async (req, res) => {
 exports.showCreateForm = async (req, res) => {
     const userRole = req.user ? req.user.id_rol_fk : null;
     const isBodeguero = userRole === ROLES.BODEGUERO;
-    
+
     // El bodeguero no puede crear envíos, solo editarlos
     if (isBodeguero) {
         req.flash('error_msg', 'No tiene permisos para crear envíos. Solo puede editar envíos existentes.');
         return res.redirect('/admin/envios');
     }
-    
+
     // Generar código automático para admin (no para cliente)
     let codigoAuto = null;
     if (userRole !== ROLES.CLIENTE) {
@@ -55,7 +57,7 @@ exports.showCreateForm = async (req, res) => {
             console.error('Error al generar código automático:', error);
         }
     }
-    
+
     res.render('admin/form', {
         envio: codigoAuto ? { ID_Envio: codigoAuto } : null, // Pre-llenar con código generado
         isEdit: false,
@@ -66,7 +68,7 @@ exports.showCreateForm = async (req, res) => {
 // 3. Procesar Creación (CRUD Create)
 exports.createEnvío = async (req, res) => {
     const userRole = req.user.id_rol_fk;
-    
+
     // El bodeguero no puede crear envíos, solo editarlos
     if (userRole === ROLES.BODEGUERO) {
         req.flash('error_msg', 'No tiene permisos para crear envíos. Solo puede editar envíos existentes.');
@@ -188,7 +190,7 @@ exports.createEnvío = async (req, res) => {
         await Envio.create(nuevoEnvio);
 
         req.flash('success_msg', `Envío "${nuevoEnvio.codigo_envio}" creado con éxito.`);
-        
+
         if (userRole === ROLES.CLIENTE) {
             return res.redirect('/');
         }
@@ -265,7 +267,7 @@ exports.updateEnvío = async (req, res) => {
                     }
                     throw error;
                 }
-                
+
                 if (!validacion.valido) {
                     req.flash('error_msg', validacion.mensaje);
                     return res.redirect('/admin/repartidor');
@@ -275,7 +277,7 @@ exports.updateEnvío = async (req, res) => {
                     req.flash('error_msg', 'El código de confirmación de asignación no es válido para este proceso.');
                     return res.redirect('/admin/repartidor');
                 }
-                
+
                 // Cambiar automáticamente a "En reparto"
                 estadoFinal = 'En reparto';
             }
@@ -297,7 +299,7 @@ exports.updateEnvío = async (req, res) => {
                     }
                     throw error;
                 }
-                
+
                 if (!validacion.valido) {
                     req.flash('error_msg', validacion.mensaje);
                     return res.redirect('/admin/repartidor');
@@ -378,7 +380,7 @@ exports.updateEnvío = async (req, res) => {
 
         // Obtener el envío actual para mantener precio y otros campos
         const envioActual = await Envio.findById(id);
-        
+
         // Log para depuración
         console.log('[UPDATE_ENVIO] Datos recibidos:', {
             id,
@@ -388,13 +390,13 @@ exports.updateEnvío = async (req, res) => {
             metodo_pago: req.body.metodo_pago,
             estado_pago: req.body.estado_pago
         });
-        
+
         // Validar que el admin solo pueda cambiar a "Aceptado" o "Rechazado"
         if (estadoEnvio !== 'Aceptado' && estadoEnvio !== 'Rechazado') {
             req.flash('error_msg', 'El administrador solo puede cambiar el estado a "Aceptado" o "Rechazado".');
             return res.redirect(`/admin/envios/${id}/editar`);
         }
-        
+
         // En modo edición, solo actualizar los campos que pueden cambiar (estado, método de pago, estado de pago)
         // NO actualizar: código_envio, nombre_destinatario, direccion_completa, precio (son informativos o no editables)
         const datosActualizados = {
@@ -404,12 +406,12 @@ exports.updateEnvío = async (req, res) => {
             estado_pago: req.body.estado_pago
             // No incluir products aquí - se manejan por separado si es necesario
         };
-        
+
         // Solo incluir products si se proporcionan explícitamente y es un array válido
         if (req.body.products && Array.isArray(req.body.products) && req.body.products.length > 0) {
             datosActualizados.products = req.body.products;
         }
-        
+
         console.log('[UPDATE_ENVIO] Datos a actualizar:', datosActualizados);
 
         await Envio.update(id, datosActualizados);
@@ -421,7 +423,7 @@ exports.updateEnvío = async (req, res) => {
         res.redirect('/admin/envios');
     } catch (error) {
         console.error('Error al actualizar envío:', error);
-        
+
         // Mensaje de error más específico
         let mensajeError = 'Error al actualizar el envío.';
         if (error.code === 'ER_DUP_ENTRY') {
@@ -429,7 +431,7 @@ exports.updateEnvío = async (req, res) => {
         } else if (error.message) {
             mensajeError = `Error: ${error.message}`;
         }
-        
+
         req.flash('error_msg', mensajeError);
         res.redirect(`/admin/envios/${req.params.id}/editar`);
     }
@@ -686,7 +688,7 @@ exports.addEnvioToRuta = async (req, res) => {
             }
             throw error;
         }
-        
+
         if (!validacion.valido) {
             req.flash('error_msg', validacion.mensaje);
             return res.redirect('/admin/repartidor');
@@ -698,7 +700,7 @@ exports.addEnvioToRuta = async (req, res) => {
             return res.redirect('/admin/repartidor');
         }
 
-        await Envio.update(envio._id, { 
+        await Envio.update(envio._id, {
             id_repartidor: id_usuario,
             estado_envio: 'En Ruta'
         });
@@ -717,10 +719,14 @@ exports.addEnvioToRuta = async (req, res) => {
 
 // 16. API: Generar código de confirmación para bodeguero
 exports.generarCodigoBodeguero = async (req, res) => {
+    console.log('[DEBUG_FREEZE] Entrando a generarCodigoBodeguero. ID:', req.params.id);
     try {
         const { id } = req.params;
         const idEnvio = parseInt(id, 10);
+        console.log('[DEBUG_FREEZE] ID parseado:', idEnvio);
+
         if (isNaN(idEnvio)) {
+            console.log('[DEBUG_FREEZE] ID inválido');
             return res.status(400).json({
                 success: false,
                 message: 'ID de envío inválido'
@@ -728,28 +734,36 @@ exports.generarCodigoBodeguero = async (req, res) => {
         }
         const currentUserId = req.user.id_usuario;
         const userRole = req.user.id_rol_fk;
+        console.log('[DEBUG_FREEZE] Usuario:', currentUserId, 'Rol:', userRole);
 
         if (userRole !== ROLES.BODEGUERO) {
+            console.log('[DEBUG_FREEZE] Acceso denegado: No es bodeguero');
             return res.status(403).json({
                 success: false,
                 message: 'No tiene permisos para generar códigos'
             });
         }
 
+        console.log('[DEBUG_FREEZE] Buscando envío...');
         const envio = await Envio.findById(idEnvio);
         if (!envio) {
+            console.log('[DEBUG_FREEZE] Envío no encontrado');
             return res.status(404).json({
                 success: false,
                 message: 'Envío no encontrado'
             });
         }
 
+        console.log('[DEBUG_FREEZE] Envío encontrado. Generando código...');
         const codigoData = await CodigoConfirmacion.generar(idEnvio, 'BODEGUERO_CHOFER', currentUserId);
+        console.log('[DEBUG_FREEZE] Código generado data:', codigoData);
+
         const codigo = typeof codigoData.codigo === 'string' ? codigoData.codigo : String(codigoData.codigo || '');
 
         logger.logAction(currentUserId, 'GENERAR_CODIGO', `Código de confirmación de asignación ${codigo} generado para envío ${idEnvio}`)
             .catch(function (logErr) { console.warn('Log auditoría:', logErr.message); });
 
+        console.log('[DEBUG_FREEZE] Enviando respuesta JSON...');
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.setHeader('Cache-Control', 'no-store');
         res.status(200);
@@ -758,9 +772,10 @@ exports.generarCodigoBodeguero = async (req, res) => {
             codigo: codigo,
             message: 'Código de confirmación de asignación generado. Entregue este código al repartidor para que confirme que el envío está asignado a él.'
         }));
+        console.log('[DEBUG_FREEZE] Respuesta enviada.');
         return;
     } catch (error) {
-        console.error('Error al generar código:', error.message);
+        console.error('[DEBUG_FREEZE] Error FATAL en generarCodigoBodeguero:', error);
         console.error('Código:', error.code, '| SQL:', error.sql);
 
         if (error.code === 'ER_NO_SUCH_TABLE') {
@@ -810,7 +825,7 @@ exports.cancelarCodigoBodeguero = async (req, res) => {
         // Cancelar código activo si existe
         // Cancelar código usando la tabla codigos_confirmacion
         const resultado = await CodigoConfirmacion.cancelarCodigoActivo(id, 'BODEGUERO_CHOFER', currentUserId);
-        
+
         if (!resultado.cancelado) {
             return res.status(400).json({
                 success: false,
@@ -830,6 +845,75 @@ exports.cancelarCodigoBodeguero = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error al cancelar el código: ' + error.message
+        });
+    }
+};
+
+// 18. API: Generar código de confirmación para sucursal (cliente)
+exports.generarCodigoSucursal = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const idEnvio = parseInt(id, 10);
+        if (isNaN(idEnvio)) {
+            return res.status(400).json({
+                success: false,
+                message: 'ID de envío inválido'
+            });
+        }
+        const currentUserId = req.user.id_usuario;
+        const userRole = req.user.id_rol_fk;
+
+        if (userRole !== ROLES.SUCURSAL) {
+            return res.status(403).json({
+                success: false,
+                message: 'No tiene permisos para generar códigos de recepción.'
+            });
+        }
+
+        const envio = await Envio.findById(idEnvio);
+        if (!envio) {
+            return res.status(404).json({
+                success: false,
+                message: 'Envío no encontrado'
+            });
+        }
+
+        // Validar que el envío esté "En Ruta" para poder generar el código de recepción
+        if (envio.Estado_Envio !== 'En Ruta') {
+            return res.status(400).json({
+                success: false,
+                message: 'Solo se puede generar código de recepción cuando el envío está En Ruta.'
+            });
+        }
+
+        const codigoData = await CodigoConfirmacion.generar(idEnvio, 'CLIENTE_CHOFER', currentUserId);
+        const codigo = typeof codigoData.codigo === 'string' ? codigoData.codigo : String(codigoData.codigo || '');
+
+        logger.logAction(currentUserId, 'GENERAR_CODIGO_SUCURSAL', `Código de recepción ${codigo} generado para envío ${idEnvio}`)
+            .catch(function (logErr) { console.warn('Log auditoría:', logErr.message); });
+
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-store');
+        res.status(200);
+        res.end(JSON.stringify({
+            success: true,
+            codigo: codigo,
+            message: 'Código de recepción generado. Entregue este código al repartidor para confirmar la entrega.'
+        }));
+        return;
+    } catch (error) {
+        console.error('Error al generar código sucursal:', error.message);
+
+        if (error.code === 'ER_NO_SUCH_TABLE') {
+            return res.status(503).json({
+                success: false,
+                message: 'La tabla de códigos no existe. Contacte al administrador.'
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: 'Error al generar el código. ' + (error.message || 'Intente de nuevo.')
         });
     }
 };

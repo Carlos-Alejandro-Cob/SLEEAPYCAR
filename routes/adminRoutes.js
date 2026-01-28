@@ -11,7 +11,7 @@ const ROLES = require('../config/roles');
 // --- RUTAS CRUD PARA ENVÍOS ---
 
 // [R]EAD: Listar todos los envíos (con filtros)
-router.get('/envios', checkRole([ROLES.ADMIN, ROLES.BODEGUERO, ROLES.SUPER_ADMIN]), envioController.listEnvíos);
+router.get('/envios', checkRole([ROLES.ADMIN, ROLES.BODEGUERO, ROLES.SUCURSAL, ROLES.SUPER_ADMIN]), envioController.listEnvíos);
 
 // [C]REATE: Mostrar formulario para nuevo envío (Bodeguero NO puede crear, solo admin)
 router.get('/envios/nuevo', checkRole([ROLES.ADMIN, ROLES.SUPER_ADMIN]), envioController.showCreateForm);
@@ -63,6 +63,7 @@ router.post('/repartidor/ruta', checkRole([ROLES.REPARTIDOR, ROLES.SUPER_ADMIN])
 
 // --- API RUTAS PARA CÓDIGOS DE CONFIRMACIÓN (BODEGUERO) ---
 router.post('/api/envios/:id/generar-codigo', checkRole([ROLES.BODEGUERO, ROLES.SUPER_ADMIN]), envioController.generarCodigoBodeguero);
+router.post('/api/envios/:id/generar-codigo-sucursal', checkRole([ROLES.SUCURSAL, ROLES.SUPER_ADMIN]), envioController.generarCodigoSucursal);
 router.post('/api/envios/:id/cancelar-codigo', checkRole([ROLES.BODEGUERO, ROLES.SUPER_ADMIN]), envioController.cancelarCodigoBodeguero);
 
 // --- API VALIDACIÓN CÓDIGO DE SEGURIDAD (REPARTIDOR / ADMIN) ---

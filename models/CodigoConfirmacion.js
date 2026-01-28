@@ -27,18 +27,30 @@ class CodigoConfirmacion {
     static async generar(idEnvio, tipo, generadoPor = null) {
         let codigo;
         let codigoExiste = true;
-        
-        // Asegurar que el código sea único
-        while (codigoExiste) {
+
+        // Asegurar que el código sea único (con límite de intentos para evitar bucles infinitos)
+        let intentos = 0;
+        const MAX_INTENTOS = 100;
+
+        while (codigoExiste && intentos < MAX_INTENTOS) {
             codigo = this.generarCodigo();
+            console.log(`[DEBUG_FREEZE] Intento ${intentos + 1}: Generado código ${codigo}`);
             const [existing] = await queryWithRetry(
                 'SELECT id_codigo FROM codigos_confirmacion WHERE codigo = ? AND usado = FALSE',
                 [codigo]
             );
             codigoExiste = existing && existing.length > 0;
+            if (codigoExiste) console.log(`[DEBUG_FREEZE] Código ${codigo} ya existe. Reintentando...`);
+            intentos++;
+        }
+
+        if (intentos >= MAX_INTENTOS) {
+            console.error('[DEBUG_FREEZE] FATAL: Límite de intentos alcanzado');
+            throw new Error('No se pudo generar un código único después de varios intentos. Por favor, intente de nuevo.');
         }
 
         // Invalidar códigos anteriores del mismo tipo para este envío
+        console.log('[DEBUG_FREEZE] Invalidando códigos anteriores...');
         await queryWithRetry(
             'UPDATE codigos_confirmacion SET usado = TRUE WHERE id_envio_fk = ? AND tipo = ? AND usado = FALSE',
             [idEnvio, tipo]
