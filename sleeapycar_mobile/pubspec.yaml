@@ -1,0 +1,30 @@
+name: sleeapycar_mobile
+description: App móvil SLEE APYCAR - Repartidor y Bodeguero
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+
+  # HTTP y cookies de sesión (backend usa connect.sid)
+  dio: ^5.4.0
+  dio_cookie_manager: ^3.0.0
+  cookie_jar: ^4.0.8
+  path_provider: ^2.1.1
+  path: ^1.8.3
+
+  # Estado
+  provider: ^6.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

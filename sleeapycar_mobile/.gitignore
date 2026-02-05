@@ -1,0 +1,13 @@
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+*.iml
+# IDE
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
