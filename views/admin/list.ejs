@@ -1,0 +1,506 @@
+<%- include('../layouts/header', { ...locals, title: 'Gestión de Envíos - SLEE APYCAR' }) %>
+
+    <div class="row">
+        <style>
+            .table-sm td,
+            .table-sm th {
+                padding-top: 0.15rem !important;
+                padding-bottom: 0.15rem !important;
+                vertical-align: middle !important;
+            }
+
+            /* Mejora de espaciado para columna de pago */
+            .table-sm td {
+                padding: 0.5rem 0.75rem !important;
+            }
+
+            /* Asegurar que la columna de pago tenga suficiente espacio */
+            .table-sm tbody td:has(.d-flex.flex-column) {
+                padding: 0.75rem 1rem !important;
+                vertical-align: top !important;
+            }
+        </style>
+        <div class="col-12">
+            <!-- Header Section -->
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <% if (typeof isBodeguero !=='undefined' && isBodeguero) { %>
+                        <h1 class="h3 mb-2">Envíos asignados a mi bodega</h1>
+                        <p class="text-muted mb-0">Gestiona los envíos de tu bodega</p>
+                        <% } else if (typeof isSucursal !=='undefined' && isSucursal) { %>
+                            <h1 class="h3 mb-2"><i class="fas fa-box-open me-2 text-primary"></i>Mis Pedidos</h1>
+                            <p class="text-muted mb-0">Rastrea tus pedidos y confirma la recepción</p>
+                            <% } else { %>
+                                <h1 class="h3 mb-2">Gestión de Envíos</h1>
+                                <p class="text-muted mb-0">Administra y monitorea todos los envíos del sistema</p>
+                                <% } %>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <% if ((typeof isBodeguero==='undefined' || !isBodeguero) && (typeof isSucursal==='undefined' ||
+                        !isSucursal)) { %>
+                        <a href="/admin/envios/nuevo" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Nuevo Envío
+                        </a>
+                        <a href="/admin/incidencias/nueva" class="btn btn-outline-primary">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Reportar Incidencia
+                        </a>
+                        <a href="/admin/incidencias" class="btn btn-outline-primary">
+                            <i class="fas fa-list me-2"></i>Incidencias
+                        </a>
+                        <% } %>
+                </div>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="GET" action="/admin/envios" class="row g-3 align-items-end">
+                        <div class="col-md-5">
+                            <label for="q" class="form-label">Buscar</label>
+                            <input type="text" class="form-control" id="q" name="q"
+                                placeholder="Destinatario o ID de envío..." value="<%= query || '' %>">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="estado" class="form-label">Estado</label>
+                            <select class="form-select" id="estado" name="estado">
+                                <option value="">Todos</option>
+                                <option value="Solicitud" <%=estadoFiltro==='Solicitud' ? 'selected' : '' %>>Solicitud
+                                </option>
+                                <option value="Pendiente" <%=estadoFiltro==='Pendiente' ? 'selected' : '' %>>Pendiente
+                                </option>
+                                <% if (typeof isBodeguero !=='undefined' && isBodeguero) { %>
+                                    <option value="Preparado" <%=estadoFiltro==='Preparado' ? 'selected' : '' %>
+                                        >Preparado</option>
+                                    <option value="Despachado" <%=estadoFiltro==='Despachado' ? 'selected' : '' %>
+                                        >Despachado</option>
+                                    <% } else { %>
+                                        <option value="Preparado" <%=estadoFiltro==='Preparado' ? 'selected' : '' %>
+                                            >Preparado</option>
+                                        <option value="Despachado" <%=estadoFiltro==='Despachado' ? 'selected' : '' %>
+                                            >Despachado</option>
+                                        <option value="En Ruta" <%=estadoFiltro==='En Ruta' ? 'selected' : '' %>>En Ruta
+                                        </option>
+                                        <option value="Entregado" <%=estadoFiltro==='Entregado' ? 'selected' : '' %>
+                                            >Entregado</option>
+                                        <% } %>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-fill">
+                                <i class="fas fa-search me-2"></i>Filtrar
+                            </button>
+                            <a href="/admin/envios" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted" style="font-size: 0.875rem; font-weight: 500;">
+                            <%= envios.length %>
+                                <%= envios.length===1 ? 'envío' : 'envíos' %>
+                        </span>
+                    </div>
+                    <% if (typeof isBodeguero==='undefined' || !isBodeguero) { %>
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportarExcel()">
+                            <i class="fas fa-file-excel me-2"></i>Exportar
+                        </button>
+                        <% } %>
+                </div>
+                <div class="card-body p-0">
+                    <% if (envios.length===0) { %>
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No se encontraron envíos</h5>
+                            <p class="text-muted">Intenta ajustar los filtros de búsqueda</p>
+                            <% if (typeof isBodeguero==='undefined' || !isBodeguero) { %>
+                                <a href="/admin/envios/nuevo" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Crear Primer Envío
+                                </a>
+                                <% } %>
+                        </div>
+                        <% } else { %>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm mb-0" style="font-size: 0.75rem;">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Destinatario</th>
+                                            <th>Dirección</th>
+                                            <th>Estado</th>
+                                            <% if (typeof isBodeguero==='undefined' || !isBodeguero) { %>
+                                                <th>Pago</th>
+                                                <th>Foto</th>
+                                                <% } else { %>
+                                                    <!-- Bodeguero no ve pago ni foto aquí usualmente, pero mantenemos simple -->
+                                                    <% } %>
+                                                        <th>Fecha</th>
+                                                        <th width="120">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% envios.forEach(function(envio) { %>
+                                            <tr>
+                                                <td>
+                                                    <span class="badge bg-secondary">
+                                                        <%= envio.ID_Envio %>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <strong>
+                                                        <%= envio.Nombre_Destinatario %>
+                                                    </strong>
+                                                </td>
+                                                <td>
+                                                    <small class="text-muted">
+                                                        <%= envio.Direccion_Completa %>
+                                                    </small>
+                                                </td>
+                                                <td>
+                                                    <% let badgeClass='bg-secondary' ; if
+                                                        (envio.Estado_Envio==='Entregado' ) badgeClass='bg-success' ;
+                                                        else if (['En Ruta', 'Despachado' , 'En reparto'
+                                                        ].includes(envio.Estado_Envio)) badgeClass='bg-warning' ; else
+                                                        if (envio.Estado_Envio==='Solicitud' ) badgeClass='bg-primary' ;
+                                                        else if (['Pendiente', 'Preparado'
+                                                        ].includes(envio.Estado_Envio)) badgeClass='bg-info' ; %>
+                                                        <span class="badge <%= badgeClass %>">
+                                                            <%= envio.Estado_Envio %>
+                                                        </span>
+                                                </td>
+                                                <% if (typeof isBodeguero==='undefined' || !isBodeguero) { %>
+                                                    <td style="min-width: 140px;">
+                                                        <div class="d-flex flex-column gap-2">
+                                                            <div>
+                                                                <span class="badge bg-light text-dark border mb-1">
+                                                                    <%= envio.metodo_pago || '—' %>
+                                                                </span>
+                                                            </div>
+                                                            <div>
+                                                                <strong class="text-dark" style="font-size: 0.875rem;">
+                                                                    $<%= envio.precio ?
+                                                                        parseFloat(envio.precio).toFixed(2) : '0.00' %>
+                                                                </strong>
+                                                            </div>
+                                                            <div>
+                                                                <% if (envio.estado_pago==='Pagado' ) { %>
+                                                                    <span class="badge bg-success"
+                                                                        style="font-size: 0.75rem;">
+                                                                        <i class="fas fa-check-circle me-1"></i>Pagado
+                                                                    </span>
+                                                                    <% } else { %>
+                                                                        <span class="badge bg-warning text-dark"
+                                                                            style="font-size: 0.75rem;">
+                                                                            <i class="fas fa-clock me-1"></i>Pendiente
+                                                                        </span>
+                                                                        <% } %>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <% if (envio.URL_Foto_Entrega) { %>
+                                                            <a href="<%= envio.URL_Foto_Entrega %>" target="_blank">
+                                                                <img src="<%= envio.URL_Foto_Entrega %>" alt="Foto"
+                                                                    class="img-thumbnail"
+                                                                    style="height: 40px; width: auto; padding: 2px;">
+                                                            </a>
+                                                            <% } else { %>
+                                                                <span class="text-muted"
+                                                                    style="font-size: 0.8125rem;">—</span>
+                                                                <% } %>
+                                                    </td>
+                                                    <% } %>
+                                                        <td>
+                                                            <small class="text-muted">
+                                                                <%= envio.fecha_salida ? new
+                                                                    Date(envio.fecha_salida).toLocaleDateString('es-ES',
+                                                                    { year: 'numeric' , month: 'short' , day: 'numeric'
+                                                                    }) : '—' %>
+                                                            </small>
+                                                        </td>
+                                                        <td>
+                                                            <div class="d-flex gap-1 flex-wrap">
+                                                                <% if (typeof isBodeguero !=='undefined' && isBodeguero)
+                                                                    { %>
+                                                                    <button type="button"
+                                                                        class="btn btn-sm btn-outline-success btn-generar-codigo"
+                                                                        title="Generar código de confirmación de asignación para este envío"
+                                                                        data-envio-id="<%= envio._id %>"
+                                                                        data-envio-codigo="<%= typeof envio.ID_Envio !== 'undefined' ? envio.ID_Envio : '' %>"
+                                                                        data-rol="bodeguero">
+                                                                        <i class="fas fa-key"></i>
+                                                                    </button>
+                                                                    <% } else if (typeof isSucursal !=='undefined' &&
+                                                                        isSucursal && envio.Estado_Envio==='En Ruta' ) {
+                                                                        %>
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-outline-success btn-generar-codigo"
+                                                                            title="Generar código de recepción para confirmar entrega"
+                                                                            data-envio-id="<%= envio._id %>"
+                                                                            data-envio-codigo="<%= typeof envio.ID_Envio !== 'undefined' ? envio.ID_Envio : '' %>"
+                                                                            data-rol="sucursal">
+                                                                            <i class="fas fa-key"></i>
+                                                                        </button>
+                                                                        <% } %>
+
+                                                                            <a href="/admin/envios/<%= envio._id %>/editar"
+                                                                                class="btn btn-sm btn-outline-primary"
+                                                                                title="<%= (typeof isBodeguero !== 'undefined' && isBodeguero) ? 'Cambiar Estado' : 'Editar' %>">
+                                                                                <i class="fas fa-edit"></i>
+                                                                            </a>
+
+                                                                            <% if (typeof isBodeguero==='undefined' ||
+                                                                                !isBodeguero) { %>
+                                                                                <form
+                                                                                    action="/admin/envios/<%= envio._id %>?_method=DELETE"
+                                                                                    method="POST" class="d-inline"
+                                                                                    onsubmit="return confirm('¿Estás seguro de que quieres eliminar el envío <%= envio.ID_Envio %>?');">
+                                                                                    <button type="submit"
+                                                                                        class="btn btn-sm btn-outline-danger"
+                                                                                        title="Eliminar">
+                                                                                        <i class="fas fa-trash"></i>
+                                                                                    </button>
+                                                                                </form>
+                                                                                <% } %>
+                                                            </div>
+                                                        </td>
+                                            </tr>
+                                            <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <% if ((typeof isBodeguero !=='undefined' && isBodeguero) || (typeof isSucursal !=='undefined' && isSucursal)) { %>
+        <!-- Modal: Generar código de confirmación (Bodeguero o Sucursal) -->
+        <div id="modalGenerarCodigoBackdrop" class="modal-backdrop fade show"
+            style="display: none; position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,.5);"></div>
+        <div class="modal fade show" id="modalGenerarCodigo" tabindex="-1" role="dialog"
+            style="display: none; position: fixed; inset: 0; z-index: 9999; overflow-x: hidden; overflow-y: auto;">
+            <div class="modal-dialog modal-dialog-centered" style="pointer-events: auto;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalGenerarCodigoLabel">
+                            <i class="fas fa-key me-2"></i>Código de confirmación de asignación
+                        </h5>
+                        <button type="button" class="btn-close" id="modalGenerarCodigoCerrar"
+                            aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body" id="modalGenerarCodigoBody">
+                        <p class="text-muted mb-2" id="modalGenerarCodigoEnvio"></p>
+                        <div class="alert alert-info small mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Este código confirma que el envío está asignado al repartidor. Entregue el código al
+                            repartidor para que lo use al agregar el envío a su ruta.
+                        </div>
+                        <div id="modalGenerarCodigoLoading" class="text-center py-4 d-none">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2 mb-0">Generando código...</p>
+                        </div>
+                        <div id="modalGenerarCodigoResult" class="d-none">
+                            <div class="alert alert-success d-flex align-items-center">
+                                <i class="fas fa-check-circle fa-2x me-3"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Código de confirmación de asignación:</strong>
+                                    <div class="mt-2">
+                                        <span class="fs-3 font-monospace fw-bold" id="modalGenerarCodigoValor"></span>
+                                        <button type="button" class="btn btn-sm btn-outline-dark ms-2"
+                                            id="btnCopiarModalCodigo" title="Copiar">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted d-block mt-2">Entregue este código al repartidor. Lo usará
+                                        al agregar el envío a su ruta para confirmar que el pedido está asignado a
+                                        él.</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="modalGenerarCodigoError" class="alert alert-danger d-none">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <span id="modalGenerarCodigoErrorMsg"></span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary"
+                            id="modalGenerarCodigoCerrarFooter">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            (function () {
+                var _debug = function (msg) { if (window.DEBUG_MODAL_CODIGO) { console.log('[Modal código]', msg); } };
+
+                function initModalGenerarCodigo() {
+                    var modalEl = document.getElementById('modalGenerarCodigo');
+                    var backdrop = document.getElementById('modalGenerarCodigoBackdrop');
+                    var loading = document.getElementById('modalGenerarCodigoLoading');
+                    var result = document.getElementById('modalGenerarCodigoResult');
+                    var error = document.getElementById('modalGenerarCodigoError');
+                    var errorMsg = document.getElementById('modalGenerarCodigoErrorMsg');
+                    var valorEl = document.getElementById('modalGenerarCodigoValor');
+                    var envioEl = document.getElementById('modalGenerarCodigoEnvio');
+
+                    if (!modalEl || !backdrop) return;
+
+                    function mostrarModal() {
+                        modalEl.style.display = 'flex';
+                        modalEl.style.alignItems = 'center';
+                        modalEl.style.justifyContent = 'center';
+                        backdrop.style.display = 'block';
+                        document.body.classList.add('modal-open');
+                        document.body.style.overflow = 'hidden';
+                    }
+                    function ocultarModal() {
+                        modalEl.style.display = 'none';
+                        backdrop.style.display = 'none';
+                        document.body.classList.remove('modal-open');
+                        document.body.style.overflow = '';
+                    }
+
+                    var btnCerrar = document.getElementById('modalGenerarCodigoCerrar');
+                    var btnCerrarFooter = document.getElementById('modalGenerarCodigoCerrarFooter');
+                    if (btnCerrar) btnCerrar.addEventListener('click', ocultarModal);
+                    if (btnCerrarFooter) btnCerrarFooter.addEventListener('click', ocultarModal);
+                    backdrop.addEventListener('click', ocultarModal);
+
+                    function restablecerBoton(btn) {
+                        if (!btn) return;
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-key"></i>';
+                    }
+
+                    function abrirYGenerar(idEnvio, idEnvioStr, btn) {
+                        if (!idEnvio) return;
+                        if (btn && btn.disabled) { _debug('Ignorado: botón ya deshabilitado'); return; }
+
+                        // 1. Mostrar modal inmediatamente en estado de carga
+                        if (envioEl) envioEl.textContent = 'Envío: ' + (idEnvioStr || idEnvio);
+                        if (loading) loading.classList.remove('d-none'); // Mostrar spinner
+                        if (result) result.classList.add('d-none');      // Ocultar resultado anterior
+                        if (error) error.classList.add('d-none');        // Ocultar errores anteriores
+                        if (errorMsg) errorMsg.textContent = '';
+                        if (valorEl) valorEl.textContent = '';
+
+                        mostrarModal(); // <--- CLAVE: Mostrar modal AHORA, no después del fetch
+
+                        if (btn) {
+                            btn.disabled = true;
+                            // Opcional: mostrar spinner en botón también, aunque el modal ya cubre la pantalla
+                            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+                        }
+                        _debug('Fetch iniciado');
+
+                        var controller = new AbortController();
+                        var timeoutId = setTimeout(function () { controller.abort(); }, 15000);
+
+                        // Determinar URL basado en el rol (data-rol)
+                        var rol = btn ? btn.getAttribute('data-rol') : 'bodeguero';
+                        var url = '/admin/api/envios/' + idEnvio + '/generar-codigo';
+                        if (rol === 'sucursal') {
+                            url = '/admin/api/envios/' + idEnvio + '/generar-codigo-sucursal';
+                        }
+
+                        fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({}),
+                            signal: controller.signal
+                        })
+                            .then(function (r) {
+                                clearTimeout(timeoutId);
+                                _debug('Respuesta: ' + r.status + ' ' + r.statusText);
+                                var ct = (r.headers.get('Content-Type') || '').toLowerCase();
+                                if (r.status >= 300 && r.status < 400) {
+                                    throw new Error('Redirección inesperada. ¿Sesión expirada? Vuelva a iniciar sesión.');
+                                }
+                                if (!r.ok) {
+                                    if (r.status === 403) throw new Error('No tienes permisos para generar códigos.');
+                                    if (r.status === 401) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+                                    if (r.status === 404) throw new Error('Envío no encontrado.');
+                                    throw new Error('Error del servidor: ' + r.status);
+                                }
+                                if (!ct.includes('application/json')) throw new Error('La respuesta no es JSON.');
+                                return r.json();
+                            })
+                            .then(function (data) {
+                                _debug('JSON recibido');
+                                if (!data || !data.success || !data.codigo) {
+                                    throw new Error((data && data.message) || 'No se pudo generar el código.');
+                                }
+
+                                // 2. Actualizar modal con éxito
+                                if (loading) loading.classList.add('d-none');
+
+                                if (valorEl) {
+                                    valorEl.innerText = data.codigo; // Usar innerText para asegurar renderizado
+                                }
+
+                                if (result) {
+                                    result.classList.remove('d-none');
+                                    result.style.display = 'block'; // Forzar display por si d-none tiene precedencia rara
+                                } else {
+                                    console.error('Elemento result no encontrado');
+                                    alert('Código generado: ' + data.codigo); // Fallback visible
+                                }
+
+                                var btnCopy = document.getElementById('btnCopiarModalCodigo');
+                                if (btnCopy) {
+                                    btnCopy.onclick = function () {
+                                        navigator.clipboard.writeText(data.codigo).then(function () {
+                                            var icon = btnCopy.querySelector('i');
+                                            if (icon) {
+                                                icon.classList.remove('fa-copy'); icon.classList.add('fa-check');
+                                                setTimeout(function () { icon.classList.remove('fa-check'); icon.classList.add('fa-copy'); }, 1500);
+                                            }
+                                        });
+                                    };
+                                }
+
+                                restablecerBoton(btn);
+                            })
+                            .catch(function (err) {
+                                clearTimeout(timeoutId);
+                                _debug('Error: ' + (err.message || err));
+
+                                // 3. Actualizar modal con error
+                                if (loading) loading.classList.add('d-none');
+                                if (error) error.classList.remove('d-none');
+                                if (errorMsg) errorMsg.textContent = err.name === 'AbortError' ? 'Tiempo de espera agotado.' : (err.message || 'Error desconocido.');
+
+                                restablecerBoton(btn);
+                                // No usamos alert(), mostramos el error en el modal mismo
+                            });
+                    }
+
+                    document.addEventListener('click', function (e) {
+                        var btn = e.target && (e.target.closest ? e.target.closest('.btn-generar-codigo') : null);
+                        if (!btn) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        var id = btn.getAttribute('data-envio-id');
+                        var codigo = btn.getAttribute('data-envio-codigo') || '';
+                        abrirYGenerar(id, codigo, btn);
+                    });
+                }
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initModalGenerarCodigo);
+                } else {
+                    initModalGenerarCodigo();
+                }
+            })();
+        </script>
+        <% } %>
+
+            <%- include('../layouts/footer') %>

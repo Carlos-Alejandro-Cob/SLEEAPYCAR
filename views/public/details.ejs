@@ -1,0 +1,354 @@
+<%- include('header') %>
+
+    <div class="row justify-content-center w-100">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-primary">
+                        <i class="fas fa-box me-2"></i>Envío #<%= envio.ID_Envio %>
+                    </h5>
+                    <a href="/pedidos" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Volver
+                    </a>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Status Steps -->
+                    <% 
+                        const estadoCliente = envio.Estado_Envio_Cliente || 'Aceptado';
+                        const progressWidth = estadoCliente === 'Entregado' ? '100%' : (estadoCliente === 'En reparto' ? '66%' : '33%');
+                        const paso2Active = (estadoCliente === 'En reparto' || estadoCliente === 'Entregado');
+                        const paso3Active = (estadoCliente === 'Entregado');
+                    %>
+                    <div class="position-relative m-4">
+                        <div class="progress" style="height: 2px;">
+                            <div class="progress-bar" role="progressbar"
+                                style="width: <%= progressWidth %>;">
+                            </div>
+                        </div>
+                        <div class="position-absolute top-0 start-0 translate-middle btn btn-sm btn-primary rounded-pill"
+                            style="width: 2rem; height:2rem;">1</div>
+                        <div class="position-absolute top-0 start-50 translate-middle btn btn-sm <%= paso2Active ? 'btn-primary' : 'btn-secondary' %> rounded-pill"
+                            style="width: 2rem; height:2rem;">2</div>
+                        <div class="position-absolute top-0 start-100 translate-middle btn btn-sm <%= paso3Active ? 'btn-primary' : 'btn-secondary' %> rounded-pill"
+                            style="width: 2rem; height:2rem;">3</div>
+
+                        <div class="d-flex justify-content-between mt-2 text-muted small">
+                            <span>Aceptado</span>
+                            <span>En reparto</span>
+                            <span>Entregado</span>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Details -->
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Destinatario</small>
+                            <strong>
+                                <%= envio.Nombre_Destinatario %>
+                            </strong>
+                        </div>
+                        <div class="col-6 text-end">
+                            <small class="text-muted d-block">Estado Actual</small>
+                            <% 
+                                let estadoBadgeClass = 'bg-info';
+                                if (estadoCliente === 'Entregado') estadoBadgeClass = 'bg-success';
+                                else if (estadoCliente === 'En reparto') estadoBadgeClass = 'bg-warning';
+                                else if (estadoCliente === 'Aceptado') estadoBadgeClass = 'bg-info';
+                                else if (estadoCliente === 'Rechazado') estadoBadgeClass = 'bg-danger';
+                            %>
+                            <span class="badge <%= estadoBadgeClass %>">
+                                <%= estadoCliente %>
+                            </span>
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted d-block">Dirección</small>
+                            <span>
+                                <%= envio.Direccion_Completa %>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Código de Confirmación para Cliente -->
+                    <% const estadosEntrega = ['En Ruta', 'En reparto', 'En envío']; %>
+                    <% const mostrarSeccionCodigo = estadosEntrega.indexOf(envio.Estado_Envio) !== -1; %>
+                    <% if (mostrarSeccionCodigo) { %>
+                        <div class="mt-4 p-3 bg-light rounded border">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-key me-2"></i>Código de Confirmación
+                            </h6>
+                            <% if (codigoActivo) { %>
+                                <div class="alert alert-success">
+                                    <div class="text-center">
+                                        <p class="mb-2"><strong>Su código de confirmación es:</strong></p>
+                                        <h2 class="display-4 fw-bold text-primary mb-2" id="codigo-display">
+                                            <%= codigoActivo %>
+                                        </h2>
+                                        <p class="text-muted small mb-2">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Proporcione este código al repartidor al momento de recibir su pedido.
+                                        </p>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="copiarCodigo()">
+                                            <i class="fas fa-copy me-1"></i>Copiar Código
+                                        </button>
+                                    </div>
+                                </div>
+                            <% } else { %>
+                                <div class="text-center">
+                                    <p class="mb-3">Genere su código de confirmación para recibir su pedido.</p>
+                                    <button type="button" class="btn btn-primary" id="btn-generar-codigo" onclick="generarCodigo()">
+                                        <i class="fas fa-key me-2"></i>Generar Código de Confirmación
+                                    </button>
+                                </div>
+                                <div id="codigo-result" class="mt-3" style="display: none;"></div>
+                                <!-- Ventana emergente (modal) para mostrar el código -->
+                                <div id="modalCodigoClienteBackdrop" class="modal-backdrop" style="display: none; position: fixed; inset: 0; z-index: 1040; background: rgba(0,0,0,.5);"></div>
+                                <div id="modalCodigoCliente" role="dialog" style="display: none; position: fixed; inset: 0; z-index: 1050; overflow-x: hidden; overflow-y: auto; align-items: center; justify-content: center;">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content shadow">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title"><i class="fas fa-key me-2"></i>Código de confirmación</h5>
+                                                <button type="button" class="btn-close" id="modalCodigoClienteCerrar" aria-label="Cerrar"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div id="modalCodigoClienteLoading" class="text-center py-4 d-none">
+                                                    <div class="spinner-border text-primary" role="status"></div>
+                                                    <p class="mt-2 mb-0">Generando código...</p>
+                                                </div>
+                                                <div id="modalCodigoClienteResult" class="d-none text-center">
+                                                    <p class="mb-2"><strong>Su código de confirmación es:</strong></p>
+                                                    <h2 class="display-4 fw-bold text-primary mb-2" id="modal-codigo-display"></h2>
+                                                    <p class="text-muted small mb-3"><i class="fas fa-info-circle me-1"></i>Proporcione este código al repartidor al recibir su pedido.</p>
+                                                    <button type="button" class="btn btn-outline-primary" id="btn-copiar-modal-codigo"><i class="fas fa-copy me-1"></i>Copiar código</button>
+                                                </div>
+                                                <div id="modalCodigoClienteError" class="alert alert-danger d-none"><i class="fas fa-exclamation-circle me-2"></i><span id="modalCodigoClienteErrorMsg"></span></div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" id="modalCodigoClienteCerrarFooter">Cerrar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% } %>
+                        </div>
+                    <% } %>
+
+                    <!-- Payment Section -->
+                    <% if (envio.precio> 0) { %>
+                        <div class="mt-4 p-3 bg-light rounded border">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="h5 mb-0">Total a Pagar:</span>
+                                <span class="h4 mb-0 fw-bold text-success">$<%= parseFloat(envio.precio).toFixed(2) %>
+                                </span>
+                            </div>
+
+                            <% if (envio.estado_pago==='Pagado' ) { %>
+                                <div class="alert alert-success mb-0 text-center">
+                                    <i class="fas fa-check-circle me-2"></i>¡Este envío ya ha sido pagado!
+                                </div>
+                                <% } else { %>
+                                    <div class="d-grid gap-2">
+                                        <!-- PayPal Button Container -->
+                                        <div id="paypal-button-container"></div>
+
+                                        <!-- Mercado Pago Button -->
+                                        <div id="wallet_container"></div>
+                                    </div>
+                                    <% } %>
+                        </div>
+                        <% } else { %>
+                            <!-- Debug info for user if price is 0 -->
+                            <div class="mt-4 alert alert-info text-center">
+                                <small>Este envío no tiene un precio asignado para pago en línea.</small>
+                            </div>
+                            <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts for Payment Gateways -->
+    <% if (envio.precio> 0 && envio.estado_pago !== 'Pagado') { %>
+        <!-- PayPal SDK -->
+        <script src="https://www.paypal.com/sdk/js?client-id=<%= paypalClientId %>&currency=MXN"></script>
+        <script>
+            paypal.Buttons({
+                createOrder: function (data, actions) {
+                    return fetch('/api/pagos/paypal/create-order', {
+                        method: 'post',
+                        headers: { 'content-type': 'application/json' },
+                        body: JSON.stringify({
+                            orderId: '<%= envio._id %>',
+                            amount: '<%= envio.precio %>'
+                        })
+                    }).then(function (res) {
+                        return res.json();
+                    }).then(function (orderData) {
+                        return orderData.id;
+                    });
+                },
+                onApprove: function (data, actions) {
+                    return fetch('/api/pagos/paypal/capture-order', {
+                        method: 'post',
+                        headers: { 'content-type': 'application/json' },
+                        body: JSON.stringify({
+                            orderID: data.orderID,
+                            envioId: '<%= envio._id %>'
+                        })
+                    }).then(function (res) {
+                        return res.json();
+                    }).then(function (orderData) {
+                        window.location.reload();
+                    });
+                }
+            }).render('#paypal-button-container');
+        </script>
+
+        <!-- Mercado Pago SDK -->
+        <script src="https://sdk.mercadopago.com/js/v2"></script>
+        <script>
+            const mp = new MercadoPago('<%= mpPublicKey %>');
+
+            // Create Preference on load
+            fetch('/api/pagos/mercadopago/create-preference', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    envioId: '<%= envio._id %>',
+                    title: 'Envío #<%= envio.ID_Envio %>',
+                    price: Number('<%= envio.precio || 0 %>')
+                })
+            })
+                .then(response => response.json())
+                .then(preference => {
+                    mp.bricks().create("wallet", "wallet_container", {
+                        initialization: {
+                            preferenceId: preference.id,
+                        },
+                    });
+                })
+                .catch(error => console.error(error));
+        </script>
+        <% } %>
+
+        <!-- Script para generar código (misma condición que el botón: en proceso de entrega y sin código activo) -->
+        <% if (mostrarSeccionCodigo && !codigoActivo) { %>
+        <script>
+            (function() {
+                var envioId = '<%= envio._id %>';
+                var baseUrl = '/rastreo/' + envioId + '/generar-codigo';
+                var modal = document.getElementById('modalCodigoCliente');
+                var backdrop = document.getElementById('modalCodigoClienteBackdrop');
+                var result = document.getElementById('modalCodigoClienteResult');
+                var codigoDisplay = document.getElementById('modal-codigo-display');
+                var btnCopy = document.getElementById('btn-copiar-modal-codigo');
+                var _debug = function(m) { if (window.DEBUG_MODAL_CODIGO) console.log('[Cliente código]', m); };
+
+                var codigoGenerado = null;
+
+                function mostrarModal() {
+                    if (!modal || !backdrop) return;
+                    modal.style.display = 'flex';
+                    backdrop.style.display = 'block';
+                    document.body.style.overflow = 'hidden';
+                }
+                function ocultarModal() {
+                    if (!modal || !backdrop) return;
+                    modal.style.display = 'none';
+                    backdrop.style.display = 'none';
+                    document.body.style.overflow = '';
+                    if (codigoGenerado && resultDiv) {
+                        resultDiv.innerHTML = '<div class="alert alert-success text-center"><p class="mb-2"><strong>Su código de confirmación es:</strong></p><h2 class="display-4 fw-bold text-primary mb-2" id="codigo-display">' + codigoGenerado + '</h2><p class="text-muted small mb-2"><i class="fas fa-info-circle me-1"></i>Proporcione este código al repartidor al recibir su pedido.</p><button type="button" class="btn btn-sm btn-outline-primary" onclick="copiarCodigo()"><i class="fas fa-copy me-1"></i>Copiar Código</button></div>';
+                        resultDiv.style.display = 'block';
+                    }
+                }
+
+                if (document.getElementById('modalCodigoClienteCerrar')) document.getElementById('modalCodigoClienteCerrar').addEventListener('click', ocultarModal);
+                if (document.getElementById('modalCodigoClienteCerrarFooter')) document.getElementById('modalCodigoClienteCerrarFooter').addEventListener('click', ocultarModal);
+                if (backdrop) backdrop.addEventListener('click', ocultarModal);
+
+                window.generarCodigo = function() {
+                    var btn = document.getElementById('btn-generar-codigo');
+                    var resultDiv = document.getElementById('codigo-result');
+                    if (!btn) return;
+                    if (btn.disabled) { _debug('Ignorado: ya en curso'); return; }
+
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generando...';
+                    _debug('Fetch iniciado');
+
+                    var ctrl = new AbortController();
+                    var tid = setTimeout(function() { ctrl.abort(); }, 15000);
+                    fetch(baseUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({}),
+                        signal: ctrl.signal
+                    })
+                    .then(function(r) {
+                        clearTimeout(tid);
+                        _debug('Respuesta: ' + r.status);
+                        if (!r.ok) throw new Error('Error del servidor: ' + r.status);
+                        var ct = (r.headers.get('Content-Type') || '').toLowerCase();
+                        if (!ct.includes('application/json')) throw new Error('La respuesta no es JSON.');
+                        return r.json();
+                    })
+                    .then(function(data) {
+                        _debug('JSON recibido');
+                        if (!data || !data.success || !data.codigo) {
+                            throw new Error((data && data.message) || 'No se pudo generar el código.');
+                        }
+                        codigoGenerado = data.codigo;
+                        if (codigoDisplay) codigoDisplay.textContent = data.codigo;
+                        if (result) result.classList.remove('d-none');
+                        if (btnCopy) {
+                            btnCopy.onclick = function() {
+                                navigator.clipboard.writeText(data.codigo).then(function() {
+                                    var icon = btnCopy.querySelector('i');
+                                    if (icon) { icon.classList.remove('fa-copy'); icon.classList.add('fa-check'); setTimeout(function() { icon.classList.remove('fa-check'); icon.classList.add('fa-copy'); }, 1500); }
+                                });
+                            };
+                        }
+                        btn.style.display = 'none';
+                        mostrarModal();
+                        _debug('Modal abierto con código');
+                    })
+                    .catch(function(err) {
+                        clearTimeout(tid);
+                        console.error('Generar código:', err);
+                        _debug('Error: ' + (err.message || err));
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-key me-2"></i>Generar Código de Confirmación';
+                        var msg = (err.name === 'AbortError') ? 'Tiempo agotado. Intente de nuevo.' : (err.message || 'Error al generar el código. Compruebe la conexión e intente de nuevo.');
+                        alert(msg);
+                    });
+                };
+
+                window.copiarCodigo = function() {
+                    var el = document.getElementById('codigo-display');
+                    if (!el) return;
+                    var codigo = el.textContent.trim();
+                    navigator.clipboard.writeText(codigo).then(function() {
+                        alert('Código copiado: ' + codigo);
+                    }).catch(function() {
+                        alert('Anote el código manualmente: ' + codigo);
+                    });
+                };
+            })();
+        </script>
+        <% } else if (codigoActivo) { %>
+        <script>
+            function copiarCodigo() {
+                const codigo = document.getElementById('codigo-display').textContent.trim();
+                navigator.clipboard.writeText(codigo).then(() => {
+                    alert('Código copiado al portapapeles: ' + codigo);
+                }).catch(err => {
+                    console.error('Error al copiar:', err);
+                    alert('No se pudo copiar el código. Por favor, anótelo manualmente: ' + codigo);
+                });
+            }
+        </script>
+        <% } %>
+
+            <%- include('footer') %>
